@@ -59,7 +59,7 @@ export function FiltersSection({ filters, onFiltersChange, onApplyFilters }: Fil
                 <SelectValue placeholder="Todos los estados" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos los estados</SelectItem>
+                <SelectItem value="all">Todos los estados</SelectItem>
                 <SelectItem value="Pendiente">Pendiente</SelectItem>
                 <SelectItem value="Aprobado">Aprobado</SelectItem>
                 <SelectItem value="Rechazado">Rechazado</SelectItem>
@@ -74,7 +74,7 @@ export function FiltersSection({ filters, onFiltersChange, onApplyFilters }: Fil
                 <SelectValue placeholder="Todos los tipos" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos los tipos</SelectItem>
+                <SelectItem value="all">Todos los tipos</SelectItem>
                 <SelectItem value="Permiso">Permiso</SelectItem>
                 <SelectItem value="Vacaciones">Vacaciones</SelectItem>
                 <SelectItem value="Marca">Marca</SelectItem>

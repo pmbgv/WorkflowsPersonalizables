@@ -24,7 +24,7 @@ export default function Dashboard() {
 
   // Build query string from applied filters
   const queryString = new URLSearchParams(
-    Object.entries(appliedFilters).filter(([_, value]) => value !== "")
+    Object.entries(appliedFilters).filter(([_, value]) => value !== "" && value !== "all")
   ).toString();
 
   const { 
