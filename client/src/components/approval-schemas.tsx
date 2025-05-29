@@ -270,41 +270,9 @@ export function ApprovalSchemas() {
       </div>
 
       {/* Center Panel - Schema Details */}
-      <div className="space-y-4">
+      <div className="space-y-4 relative">
         {selectedSchema ? (
           <>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>{selectedSchema.nombre}</CardTitle>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => deleteSchemaMutation.mutate(selectedSchema.id)}
-                  disabled={deleteSchemaMutation.isPending}
-                >
-                  Desactivar
-                </Button>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label>Nombre</Label>
-                  <Input value={selectedSchema.nombre} readOnly />
-                </div>
-                <div>
-                  <Label>Tipo de solicitud</Label>
-                  <Select value={selectedSchema.tipoSolicitud} disabled>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Permiso">Permisos</SelectItem>
-                      <SelectItem value="Vacaciones">Vacaciones</SelectItem>
-                      <SelectItem value="Marca">Marcas</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardContent>
-            </Card>
 
             {/* Approval Steps */}
             <Card>
@@ -334,6 +302,18 @@ export function ApprovalSchemas() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Desactivar Button - Positioned at bottom right */}
+            <div className="absolute bottom-0 right-0">
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => deleteSchemaMutation.mutate(selectedSchema.id)}
+                disabled={deleteSchemaMutation.isPending}
+              >
+                Desactivar
+              </Button>
+            </div>
           </>
         ) : (
           <Card>
