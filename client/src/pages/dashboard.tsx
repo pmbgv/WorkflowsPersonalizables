@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronRight, Globe } from "lucide-react";
+import { ChevronRight, Globe, User, Star, FileText, Users, Calendar, Settings } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RequestTable } from "@/components/request-table";
@@ -127,16 +127,83 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4">
-        <nav className="flex items-center space-x-2 text-sm text-gray-600">
-          <span>Solicitudes</span>
-          <ChevronRight className="h-4 w-4" />
-          <span className="text-gray-900 font-medium">Solicitudes</span>
-          <Globe className="h-4 w-4 text-blue-500 ml-2" />
-        </nav>
-      </header>
-      <div className="container mx-auto px-6 py-8 max-w-7xl">
+      {/* Portal Header */}
+      <div className="portal-header bg-white border-b border-gray-200 px-6 py-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <img 
+              src="https://www.geovictoria.com/hubfs/social-suggested-images/info.geovictoria.comhubfscropped-Logo-WEB-5-1.png" 
+              width="112" 
+              alt="Logo"
+              className="h-8"
+            />
+            <div className="h-6 w-px bg-gray-300"></div>
+            <div className="text-blue-600 font-medium">Control de Solicitudes</div>
+            <div className="h-6 w-px bg-gray-300"></div>
+            <input 
+              className="px-3 py-1 border border-gray-300 rounded text-sm bg-gray-50" 
+              type="text" 
+              placeholder="Buscar..."
+            />
+          </div>
+          
+          <div className="flex items-center space-x-4">
+            <button className="p-2 text-blue-600 hover:bg-gray-100 rounded">
+              <Globe className="h-5 w-5" />
+            </button>
+            
+            <div className="flex items-center space-x-2 px-3 py-1 bg-gray-100 rounded">
+              <span className="text-sm">Empresa</span>
+              <img 
+                src="https://cdn.countryflags.com/thumbs/chile/flag-round-250.png" 
+                height="20" 
+                alt="Chile"
+                className="w-5 h-5"
+              />
+            </div>
+
+            <button className="p-2 text-blue-600 hover:bg-gray-100 rounded">
+              <User className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex">
+        {/* Side Menu */}
+        <div className="w-16 bg-white border-r border-gray-200 flex flex-col items-center py-4 space-y-4">
+          <button className="p-3 text-gray-400 hover:text-blue-600 hover:bg-gray-100 rounded">
+            <Star className="h-5 w-5" />
+          </button>
+          <button className="p-3 text-blue-600 bg-blue-50 rounded">
+            <FileText className="h-5 w-5" />
+          </button>
+          <button className="p-3 text-gray-400 hover:text-blue-600 hover:bg-gray-100 rounded">
+            <User className="h-5 w-5" />
+          </button>
+          <button className="p-3 text-gray-400 hover:text-blue-600 hover:bg-gray-100 rounded">
+            <Users className="h-5 w-5" />
+          </button>
+          <button className="p-3 text-gray-400 hover:text-blue-600 hover:bg-gray-100 rounded">
+            <Calendar className="h-5 w-5" />
+          </button>
+          <button className="p-3 text-gray-400 hover:text-blue-600 hover:bg-gray-100 rounded">
+            <Settings className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/* Main Content */}
+        <div className="flex-1">
+          {/* Breadcrumb */}
+          <div className="bg-white px-6 py-3 border-b border-gray-200">
+            <nav className="flex items-center space-x-2 text-sm text-gray-600">
+              <span>Planificación</span>
+              <ChevronRight className="h-4 w-4" />
+              <span className="text-gray-900 font-medium">Solicitudes</span>
+            </nav>
+          </div>
+
+          <div className="container mx-auto px-6 py-6 max-w-7xl">
 
 
         {/* Filters - Only show for request tabs */}
@@ -188,15 +255,17 @@ export default function Dashboard() {
           </TabsContent>
         </Tabs>
 
-        {/* Request Details Modal */}
-        <RequestDetailsModal
-          request={selectedRequest}
-          open={detailsModalOpen}
-          onOpenChange={setDetailsModalOpen}
-          onDownload={handleDownload}
-          onStatusChange={handleStatusChange}
-          isAllRequestsTab={activeTab === "todas"}
-        />
+            {/* Request Details Modal */}
+            <RequestDetailsModal
+              request={selectedRequest}
+              open={detailsModalOpen}
+              onOpenChange={setDetailsModalOpen}
+              onDownload={handleDownload}
+              onStatusChange={handleStatusChange}
+              isAllRequestsTab={activeTab === "todas"}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
