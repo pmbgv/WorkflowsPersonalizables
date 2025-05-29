@@ -309,6 +309,54 @@ export function ApprovalSchemas() {
                       </Select>
                     </div>
                     
+                    {/* Visibility section */}
+                    <div className="space-y-3 pt-4 border-t">
+                      <Label className="text-base font-medium">Visibilidad</Label>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Permiso para visualización */}
+                        <div className="space-y-3">
+                          <Label className="text-sm font-medium text-gray-700">Permiso para visualización</Label>
+                          <div className="space-y-2">
+                            <div className="flex items-center space-x-2">
+                              <Checkbox id="vis-usuarios" />
+                              <Label htmlFor="vis-usuarios" className="text-sm">Usuarios</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Checkbox id="vis-jefes" />
+                              <Label htmlFor="vis-jefes" className="text-sm">Jefes de grupo</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Checkbox id="vis-rrhh" />
+                              <Label htmlFor="vis-rrhh" className="text-sm">Recursos humanos</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Checkbox id="vis-admin" />
+                              <Label htmlFor="vis-admin" className="text-sm">Administradores</Label>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Permiso para aprobación */}
+                        <div className="space-y-3">
+                          <Label className="text-sm font-medium text-gray-700">Permiso para aprobación</Label>
+                          <div className="space-y-2">
+                            <div className="flex items-center space-x-2">
+                              <Checkbox id="apr-rrhh" />
+                              <Label htmlFor="apr-rrhh" className="text-sm">Recursos humanos</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Checkbox id="apr-jefes" />
+                              <Label htmlFor="apr-jefes" className="text-sm">Jefes de grupo</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Checkbox id="apr-admin" />
+                              <Label htmlFor="apr-admin" className="text-sm">Administradores</Label>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
                     {/* Permissions section for Permiso type */}
                     {selectedSchema.tipoSolicitud === "Permiso" && (
                       <div className="space-y-3 pt-4 border-t">
