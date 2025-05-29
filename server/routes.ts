@@ -76,6 +76,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update request status
+  app.patch("/api/requests/:id/status", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { estado } = req.body;
+      
+      if (!estado || !["Pendiente", "Aprobado", "Rechazado"].includes(estado)) {
+        return res.status(400).json({ message: "Invalid status" });
+      }
+      
+      const updatedRequest = await storage.updateRequest(id, { estado });
+      
+      if (!updatedRequest) {
+        return res.status(404).json({ message: "Request not found" });
+      }
+      
+      res.json(updatedRequest);
+    } catch (error) {
+      console.error("Error updating request status:", error);
+      res.status(500).json({ message: "Error updating request status" });
+    }
+  });
+
   // Delete a request
   app.delete("/api/requests/:id", async (req, res) => {
     try {

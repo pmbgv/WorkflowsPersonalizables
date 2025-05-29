@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronRight, Globe } from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RequestTable } from "@/components/request-table";
 import { CreateRequestModal } from "@/components/create-request-modal";
@@ -24,6 +25,29 @@ export default function Dashboard() {
   const [appliedFilters, setAppliedFilters] = useState(filters);
 
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Mutation for updating request status
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ requestId, newStatus }: { requestId: number; newStatus: string }) => {
+      const response = await apiRequest("PATCH", `/api/requests/${requestId}/status`, { estado: newStatus });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/requests"] });
+      toast({
+        title: "Estado actualizado",
+        description: "El estado de la solicitud ha sido actualizado exitosamente.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Ocurrió un error al actualizar el estado de la solicitud.",
+        variant: "destructive",
+      });
+    },
+  });
 
   // Build query string from applied filters
   const queryString = new URLSearchParams(
@@ -79,6 +103,10 @@ export default function Dashboard() {
   const handleViewDetails = (request: Request) => {
     setSelectedRequest(request);
     setDetailsModalOpen(true);
+  };
+
+  const handleStatusChange = (requestId: number, newStatus: string) => {
+    updateStatusMutation.mutate({ requestId, newStatus });
   };
 
   const handleDownload = (requestId: number) => {
@@ -155,6 +183,8 @@ export default function Dashboard() {
               onViewDetails={handleViewDetails}
               onDownload={handleDownload}
               title="Todas las Solicitudes"
+              allowStatusChange={true}
+              onStatusChange={handleStatusChange}
             />
           </TabsContent>
           
