@@ -47,16 +47,17 @@ export default function Dashboard() {
     },
   });
 
-  // Query for all requests (Todas las Solicitudes)
+  // Query for all requests with filters applied (Todas las Solicitudes)
   const { 
     data: allRequests = [], 
     isLoading: isLoadingAll, 
     error: errorAll,
     refetch: refetchAll 
   } = useQuery<Request[]>({
-    queryKey: ["/api/requests", "all"],
+    queryKey: ["/api/requests", "all", queryString],
     queryFn: async () => {
-      const response = await fetch("/api/requests", { credentials: "include" });
+      const url = queryString ? `/api/requests?${queryString}` : "/api/requests";
+      const response = await fetch(url, { credentials: "include" });
       if (!response.ok) {
         throw new Error("Failed to fetch all requests");
       }
@@ -117,6 +118,13 @@ export default function Dashboard() {
           <CreateRequestModal onRequestCreated={handleRequestCreated} />
         </div>
 
+        {/* Filters */}
+        <FiltersSection
+          filters={filters}
+          onFiltersChange={setFilters}
+          onApplyFilters={handleApplyFilters}
+        />
+
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-2 mb-6">
@@ -125,13 +133,6 @@ export default function Dashboard() {
           </TabsList>
           
           <TabsContent value="lista" className="space-y-6">
-            {/* Filters */}
-            <FiltersSection
-              filters={filters}
-              onFiltersChange={setFilters}
-              onApplyFilters={handleApplyFilters}
-            />
-
             {/* Requests Table */}
             <RequestTable
               requests={requests}
