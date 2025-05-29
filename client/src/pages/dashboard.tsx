@@ -136,7 +136,6 @@ export default function Dashboard() {
           <Globe className="h-4 w-4 text-blue-500 ml-2" />
         </nav>
       </header>
-
       <div className="container mx-auto px-6 py-8 max-w-7xl">
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
@@ -157,7 +156,7 @@ export default function Dashboard() {
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-3 mb-6">
-            <TabsTrigger value="lista">Lista de Solicitudes</TabsTrigger>
+            <TabsTrigger value="lista">Mis Solicitudes</TabsTrigger>
             <TabsTrigger value="todas">Todas las Solicitudes</TabsTrigger>
             <TabsTrigger value="esquemas">Configuración Esquemas</TabsTrigger>
           </TabsList>
