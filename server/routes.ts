@@ -101,7 +101,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             token: "mi-token-seguro"
           };
 
-          const response = await fetch("https://conexion-WF-Libro-test.pmbgv.repl.co/actualizar", {
+          const response = await fetch("https://shift-scheduler.productmanager3.repl.co/actualizar", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
