@@ -31,6 +31,7 @@ const PROFILES = [
 export function ApprovalSchemas() {
   const [selectedSchema, setSelectedSchema] = useState<ApprovalSchema | null>(null);
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
+  const [stepChanges, setStepChanges] = useState<Record<number, Partial<ApprovalStep>>>({});
   const [newSchemaName, setNewSchemaName] = useState("");
   const [newSchemaType, setNewSchemaType] = useState("Permiso");
   const [searchTerm, setSearchTerm] = useState("");
@@ -130,6 +131,24 @@ export function ApprovalSchemas() {
     },
   });
 
+  // Update step mutation
+  const updateStepMutation = useMutation({
+    mutationFn: async ({ stepId, updates }: { stepId: number; updates: Partial<ApprovalStep> }) => {
+      const response = await apiRequest("PATCH", `/api/approval-steps/${stepId}`, updates);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/approval-schemas", selectedSchema?.id, "steps"] });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Ocurrió un error al actualizar el paso.",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Delete schema mutation
   const deleteSchemaMutation = useMutation({
     mutationFn: async (schemaId: number) => {
@@ -155,12 +174,19 @@ export function ApprovalSchemas() {
   // Save schema changes mutation
   const saveSchemaChangesMutation = useMutation({
     mutationFn: async (schemaId: number) => {
-      // Refresh data to ensure we have the latest state
-      await queryClient.invalidateQueries({ queryKey: ["/api/approval-schemas"] });
-      await queryClient.invalidateQueries({ queryKey: ["/api/approval-schemas", schemaId, "steps"] });
+      // Save all pending step changes
+      const promises = Object.entries(stepChanges).map(([stepId, changes]) => 
+        updateStepMutation.mutateAsync({ stepId: parseInt(stepId), updates: changes })
+      );
+      
+      if (promises.length > 0) {
+        await Promise.all(promises);
+      }
+      
       return { success: true };
     },
     onSuccess: () => {
+      setStepChanges({}); // Clear pending changes
       toast({
         title: "Configuración guardada",
         description: "Los cambios en el esquema han sido guardados exitosamente.",
@@ -210,6 +236,16 @@ export function ApprovalSchemas() {
         ? prev.filter(p => p !== permission)
         : [...prev, permission]
     );
+  };
+
+  const handleStepChange = (stepId: number, field: keyof ApprovalStep, value: string) => {
+    setStepChanges(prev => ({
+      ...prev,
+      [stepId]: {
+        ...prev[stepId],
+        [field]: value
+      }
+    }));
   };
 
   const filteredSchemas = schemas.filter(schema =>
@@ -427,6 +463,8 @@ export function ApprovalSchemas() {
                           step={step} 
                           onDelete={() => deleteStepMutation.mutate(step.id)}
                           isDeleting={deleteStepMutation.isPending}
+                          onChange={handleStepChange}
+                          pendingChanges={stepChanges[step.id]}
                         />
                       ))}
                     </div>
@@ -476,12 +514,18 @@ export function ApprovalSchemas() {
 function ApprovalStepRow({ 
   step, 
   onDelete, 
-  isDeleting 
+  isDeleting,
+  onChange,
+  pendingChanges 
 }: { 
   step: ApprovalStep; 
   onDelete: () => void; 
-  isDeleting: boolean; 
+  isDeleting: boolean;
+  onChange: (stepId: number, field: keyof ApprovalStep, value: string) => void;
+  pendingChanges?: Partial<ApprovalStep>;
 }) {
+  const currentPerfil = pendingChanges?.perfil ?? step.perfil;
+  
   return (
     <div className="grid grid-cols-4 gap-2 items-center py-2 border-b border-gray-100">
       <div className="text-sm">{step.orden}</div>
@@ -490,7 +534,10 @@ function ApprovalStepRow({
         className="text-sm h-8"
         readOnly
       />
-      <Select defaultValue={step.perfil}>
+      <Select 
+        value={currentPerfil}
+        onValueChange={(value) => onChange(step.id, 'perfil', value)}
+      >
         <SelectTrigger className="h-8">
           <SelectValue />
         </SelectTrigger>
