@@ -82,7 +82,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const { estado } = req.body;
       
-      if (!estado || !["Pendiente", "Aprobado", "Rechazado"].includes(estado)) {
+      if (!estado || !["Pendiente", "Aprobado", "Rechazado", "Cancelada", "Anulada"].includes(estado)) {
         return res.status(400).json({ message: "Invalid status" });
       }
       
