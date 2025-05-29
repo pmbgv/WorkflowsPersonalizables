@@ -6,6 +6,7 @@ import { RequestTable } from "@/components/request-table";
 import { CreateRequestModal } from "@/components/create-request-modal";
 import { RequestDetailsModal } from "@/components/request-details-modal";
 import { FiltersSection } from "@/components/filters-section";
+import { ApprovalSchemas } from "@/components/approval-schemas";
 import { useToast } from "@/hooks/use-toast";
 import type { Request } from "@shared/schema";
 

@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertRequestSchema } from "@shared/schema";
+import { insertRequestSchema, insertApprovalSchemaSchema, insertApprovalStepSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -89,6 +89,138 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Error deleting request" });
+    }
+  });
+
+  // Approval Schemas routes
+  app.get("/api/approval-schemas", async (req, res) => {
+    try {
+      const schemas = await storage.getApprovalSchemas();
+      res.json(schemas);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching approval schemas" });
+    }
+  });
+
+  app.get("/api/approval-schemas/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const schema = await storage.getApprovalSchema(id);
+      
+      if (!schema) {
+        return res.status(404).json({ message: "Approval schema not found" });
+      }
+      
+      res.json(schema);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching approval schema" });
+    }
+  });
+
+  app.post("/api/approval-schemas", async (req, res) => {
+    try {
+      const validatedData = insertApprovalSchemaSchema.parse(req.body);
+      const newSchema = await storage.createApprovalSchema(validatedData);
+      res.status(201).json(newSchema);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Validation error", 
+          errors: error.errors 
+        });
+      }
+      res.status(500).json({ message: "Error creating approval schema" });
+    }
+  });
+
+  app.patch("/api/approval-schemas/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updates = req.body;
+      
+      const updatedSchema = await storage.updateApprovalSchema(id, updates);
+      
+      if (!updatedSchema) {
+        return res.status(404).json({ message: "Approval schema not found" });
+      }
+      
+      res.json(updatedSchema);
+    } catch (error) {
+      res.status(500).json({ message: "Error updating approval schema" });
+    }
+  });
+
+  app.delete("/api/approval-schemas/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteApprovalSchema(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Approval schema not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Error deleting approval schema" });
+    }
+  });
+
+  // Approval Steps routes
+  app.get("/api/approval-schemas/:schemaId/steps", async (req, res) => {
+    try {
+      const schemaId = parseInt(req.params.schemaId);
+      const steps = await storage.getApprovalSteps(schemaId);
+      res.json(steps);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching approval steps" });
+    }
+  });
+
+  app.post("/api/approval-steps", async (req, res) => {
+    try {
+      const validatedData = insertApprovalStepSchema.parse(req.body);
+      const newStep = await storage.createApprovalStep(validatedData);
+      res.status(201).json(newStep);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Validation error", 
+          errors: error.errors 
+        });
+      }
+      res.status(500).json({ message: "Error creating approval step" });
+    }
+  });
+
+  app.patch("/api/approval-steps/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updates = req.body;
+      
+      const updatedStep = await storage.updateApprovalStep(id, updates);
+      
+      if (!updatedStep) {
+        return res.status(404).json({ message: "Approval step not found" });
+      }
+      
+      res.json(updatedStep);
+    } catch (error) {
+      res.status(500).json({ message: "Error updating approval step" });
+    }
+  });
+
+  app.delete("/api/approval-steps/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteApprovalStep(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Approval step not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Error deleting approval step" });
     }
   });
 

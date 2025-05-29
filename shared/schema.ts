@@ -17,11 +17,46 @@ export const requests = pgTable("requests", {
   fechaActualizacion: timestamp("fecha_actualizacion").defaultNow().notNull(),
 });
 
+// Esquemas de aprobación
+export const approvalSchemas = pgTable("approval_schemas", {
+  id: serial("id").primaryKey(),
+  nombre: varchar("nombre", { length: 100 }).notNull(),
+  tipoSolicitud: varchar("tipo_solicitud", { length: 50 }).notNull(),
+  fechaCreacion: timestamp("fecha_creacion").defaultNow().notNull(),
+  fechaActualizacion: timestamp("fecha_actualizacion").defaultNow().notNull(),
+});
+
+// Pasos de aprobación
+export const approvalSteps = pgTable("approval_steps", {
+  id: serial("id").primaryKey(),
+  schemaId: integer("schema_id").references(() => approvalSchemas.id).notNull(),
+  orden: integer("orden").notNull(),
+  descripcion: varchar("descripcion", { length: 255 }).notNull(),
+  perfil: varchar("perfil", { length: 100 }).notNull(),
+  obligatorio: varchar("obligatorio", { length: 2 }).notNull().default("Si"),
+  fechaCreacion: timestamp("fecha_creacion").defaultNow().notNull(),
+});
+
 export const insertRequestSchema = createInsertSchema(requests).omit({
   id: true,
   fechaCreacion: true,
   fechaActualizacion: true,
 });
 
+export const insertApprovalSchemaSchema = createInsertSchema(approvalSchemas).omit({
+  id: true,
+  fechaCreacion: true,
+  fechaActualizacion: true,
+});
+
+export const insertApprovalStepSchema = createInsertSchema(approvalSteps).omit({
+  id: true,
+  fechaCreacion: true,
+});
+
 export type InsertRequest = z.infer<typeof insertRequestSchema>;
 export type Request = typeof requests.$inferSelect;
+export type ApprovalSchema = typeof approvalSchemas.$inferSelect;
+export type InsertApprovalSchema = z.infer<typeof insertApprovalSchemaSchema>;
+export type ApprovalStep = typeof approvalSteps.$inferSelect;
+export type InsertApprovalStep = z.infer<typeof insertApprovalStepSchema>;
