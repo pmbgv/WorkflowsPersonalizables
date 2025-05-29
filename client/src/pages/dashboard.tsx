@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, Globe } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RequestTable } from "@/components/request-table";
 import { CreateRequestModal } from "@/components/create-request-modal";
 import { RequestDetailsModal } from "@/components/request-details-modal";
@@ -11,6 +12,7 @@ import type { Request } from "@shared/schema";
 export default function Dashboard() {
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("lista");
   const [filters, setFilters] = useState({
     fechaInicio: "",
     fechaFin: "",
@@ -27,6 +29,7 @@ export default function Dashboard() {
     Object.entries(appliedFilters).filter(([_, value]) => value !== "" && value !== "all")
   ).toString();
 
+  // Query for filtered requests (Lista de Solicitudes)
   const { 
     data: requests = [], 
     isLoading, 
@@ -44,15 +47,32 @@ export default function Dashboard() {
     },
   });
 
+  // Query for all requests (Todas las Solicitudes)
+  const { 
+    data: allRequests = [], 
+    isLoading: isLoadingAll, 
+    error: errorAll,
+    refetch: refetchAll 
+  } = useQuery<Request[]>({
+    queryKey: ["/api/requests", "all"],
+    queryFn: async () => {
+      const response = await fetch("/api/requests", { credentials: "include" });
+      if (!response.ok) {
+        throw new Error("Failed to fetch all requests");
+      }
+      return response.json();
+    },
+  });
+
   useEffect(() => {
-    if (error) {
+    if (error || errorAll) {
       toast({
         title: "Error",
         description: "No se pudieron cargar las solicitudes.",
         variant: "destructive",
       });
     }
-  }, [error, toast]);
+  }, [error, errorAll, toast]);
 
   const handleViewDetails = (request: Request) => {
     setSelectedRequest(request);
@@ -72,6 +92,7 @@ export default function Dashboard() {
 
   const handleRequestCreated = () => {
     refetch();
+    refetchAll();
   };
 
   return (
@@ -96,20 +117,42 @@ export default function Dashboard() {
           <CreateRequestModal onRequestCreated={handleRequestCreated} />
         </div>
 
-        {/* Filters */}
-        <FiltersSection
-          filters={filters}
-          onFiltersChange={setFilters}
-          onApplyFilters={handleApplyFilters}
-        />
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-2 mb-6">
+            <TabsTrigger value="lista">Lista de Solicitudes</TabsTrigger>
+            <TabsTrigger value="todas">Todas las Solicitudes</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="lista" className="space-y-6">
+            {/* Filters */}
+            <FiltersSection
+              filters={filters}
+              onFiltersChange={setFilters}
+              onApplyFilters={handleApplyFilters}
+            />
 
-        {/* Requests Table */}
-        <RequestTable
-          requests={requests}
-          isLoading={isLoading}
-          onViewDetails={handleViewDetails}
-          onDownload={handleDownload}
-        />
+            {/* Requests Table */}
+            <RequestTable
+              requests={requests}
+              isLoading={isLoading}
+              onViewDetails={handleViewDetails}
+              onDownload={handleDownload}
+              title="Lista de Solicitudes"
+            />
+          </TabsContent>
+          
+          <TabsContent value="todas" className="space-y-6">
+            {/* All Requests Table */}
+            <RequestTable
+              requests={allRequests}
+              isLoading={isLoadingAll}
+              onViewDetails={handleViewDetails}
+              onDownload={handleDownload}
+              title="Todas las Solicitudes"
+            />
+          </TabsContent>
+        </Tabs>
 
         {/* Request Details Modal */}
         <RequestDetailsModal

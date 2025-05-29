@@ -12,9 +12,10 @@ interface RequestTableProps {
   isLoading: boolean;
   onViewDetails: (request: Request) => void;
   onDownload: (requestId: number) => void;
+  title?: string;
 }
 
-export function RequestTable({ requests, isLoading, onViewDetails, onDownload }: RequestTableProps) {
+export function RequestTable({ requests, isLoading, onViewDetails, onDownload, title = "Lista de Solicitudes" }: RequestTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
@@ -46,7 +47,7 @@ export function RequestTable({ requests, isLoading, onViewDetails, onDownload }:
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Lista de Solicitudes</CardTitle>
+          <CardTitle>{title}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">
@@ -61,7 +62,7 @@ export function RequestTable({ requests, isLoading, onViewDetails, onDownload }:
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Lista de Solicitudes</CardTitle>
+        <CardTitle>{title}</CardTitle>
         <div className="text-sm text-gray-500">
           Mostrando {startIndex + 1} a {Math.min(endIndex, requests.length)} de {requests.length} solicitudes
         </div>
