@@ -1,0 +1,170 @@
+.toast-container, #divSmallBoxes {
+    position: fixed;
+    top: 0;
+    right: 0;
+    padding: 16px;
+    z-index: 1060;
+}
+
+.notification-container {
+    max-width: 353px;
+    width: 353px;
+    overflow: hidden;
+    border-radius: 8px;
+    box-shadow: 1px 1px 5px 1px rgba(0, 0, 0, 0.20);
+}
+
+    .notification-container .notification-body {
+        display: flex;
+        padding: 12px 8px;
+    }
+
+    .notification-container .notification-text {
+        font-family: Nunito;
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 20px;
+        letter-spacing: -0.03em;
+        text-align: left;
+        padding: 0 8px;
+        margin: auto 0;
+    }
+
+        .notification-container .notification-text ul {
+            margin: 0 !important;
+            padding: 0 0 0 21px;
+            list-style-type: disc;
+        }
+
+    .notification-container .notification-button-close {
+        background-image: url(../Assets/Icons/x-icon.svg);
+        background-position: center;
+        background-repeat: no-repeat;
+        padding: 0;
+        background-color: transparent;
+        border: none;
+        width: 20px;
+        height: 20px;
+        margin: 0 3.5px;
+        margin-left: auto;
+    }
+
+    .notification-container .btn.inner-btn {
+        min-width: 78px !important;
+        letter-spacing: -0.03em;
+        margin: 0 8px;
+    }
+
+    .notification-container .notification-icon {
+        padding: 8px;
+        font-size: 24px;
+    }
+
+    .notification-container.success-notification .notification-icon i {
+        color: var(--gv-green1);
+    }
+
+    .notification-container.error-notification .notification-icon i {
+        color: var(--gv-red1);
+    }
+
+    .notification-container.warning-notification .notification-icon i {
+        color: var(--gv-yellow1);
+    }
+
+    .notification-container.info-notification .notification-icon i {
+        color: var(--gv-lightblue2);
+    }
+
+    .notification-container.loading-notification .notification-icon {
+        background-image: url(../Assets/Icons/loading-notification-spinner.svg);
+        background-position: center;
+        background-repeat: no-repeat;
+        pointer-events: none;
+        width: 24px;
+        height: 24px;
+        margin: 8px;
+    }
+
+    .notification-container.success-notification {
+        background-color: var(--gv-green5);
+        border: 1px solid var(--gv-green1);
+    }
+
+    .notification-container.error-notification {
+        background-color: var(--gv-red5);
+        border: 1px solid var(--gv-red1);
+    }
+
+    .notification-container.warning-notification {
+        background-color: var(--gv-yellow5);
+        border: 1px solid var(--gv-yellow1);
+    }
+
+    .notification-container.info-notification {
+        background-color: var(--gv-lightblue6);
+        border: 1px solid var(--gv-lightblue2);
+    }
+
+    .notification-container.loading-notification {
+        background-color: var(--gv-white);
+        border: 1px solid var(--gv-gray1);
+    }
+
+@keyframes reduce-width {
+    from {
+        width: 100%;
+    }
+
+    to {
+        width: 0%;
+    }
+}
+
+.notification-container .notification-progress {
+    position: static;
+    left: 0;
+    bottom: 0;
+    height: 4px;
+    width: 100%;
+}
+
+.notification-container.info-notification .notification-progress {
+    background-color: var(--gv-lightblue2);
+    animation: reduce-width 5s linear forwards;
+}
+
+.notification-container.success-notification .notification-progress {
+    background-color: var(--gv-green1);
+    animation: reduce-width 3s linear forwards;
+}
+
+.notification-container.error-notification .notification-progress {
+    background-color: var(--gv-red1);
+    animation: reduce-width 7s linear forwards;
+}
+
+.notification-container.warning-notification .notification-progress {
+    background-color: var(--gv-yellow1);
+    animation: reduce-width 7s linear forwards;
+}
+
+/* Versión mobile solo para mostrar el ejemplo */
+.notification-container.mobile {
+    max-width: 300px;
+    width: 300px;
+}
+
+@media (max-width: 767px) {
+    .toast-container, #divSmallBoxes {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .notification-container {
+        max-width: 300px;
+        width: 300px;
+    }
+}

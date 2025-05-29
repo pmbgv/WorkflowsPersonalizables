@@ -1,6 +1,177 @@
+/* GeoVictoria Base Styles */
+:root {
+  /* Global color palette */
+  --gv-white: #FFFFFF;
+  --gv-lightblue1: #0082B6;
+  --gv-lightblue2: #009BD9;
+  --gv-lightblue3: #00AFF2;
+  --gv-lightblue4: #66B2FF;
+  --gv-lightblue5: #ABD5FF;
+  --gv-lightblue6: #F7FAFF;
+  --gv-lightblue7: #E9EDF6;
+  --gv-yellow1: #FFBD00;
+  --gv-yellow2: #FFF3D2;
+  --gv-yellow3: #FFDA6F;
+  --gv-yellow4: #FFE8A8;
+  --gv-yellow5: #FFFCF5;
+  --gv-gray1: #323232;
+  --gv-gray2: #5A6366;
+  --gv-gray3: #7C888C;
+  --gv-gray4: #B2BBBE;
+  --gv-gray5: #D6DDDF;
+  --gv-gray6: #F7FAFB;
+  --gv-gray7: #F2F2F2;
+  --gv-gray8: #F8F8F8;
+  --gv-gray9: #EEF2F4;
+  --gv-red1: #D14545;
+  --gv-red2: #FF4B4B;
+  --gv-red3: #FAEBE7;
+  --gv-red4: #FCA68D;
+  --gv-red5: #FDF4F5;
+  --gv-green1: #268700;
+  --gv-green2: #2B9500;
+  --gv-green3: #88CA6E;
+  --gv-green4: #E1EDE8;
+  --gv-green5: #ECF8EC;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* GeoVictoria Specific Styles */
+body {
+  background-color: var(--gv-gray6);
+  font-family: 'Nunito', sans-serif;
+  color: var(--gv-gray2);
+  letter-spacing: -0.48px;
+  line-height: 20px;
+}
+
+.portal-header {
+  height: 45px;
+  width: 100%;
+  background-color: var(--gv-white);
+  position: fixed;
+  top: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 8px;
+  z-index: 50;
+  border-bottom: 1px solid var(--gv-gray5);
+}
+
+.portal-body {
+  display: flex;
+  height: calc(100vh - 45px);
+  width: 100%;
+  flex-direction: row;
+  position: fixed;
+  top: 45px;
+  background-color: var(--gv-lightblue2);
+}
+
+.side-menu {
+  width: 60px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px 12px;
+  align-items: center;
+  background-color: var(--gv-lightblue2);
+}
+
+.side-menu svg {
+  color: var(--gv-white);
+  width: 20px;
+  height: 20px;
+}
+
+.container-fluid {
+  border-top: 1px solid var(--gv-lightblue2);
+  border-top-left-radius: 6px;
+  padding: 12px 16px;
+  margin: 0;
+  width: calc(100vw - 60px);
+  height: calc(100vh - 45px);
+  display: flex;
+  flex-direction: column;
+  background-color: var(--gv-gray6);
+  overflow-y: auto;
+}
+
+.header-content {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.info-buttons {
+  height: 28px;
+  width: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--gv-lightblue2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 4px;
+}
+
+.info-buttons.company {
+  width: 152px;
+  height: 36px;
+  border-radius: 4px;
+  background-color: var(--gv-gray6);
+  justify-content: space-between;
+  padding: 4px 8px;
+}
+
+.info-buttons.user {
+  width: 36px;
+  height: 36px;
+}
+
+.divider {
+  width: 1px;
+  height: 28px;
+  background: var(--gv-gray5);
+  margin: 0;
+  padding: 0;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: var(--gv-gray2);
+}
+
+.breadcrumb-item {
+  text-decoration: none;
+}
+
+.breadcrumb-item.current {
+  font-weight: 600;
+  color: var(--gv-gray1);
+}
+
+.gv-input {
+  padding: 4px 8px;
+  border: 1px solid var(--gv-gray5);
+  border-radius: 4px;
+  background-color: var(--gv-gray6);
+  font-size: 14px;
+  color: var(--gv-gray2);
+}
+
+.color-lightblue2 {
+  color: var(--gv-lightblue2);
+}
 
 /* Font Face Definitions */
 @font-face {

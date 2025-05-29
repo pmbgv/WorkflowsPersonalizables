@@ -1,0 +1,89 @@
+/* Modal Content */
+.modal-content { 
+    border-radius: 6px;
+    border: 1px solid var(--gv-gray9);
+    box-shadow: 0px 1.66337px 8px 0px rgba(0, 0, 0, 0.10);
+}
+
+/* Modal Header */
+.modal-header {
+    padding: 16px 0 12px 0;
+    margin: 0 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-header .modal-title {
+    letter-spacing: -0.48px;
+    line-height: 20px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--gv-gray2);
+}
+
+.modal-header .modal-btn-close {
+    border: none;
+    background-color: transparent;
+    background-image: url(../Assets/Icons/x-icon.svg);
+    background-repeat: no-repeat;
+    width: 16px;
+    height: 16px;
+    position: absolute;
+    right: 16px;
+    top: 16px;
+    padding: 0;
+}
+
+/* Modal Body */
+.modal-body {
+    padding: 12px 16px;
+}
+
+/* Modal Footer */
+.modal-footer {
+    padding: 12px 0 16px 0;
+    margin: 0 16px;
+    justify-content: space-between;
+}
+
+.modal-footer .buttons-container{
+    display: flex;
+    gap: 12px;
+    margin: 0;
+    margin-left: auto;
+}
+
+/* Modal small responsive */
+#smallModal .modal-footer .btn {
+    min-width: unset;
+}
+
+/* Confirmation Modal */
+.modal-dialog.confirmation-modal {
+    --bs-modal-width: 404px;
+}
+
+.confirmation-modal .modal-header {
+    justify-content: end;
+    border-bottom: 0;
+}
+
+.confirmation-modal .modal-header .modal-btn-close {
+    position: unset;
+}
+
+.confirmation-modal .modal-body p{
+    text-align: center;
+    color: var(--gv-gray2);
+    font-family: 'Nunito', sans-serif;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    letter-spacing: -0.48px;
+    line-height: 20px;
+}
+
+.confirmation-modal .modal-footer {
+    border-top: 0;
+}

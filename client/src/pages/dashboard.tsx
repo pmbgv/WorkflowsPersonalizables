@@ -126,84 +126,62 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <>
       {/* Portal Header */}
-      <div className="portal-header bg-white border-b border-gray-200 px-6 py-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <img 
-              src="https://www.geovictoria.com/hubfs/social-suggested-images/info.geovictoria.comhubfscropped-Logo-WEB-5-1.png" 
-              width="112" 
-              alt="Logo"
-              className="h-8"
-            />
-            <div className="h-6 w-px bg-gray-300"></div>
-            <div className="text-blue-600 font-medium">Control de Solicitudes</div>
-            <div className="h-6 w-px bg-gray-300"></div>
-            <input 
-              className="px-3 py-1 border border-gray-300 rounded text-sm bg-gray-50" 
-              type="text" 
-              placeholder="Buscar..."
-            />
+      <div className="portal-header">
+        <div className="header-content">
+          <img 
+            src="https://www.geovictoria.com/hubfs/social-suggested-images/info.geovictoria.comhubfscropped-Logo-WEB-5-1.png" 
+            width="112" 
+            alt="Logo"
+          />
+          <div className="divider"></div>
+          <div className="color-lightblue2">Control de Solicitudes</div>
+          <div className="divider"></div>
+          <input 
+            className="gv-input" 
+            type="text" 
+            placeholder="Buscar..."
+          />
+        </div>
+        
+        <div className="header-content">
+          <div className="info-buttons">
+            <Globe className="h-5 w-5 color-lightblue2" />
           </div>
           
-          <div className="flex items-center space-x-4">
-            <button className="p-2 text-blue-600 hover:bg-gray-100 rounded">
-              <Globe className="h-5 w-5" />
-            </button>
-            
-            <div className="flex items-center space-x-2 px-3 py-1 bg-gray-100 rounded">
-              <span className="text-sm">Empresa</span>
-              <img 
-                src="https://cdn.countryflags.com/thumbs/chile/flag-round-250.png" 
-                height="20" 
-                alt="Chile"
-                className="w-5 h-5"
-              />
-            </div>
+          <div className="info-buttons company">
+            <div>Empresa</div>
+            <img 
+              src="https://cdn.countryflags.com/thumbs/chile/flag-round-250.png" 
+              height="24" 
+              alt="Chile"
+            />
+          </div>
 
-            <button className="p-2 text-blue-600 hover:bg-gray-100 rounded">
-              <User className="h-5 w-5" />
-            </button>
+          <div className="info-buttons user">
+            <User className="h-6 w-6 color-lightblue2" />
           </div>
         </div>
       </div>
-
-      <div className="flex">
-        {/* Side Menu */}
-        <div className="w-16 bg-white border-r border-gray-200 flex flex-col items-center py-4 space-y-4">
-          <button className="p-3 text-gray-400 hover:text-blue-600 hover:bg-gray-100 rounded">
-            <Star className="h-5 w-5" />
-          </button>
-          <button className="p-3 text-blue-600 bg-blue-50 rounded">
-            <FileText className="h-5 w-5" />
-          </button>
-          <button className="p-3 text-gray-400 hover:text-blue-600 hover:bg-gray-100 rounded">
-            <User className="h-5 w-5" />
-          </button>
-          <button className="p-3 text-gray-400 hover:text-blue-600 hover:bg-gray-100 rounded">
-            <Users className="h-5 w-5" />
-          </button>
-          <button className="p-3 text-gray-400 hover:text-blue-600 hover:bg-gray-100 rounded">
-            <Calendar className="h-5 w-5" />
-          </button>
-          <button className="p-3 text-gray-400 hover:text-blue-600 hover:bg-gray-100 rounded">
-            <Settings className="h-5 w-5" />
-          </button>
+      
+      <div className="portal-body">
+        <div className="side-menu">
+          <Star className="h-5 w-5" />
+          <FileText className="h-5 w-5" />
+          <User className="h-5 w-5" />
+          <Users className="h-5 w-5" />
+          <Calendar className="h-5 w-5" />
+          <Settings className="h-5 w-5" />
         </div>
-
-        {/* Main Content */}
-        <div className="flex-1">
-          {/* Breadcrumb */}
-          <div className="bg-white px-6 py-3 border-b border-gray-200">
-            <nav className="flex items-center space-x-2 text-sm text-gray-600">
-              <span>Planificación</span>
-              <ChevronRight className="h-4 w-4" />
-              <span className="text-gray-900 font-medium">Solicitudes</span>
-            </nav>
+        
+        <div className="container-fluid">
+          {/* Breadcrumb Navigation */}
+          <div className="breadcrumb">
+            <span className="breadcrumb-item">Planificación</span>
+            <ChevronRight className="h-4 w-4" />
+            <span className="breadcrumb-item current">Solicitudes</span>
           </div>
-
-          <div className="container mx-auto px-6 py-6 max-w-7xl">
 
 
         {/* Filters - Only show for request tabs */}
@@ -255,18 +233,17 @@ export default function Dashboard() {
           </TabsContent>
         </Tabs>
 
-            {/* Request Details Modal */}
-            <RequestDetailsModal
-              request={selectedRequest}
-              open={detailsModalOpen}
-              onOpenChange={setDetailsModalOpen}
-              onDownload={handleDownload}
-              onStatusChange={handleStatusChange}
-              isAllRequestsTab={activeTab === "todas"}
-            />
-          </div>
+          {/* Request Details Modal */}
+          <RequestDetailsModal
+            request={selectedRequest}
+            open={detailsModalOpen}
+            onOpenChange={setDetailsModalOpen}
+            onDownload={handleDownload}
+            onStatusChange={handleStatusChange}
+            isAllRequestsTab={activeTab === "todas"}
+          />
         </div>
       </div>
-    </div>
+    </>
   );
 }

@@ -1,0 +1,143 @@
+.btn {
+    min-width: 100px;
+    border-radius: 18px;
+    padding: 8px 12px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid transparent;
+    font-weight: 600;
+    font-size: 14px;
+    margin: 0;
+}
+
+.btn.inner-btn {
+    min-width: 60px;
+    border-radius: 4px;
+    padding: 4px 8px;
+    height: 28px;
+}
+
+.btn:hover {
+    box-shadow: 0px 0px 16px 0px rgba(0, 155, 217, 0.25);
+}
+
+.btn:disabled {
+    background-color: var(--gv-gray5);
+    border-color: transparent;
+    color: var(--gv-gray2);
+    opacity: unset;
+}
+
+.btn.btn-secondary:disabled {
+    background-color: var(--gv-white);
+    border-color: var(--gv-gray5);
+}
+
+.btn:disabled i {
+    color: var(--gv-gray2);
+}
+
+.btn.loading-state:hover {
+    box-shadow: none;
+    cursor: default;
+}
+
+.btn.btn-primary.loading-state, .btn.btn-danger.loading-state {
+    background-image: url(../Assets/Icons/loader-spinner-white.svg);
+    background-position: center;
+    background-repeat: no-repeat;
+    pointer-events: none;
+}
+
+.btn.btn-secondary.loading-state {
+    background-image: url(../Assets/Icons/loader-spinner-lightblue.svg);
+    background-position: center;
+    background-repeat: no-repeat;
+    pointer-events: none;
+}
+
+/* SECCION ICONOS INICIO */
+
+/* Boton solo icono y solo texto */
+.btn.btn-only-icon {
+    min-width: unset;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background-color: transparent;
+}
+
+.btn.btn-only-text {
+    min-width: unset;
+    height: unset;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background-color: transparent;
+}
+
+.btn.btn-only-text.text-primary {
+    color: var(--gv-lightblue2);
+}
+
+.btn.btn-only-text.text-danger {
+    color: var(--gv-red1);
+}
+
+
+.btn.btn-only-icon:hover {
+    box-shadow: none;
+}
+
+    .btn.btn-only-text:hover {
+        box-shadow: none;
+        text-decoration: underline;
+        color: var(--gv-lightblue2);
+    }
+
+
+.btn.btn-only-icon:disabled i {
+    color: var(--gv-gray2) !important;
+}
+
+.btn.btn-only-text:disabled {
+    color: var(--gv-gray2) !important;
+}
+
+/* SECCION ICONOS FIN */
+.btn-primary {
+    color: var(--gv-white);
+    background-color: var(--gv-lightblue2);
+    --bs-btn-hover-bg: var(--gv-lightblue2);
+    --bs-btn-hover-border-color: transparent;
+    --bs-btn-active-bg: var(--gv-lightblue2);
+    --bs-btn-active-border-color: transparent;
+}
+
+.btn-secondary {
+    color: var(--gv-lightblue2);
+    background-color: var(--gv-white);
+    border-color: var(--gv-lightblue2);
+    --bs-btn-hover-color: var(--gv-lightblue2);
+    --bs-btn-hover-border-color: var(--gv-lightblue2);
+    --bs-btn-hover-bg: var(--gv-white);
+    --bs-btn-active-bg: var(--gv-white);
+    --bs-btn-active-color: var(--gv-lightblue2);
+    --bs-btn-active-border-color: var(--gv-lightblue2);
+}
+
+.btn-danger {
+    background-color: var(--gv-red1);
+    --bs-btn-hover-bg: var(--gv-red1);
+    --bs-btn-hover-border-color: transparent;
+    --bs-btn-active-bg: var(--gv-red1);
+    --bs-btn-active-border-color: transparent;
+}
+
+@media (max-width: 575.98px) {
+    .btn {
+        min-width: 78px !important;
+    }
+}
