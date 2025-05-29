@@ -48,6 +48,11 @@ app.use((req, res, next) => {
   } else {
     serveStatic(app);
   }
+  
+  // Add specific API route handling after Vite to catch any missed routes
+  app.use('/api', (req, res) => {
+    res.status(404).json({ error: 'API route not found' });
+  });
 
   // ALWAYS serve the app on port 5000
   // this serves both the API and the client.
