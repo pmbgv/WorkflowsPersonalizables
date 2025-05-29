@@ -152,11 +152,6 @@ export default function Dashboard() {
           
           <div className="info-buttons company">
             <div>Empresa</div>
-            <img 
-              src="https://cdn.countryflags.com/thumbs/chile/flag-round-250.png" 
-              height="24" 
-              alt="Chile"
-            />
           </div>
 
           <div className="info-buttons user">
