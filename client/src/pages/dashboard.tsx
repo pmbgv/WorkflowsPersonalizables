@@ -119,18 +119,21 @@ export default function Dashboard() {
           <CreateRequestModal onRequestCreated={handleRequestCreated} />
         </div>
 
-        {/* Filters */}
-        <FiltersSection
-          filters={filters}
-          onFiltersChange={setFilters}
-          onApplyFilters={handleApplyFilters}
-        />
+        {/* Filters - Only show for request tabs */}
+        {activeTab !== "esquemas" && (
+          <FiltersSection
+            filters={filters}
+            onFiltersChange={setFilters}
+            onApplyFilters={handleApplyFilters}
+          />
+        )}
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsList className="grid w-full grid-cols-3 mb-6">
             <TabsTrigger value="lista">Lista de Solicitudes</TabsTrigger>
             <TabsTrigger value="todas">Todas las Solicitudes</TabsTrigger>
+            <TabsTrigger value="esquemas">Configuración Esquemas</TabsTrigger>
           </TabsList>
           
           <TabsContent value="lista" className="space-y-6">
@@ -153,6 +156,11 @@ export default function Dashboard() {
               onDownload={handleDownload}
               title="Todas las Solicitudes"
             />
+          </TabsContent>
+          
+          <TabsContent value="esquemas" className="space-y-6">
+            {/* Approval Schemas Configuration */}
+            <ApprovalSchemas />
           </TabsContent>
         </Tabs>
 
