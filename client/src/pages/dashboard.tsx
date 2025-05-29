@@ -201,6 +201,7 @@ export default function Dashboard() {
           onOpenChange={setDetailsModalOpen}
           onDownload={handleDownload}
           onStatusChange={handleStatusChange}
+          isAllRequestsTab={activeTab === "todas"}
         />
       </div>
     </div>

@@ -11,9 +11,10 @@ interface RequestDetailsModalProps {
   onOpenChange: (open: boolean) => void;
   onDownload: (requestId: number) => void;
   onStatusChange?: (requestId: number, newStatus: string) => void;
+  isAllRequestsTab?: boolean;
 }
 
-export function RequestDetailsModal({ request, open, onOpenChange, onDownload, onStatusChange }: RequestDetailsModalProps) {
+export function RequestDetailsModal({ request, open, onOpenChange, onDownload, onStatusChange, isAllRequestsTab = false }: RequestDetailsModalProps) {
   if (!request) return null;
 
   const getStatusBadge = (status: string) => {
@@ -121,20 +122,34 @@ export function RequestDetailsModal({ request, open, onOpenChange, onDownload, o
                 <>
                   {request.estado === 'Pendiente' && (
                     <>
-                      <Button 
-                        className="bg-green-600 hover:bg-green-700"
-                        onClick={() => onStatusChange(request.id, "Aprobado")}
-                      >
-                        <Check className="w-4 h-4 mr-2" />
-                        Aceptar
-                      </Button>
-                      <Button 
-                        variant="destructive"
-                        onClick={() => onStatusChange(request.id, "Rechazado")}
-                      >
-                        <X className="w-4 h-4 mr-2" />
-                        Rechazar
-                      </Button>
+                      {isAllRequestsTab ? (
+                        // All Requests tab: Show Accept/Reject
+                        <>
+                          <Button 
+                            className="bg-green-600 hover:bg-green-700"
+                            onClick={() => onStatusChange(request.id, "Aprobado")}
+                          >
+                            <Check className="w-4 h-4 mr-2" />
+                            Aceptar
+                          </Button>
+                          <Button 
+                            variant="destructive"
+                            onClick={() => onStatusChange(request.id, "Rechazado")}
+                          >
+                            <X className="w-4 h-4 mr-2" />
+                            Rechazar
+                          </Button>
+                        </>
+                      ) : (
+                        // List Requests tab: Show only Cancel
+                        <Button 
+                          variant="destructive"
+                          onClick={() => onStatusChange(request.id, "Cancelada")}
+                        >
+                          <X className="w-4 h-4 mr-2" />
+                          Cancelar
+                        </Button>
+                      )}
                     </>
                   )}
                   {request.estado === 'Aprobado' && (
