@@ -66,10 +66,23 @@ export function ApprovalSchemas() {
   // Create schema mutation
   const createSchemaMutation = useMutation({
     mutationFn: async (data: InsertApprovalSchema) => {
-      const response = await apiRequest("POST", "/api/approval-schemas", data);
+      const response = await fetch("/api/approval-schemas", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorData}`);
+      }
+      
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Schema created successfully:", data);
       queryClient.invalidateQueries({ queryKey: ["/api/approval-schemas"] });
       toast({
         title: "Esquema creado",
@@ -77,10 +90,11 @@ export function ApprovalSchemas() {
       });
       setNewSchemaName("");
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Error creating schema:", error);
       toast({
         title: "Error",
-        description: "Ocurrió un error al crear el esquema.",
+        description: `Ocurrió un error al crear el esquema: ${error.message}`,
         variant: "destructive",
       });
     },
