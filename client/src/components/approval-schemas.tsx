@@ -200,7 +200,7 @@ export function ApprovalSchemas() {
   return (
     <div className={`grid gap-6 h-full ${
       selectedSchema 
-        ? "grid-cols-1 lg:grid-cols-2" 
+        ? "grid-cols-1 lg:grid-cols-[1fr_2fr]" 
         : "grid-cols-1 lg:grid-cols-3"
     }`}>
       {/* Left Panel - Schema List */}
