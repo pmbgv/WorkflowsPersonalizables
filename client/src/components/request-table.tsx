@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Eye, Download, ChevronLeft, ChevronRight, ArrowUpDown } from "lucide-react";
 import { formatDate, getStatusColor } from "@/lib/utils";
 import type { Request } from "@shared/schema";
@@ -13,9 +14,11 @@ interface RequestTableProps {
   onViewDetails: (request: Request) => void;
   onDownload: (requestId: number) => void;
   title?: string;
+  allowStatusChange?: boolean;
+  onStatusChange?: (requestId: number, newStatus: string) => void;
 }
 
-export function RequestTable({ requests, isLoading, onViewDetails, onDownload, title = "Lista de Solicitudes" }: RequestTableProps) {
+export function RequestTable({ requests, isLoading, onViewDetails, onDownload, title = "Lista de Solicitudes", allowStatusChange = false, onStatusChange }: RequestTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
@@ -41,6 +44,30 @@ export function RequestTable({ requests, isLoading, onViewDetails, onDownload, t
         {status}
       </span>
     );
+  };
+
+  const renderStatusCell = (request: Request) => {
+    // Show dropdown only if status change is allowed, status is "Pendiente", and we have the callback
+    if (allowStatusChange && request.estado === "Pendiente" && onStatusChange) {
+      return (
+        <Select 
+          defaultValue={request.estado}
+          onValueChange={(newStatus) => onStatusChange(request.id, newStatus)}
+        >
+          <SelectTrigger className="w-32">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Pendiente">Pendiente</SelectItem>
+            <SelectItem value="Aprobado">Aprobado</SelectItem>
+            <SelectItem value="Rechazado">Rechazado</SelectItem>
+          </SelectContent>
+        </Select>
+      );
+    }
+    
+    // Otherwise show the regular badge
+    return getStatusBadge(request.estado);
   };
 
   if (isLoading) {
@@ -131,7 +158,7 @@ export function RequestTable({ requests, isLoading, onViewDetails, onDownload, t
                     }
                   </TableCell>
                   <TableCell className="text-sm">{request.tipo}</TableCell>
-                  <TableCell>{getStatusBadge(request.estado)}</TableCell>
+                  <TableCell>{renderStatusCell(request)}</TableCell>
                   <TableCell className="text-sm">{request.solicitadoPor}</TableCell>
                   <TableCell className="text-sm text-gray-500">
                     {formatDate(request.fechaCreacion)}
@@ -176,7 +203,7 @@ export function RequestTable({ requests, isLoading, onViewDetails, onDownload, t
                     }
                   </p>
                 </div>
-                {getStatusBadge(request.estado)}
+                {renderStatusCell(request)}
               </div>
               <div className="space-y-2 text-sm text-gray-600">
                 <div className="flex justify-between">
