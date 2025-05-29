@@ -91,6 +91,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!updatedRequest) {
         return res.status(404).json({ message: "Request not found" });
       }
+
+      // If status changed to "Aprobado", send notification to external system
+      if (estado === "Aprobado") {
+        try {
+          const notificationData = {
+            fecha: updatedRequest.fechaSolicitada,
+            texto: `Solicitud #${updatedRequest.id} aceptada`,
+            token: "mi-token-seguro"
+          };
+
+          const response = await fetch("https://conexion-WF-Libro-test.pmbgv.repl.co/actualizar", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(notificationData)
+          });
+
+          if (!response.ok) {
+            console.error("Failed to send notification to external system:", response.status, response.statusText);
+          } else {
+            console.log("Notification sent successfully to external system");
+          }
+        } catch (notificationError) {
+          console.error("Error sending notification to external system:", notificationError);
+          // Don't fail the main request if notification fails
+        }
+      }
       
       res.json(updatedRequest);
     } catch (error) {
