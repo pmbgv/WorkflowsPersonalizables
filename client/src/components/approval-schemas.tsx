@@ -35,6 +35,7 @@ export function ApprovalSchemas() {
   const [selectedSchema, setSelectedSchema] = useState<ApprovalSchema | null>(null);
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
   const [newSchemaName, setNewSchemaName] = useState("");
+  const [newSchemaType, setNewSchemaType] = useState("Permiso");
   const [searchTerm, setSearchTerm] = useState("");
   const [profileSearch, setProfileSearch] = useState("");
 
@@ -165,7 +166,7 @@ export function ApprovalSchemas() {
 
     createSchemaMutation.mutate({
       nombre: newSchemaName,
-      tipoSolicitud: "Permiso", // Default type
+      tipoSolicitud: newSchemaType,
     });
   };
 
@@ -216,6 +217,18 @@ export function ApprovalSchemas() {
               value={newSchemaName}
               onChange={(e) => setNewSchemaName(e.target.value)}
             />
+            <Select value={newSchemaType} onValueChange={setNewSchemaType}>
+              <SelectTrigger>
+                <SelectValue placeholder="Tipo de solicitud" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Permiso">Permiso</SelectItem>
+                <SelectItem value="Vacaciones">Vacaciones</SelectItem>
+                <SelectItem value="Licencia">Licencia</SelectItem>
+                <SelectItem value="Capacitación">Capacitación</SelectItem>
+                <SelectItem value="Otro">Otro</SelectItem>
+              </SelectContent>
+            </Select>
             <Button 
               onClick={handleCreateSchema}
               disabled={createSchemaMutation.isPending}
