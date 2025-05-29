@@ -66,19 +66,7 @@ export function ApprovalSchemas() {
   // Create schema mutation
   const createSchemaMutation = useMutation({
     mutationFn: async (data: InsertApprovalSchema) => {
-      const response = await fetch("/api/approval-schemas", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.text();
-        throw new Error(`HTTP ${response.status}: ${errorData}`);
-      }
-      
+      const response = await apiRequest("POST", "/api/approval-schemas", data);
       return response.json();
     },
     onSuccess: (data) => {

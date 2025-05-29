@@ -37,6 +37,7 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Register API routes FIRST, before any other middleware
   const server = await registerRoutes(app);
 
   // importantly only setup vite in development and after
