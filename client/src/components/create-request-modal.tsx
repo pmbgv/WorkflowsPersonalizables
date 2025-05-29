@@ -118,10 +118,6 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
                 <SelectContent>
                   <SelectItem value="Permiso">Permiso</SelectItem>
                   <SelectItem value="Vacaciones">Vacaciones</SelectItem>
-                  <SelectItem value="Marca">Marca</SelectItem>
-                  <SelectItem value="Licencia">Licencia Médica</SelectItem>
-                  <SelectItem value="Capacitacion">Capacitación</SelectItem>
-                  <SelectItem value="Trabajo remoto">Trabajo remoto</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -129,7 +125,7 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
             <div className="space-y-2">
               <Label htmlFor="prioridad">Prioridad</Label>
               <Select 
-                value={formData.prioridad} 
+                value={formData.prioridad ?? "normal"} 
                 onValueChange={(value) => handleInputChange('prioridad', value)}
               >
                 <SelectTrigger>
@@ -159,7 +155,7 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
               <Input
                 id="fechaFin"
                 type="date"
-                value={formData.fechaFin}
+                value={formData.fechaFin ?? ""}
                 onChange={(e) => handleInputChange('fechaFin', e.target.value)}
               />
             </div>
@@ -182,7 +178,7 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
               id="descripcion"
               placeholder="Describe los detalles de tu solicitud..."
               rows={4}
-              value={formData.descripcion}
+              value={formData.descripcion ?? ""}
               onChange={(e) => handleInputChange('descripcion', e.target.value)}
             />
           </div>

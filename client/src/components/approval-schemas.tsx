@@ -336,9 +336,6 @@ export function ApprovalSchemas() {
               <SelectContent>
                 <SelectItem value="Permiso">Permiso</SelectItem>
                 <SelectItem value="Vacaciones">Vacaciones</SelectItem>
-                <SelectItem value="Licencia">Licencia</SelectItem>
-                <SelectItem value="Capacitación">Capacitación</SelectItem>
-                <SelectItem value="Otro">Otro</SelectItem>
               </SelectContent>
             </Select>
             <Button 

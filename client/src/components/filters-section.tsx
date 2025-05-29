@@ -77,9 +77,6 @@ export function FiltersSection({ filters, onFiltersChange, onApplyFilters }: Fil
                 <SelectItem value="all">Todos los tipos</SelectItem>
                 <SelectItem value="Permiso">Permiso</SelectItem>
                 <SelectItem value="Vacaciones">Vacaciones</SelectItem>
-                <SelectItem value="Marca">Marca</SelectItem>
-                <SelectItem value="Licencia">Licencia Médica</SelectItem>
-                <SelectItem value="Capacitacion">Capacitación</SelectItem>
               </SelectContent>
             </Select>
           </div>
