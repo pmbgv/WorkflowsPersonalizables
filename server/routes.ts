@@ -101,7 +101,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             token: "mi-token-seguro"
           };
 
-          const response = await fetch("https://shift-scheduler.productmanager3.repl.co/actualizar", {
+          console.log("ENVIANDO A LIBRO");
+
+          const response = await fetch("https://9448701c-ba39-418d-b9a3-bffb4f899f03-00-15wveztsmtm4l.picard.replit.dev/actualizar", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",

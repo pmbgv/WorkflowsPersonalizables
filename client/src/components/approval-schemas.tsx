@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, Search } from "lucide-react";
+import { Plus, Trash2, Search, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { ApprovalSchema, ApprovalStep, InsertApprovalSchema, InsertApprovalStep } from "@shared/schema";
@@ -147,6 +147,29 @@ export function ApprovalSchemas() {
       toast({
         title: "Error",
         description: "Ocurrió un error al eliminar el esquema.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Save schema changes mutation
+  const saveSchemaChangesMutation = useMutation({
+    mutationFn: async (schemaId: number) => {
+      // Refresh data to ensure we have the latest state
+      await queryClient.invalidateQueries({ queryKey: ["/api/approval-schemas"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/approval-schemas", schemaId, "steps"] });
+      return { success: true };
+    },
+    onSuccess: () => {
+      toast({
+        title: "Configuración guardada",
+        description: "Los cambios en el esquema han sido guardados exitosamente.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Ocurrió un error al guardar los cambios.",
         variant: "destructive",
       });
     },
@@ -412,8 +435,17 @@ export function ApprovalSchemas() {
               </TabsContent>
             </Tabs>
 
-            {/* Desactivar Button - Positioned at bottom right */}
-            <div className="absolute bottom-0 right-0">
+            {/* Action Buttons - Positioned at bottom right */}
+            <div className="absolute bottom-0 right-0 flex space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => saveSchemaChangesMutation.mutate(selectedSchema.id)}
+                disabled={saveSchemaChangesMutation.isPending}
+              >
+                <Save className="h-4 w-4 mr-2" />
+                Guardar
+              </Button>
               <Button
                 variant="destructive"
                 size="sm"
