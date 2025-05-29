@@ -169,7 +169,7 @@ export default function Dashboard() {
               isLoading={isLoading}
               onViewDetails={handleViewDetails}
               onDownload={handleDownload}
-              title="Lista de Solicitudes"
+              title="Mis Solicitudes"
             />
           </TabsContent>
           
