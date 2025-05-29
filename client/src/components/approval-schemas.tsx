@@ -41,6 +41,12 @@ export function ApprovalSchemas() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Reset changes when switching schemas
+  useEffect(() => {
+    setStepChanges({});
+    setSelectedPermissions([]);
+  }, [selectedSchema]);
+
   // Fetch approval schemas
   const { data: schemas = [], isLoading: isLoadingSchemas } = useQuery<ApprovalSchema[]>({
     queryKey: ["/api/approval-schemas"],
