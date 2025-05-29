@@ -304,6 +304,27 @@ export function ApprovalSchemas() {
                         </SelectContent>
                       </Select>
                     </div>
+                    
+                    {/* Permissions section for Permiso type */}
+                    {selectedSchema.tipoSolicitud === "Permiso" && (
+                      <div className="space-y-3 pt-4 border-t">
+                        <Label className="text-base font-medium">Permisos</Label>
+                        <div className="space-y-3">
+                          {PERMISSION_TYPES.map((permission, index) => (
+                            <div key={`permission-${index}-${permission}`} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`permission-${index}`}
+                                checked={selectedPermissions.includes(permission)}
+                                onCheckedChange={() => handlePermissionToggle(permission)}
+                              />
+                              <Label htmlFor={`permission-${index}`} className="text-sm">
+                                {permission}
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -362,30 +383,7 @@ export function ApprovalSchemas() {
         )}
       </div>
 
-      {/* Right Panel - Permissions (only for "Permiso" type) */}
-      {newSchemaType === "Permiso" && (
-        <div>
-          <Card>
-            <CardHeader>
-              <CardTitle>Permisos</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {PERMISSION_TYPES.map((permission, index) => (
-                <div key={`permission-${index}-${permission}`} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`permission-${index}`}
-                    checked={selectedPermissions.includes(permission)}
-                    onCheckedChange={() => handlePermissionToggle(permission)}
-                  />
-                  <Label htmlFor={`permission-${index}`} className="text-sm">
-                    {permission}
-                  </Label>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
-      )}
+
     </div>
   );
 }
