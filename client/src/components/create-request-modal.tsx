@@ -24,7 +24,7 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
     asunto: "",
     descripcion: "",
     solicitadoPor: "Andrés Acevedo", // Default user
-    prioridad: "normal",
+    motivo: "",
     archivosAdjuntos: [],
   });
 
@@ -63,7 +63,7 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
       asunto: "",
       descripcion: "",
       solicitadoPor: "Andrés Acevedo",
-      prioridad: "normal",
+      motivo: "",
       archivosAdjuntos: [],
     });
   };
@@ -123,18 +123,32 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="prioridad">Prioridad</Label>
+              <Label htmlFor="motivo">Motivo</Label>
               <Select 
-                value={formData.prioridad ?? "normal"} 
-                onValueChange={(value) => handleInputChange('prioridad', value)}
+                value={formData.motivo ?? ""} 
+                onValueChange={(value) => handleInputChange('motivo', value)}
               >
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Seleccionar motivo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="normal">Normal</SelectItem>
-                  <SelectItem value="alta">Alta</SelectItem>
-                  <SelectItem value="urgente">Urgente</SelectItem>
+                  {formData.tipo === "Permiso" && (
+                    <>
+                      <SelectItem value="Permiso Licencia Médica">Permiso Licencia Médica</SelectItem>
+                      <SelectItem value="Permiso con goce">Permiso con goce</SelectItem>
+                      <SelectItem value="Permiso por horas">Permiso por horas</SelectItem>
+                      <SelectItem value="Permiso capacitación">Permiso capacitación</SelectItem>
+                    </>
+                  )}
+                  {formData.tipo === "Vacaciones" && (
+                    <>
+                      <SelectItem value="Vacaciones anuales">Vacaciones anuales</SelectItem>
+                      <SelectItem value="Vacaciones proporcionales">Vacaciones proporcionales</SelectItem>
+                    </>
+                  )}
+                  {!formData.tipo && (
+                    <SelectItem value="" disabled>Selecciona primero el tipo de solicitud</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>
