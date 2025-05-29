@@ -119,10 +119,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/approval-schemas", async (req, res) => {
     try {
+      console.log("POST /api/approval-schemas called with body:", req.body);
       const validatedData = insertApprovalSchemaSchema.parse(req.body);
+      console.log("Validated data:", validatedData);
       const newSchema = await storage.createApprovalSchema(validatedData);
+      console.log("Created schema:", newSchema);
       res.status(201).json(newSchema);
     } catch (error) {
+      console.error("Error in POST /api/approval-schemas:", error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ 
           message: "Validation error", 
@@ -222,6 +226,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       res.status(500).json({ message: "Error deleting approval step" });
     }
+  });
+
+  // Error handling middleware - must be after all routes
+  app.use((err: any, req: any, res: any, next: any) => {
+    console.error("API Error:", err);
+    const status = err.status || err.statusCode || 500;
+    const message = err.message || "Internal Server Error";
+    res.status(status).json({ message });
   });
 
   const httpServer = createServer(app);
