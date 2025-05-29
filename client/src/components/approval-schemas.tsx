@@ -43,12 +43,19 @@ export function ApprovalSchemas() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Reset changes when switching schemas
+  // Reset changes and load schema data when switching schemas
   useEffect(() => {
     setStepChanges({});
     setSelectedPermissions([]);
-    setVisibilityPermissions([]);
-    setApprovalPermissions([]);
+    
+    if (selectedSchema) {
+      // Load existing permissions from schema
+      setVisibilityPermissions(selectedSchema.visibilityPermissions || []);
+      setApprovalPermissions(selectedSchema.approvalPermissions || []);
+    } else {
+      setVisibilityPermissions([]);
+      setApprovalPermissions([]);
+    }
   }, [selectedSchema]);
 
   // Fetch approval schemas
