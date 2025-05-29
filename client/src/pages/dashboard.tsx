@@ -141,7 +141,6 @@ export default function Dashboard() {
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Solicitudes</h1>
             <p className="text-gray-600 mt-1">Gestiona y supervisa todas las solicitudes de flujo de trabajo</p>
           </div>
           <CreateRequestModal onRequestCreated={handleRequestCreated} />
