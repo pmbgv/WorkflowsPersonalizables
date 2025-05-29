@@ -1,0 +1,20 @@
+.fs-16 {
+    font-size: 16px;
+}
+
+.fs-14 {
+    font-size: 14px;
+}
+
+.font-default {
+    font-family: 'Nunito', sans-serif;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    letter-spacing: -0.48px;
+    line-height: 20px;
+}
+
+.td-underline {
+    text-decoration: underline;
+}

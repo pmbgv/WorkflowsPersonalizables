@@ -2,6 +2,77 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Font Face Definitions */
+@font-face {
+  font-family: 'Nunito';
+  src: url('/static/fonts/Nunito-Light.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Nunito';
+  src: url('/static/fonts/Nunito-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Nunito';
+  src: url('/static/fonts/Nunito-SemiBold.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Nunito';
+  src: url('/static/fonts/Nunito-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Base styles with Nunito font */
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-nunito;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 20px;
+    letter-spacing: -0.48px;
+  }
+}
+
+/* Custom font utility classes */
+@layer utilities {
+  .fs-16 {
+    font-size: 16px;
+  }
+  
+  .fs-14 {
+    font-size: 14px;
+  }
+  
+  .font-default {
+    font-family: 'Nunito', sans-serif;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    letter-spacing: -0.48px;
+    line-height: 20px;
+  }
+  
+  .td-underline {
+    text-decoration: underline;
+  }
+}
+
 :root {
   --background: 0 0% 100%;
   --foreground: 222 84% 5%;
