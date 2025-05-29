@@ -137,12 +137,7 @@ export default function Dashboard() {
         </nav>
       </header>
       <div className="container mx-auto px-6 py-8 max-w-7xl">
-        {/* Page Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-          <div>
-          </div>
-          <CreateRequestModal onRequestCreated={handleRequestCreated} />
-        </div>
+
 
         {/* Filters - Only show for request tabs */}
         {activeTab !== "esquemas" && (
@@ -169,6 +164,8 @@ export default function Dashboard() {
               onViewDetails={handleViewDetails}
               onDownload={handleDownload}
               title="Mis Solicitudes"
+              showCreateButton={true}
+              onRequestCreated={handleRequestCreated}
             />
           </TabsContent>
           

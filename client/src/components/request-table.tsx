@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Eye, Download, ChevronLeft, ChevronRight, ArrowUpDown } from "lucide-react";
 import { formatDate, getStatusColor } from "@/lib/utils";
+import { CreateRequestModal } from "./create-request-modal";
 import type { Request } from "@shared/schema";
 
 interface RequestTableProps {
@@ -16,9 +17,11 @@ interface RequestTableProps {
   title?: string;
   allowStatusChange?: boolean;
   onStatusChange?: (requestId: number, newStatus: string) => void;
+  showCreateButton?: boolean;
+  onRequestCreated?: () => void;
 }
 
-export function RequestTable({ requests, isLoading, onViewDetails, onDownload, title = "Lista de Solicitudes", allowStatusChange = false, onStatusChange }: RequestTableProps) {
+export function RequestTable({ requests, isLoading, onViewDetails, onDownload, title = "Lista de Solicitudes", allowStatusChange = false, onStatusChange, showCreateButton = false, onRequestCreated }: RequestTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
@@ -89,7 +92,12 @@ export function RequestTable({ requests, isLoading, onViewDetails, onDownload, t
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>{title}</CardTitle>
+        <div className="flex items-center gap-4">
+          <CardTitle>{title}</CardTitle>
+          {showCreateButton && onRequestCreated && (
+            <CreateRequestModal onRequestCreated={onRequestCreated} />
+          )}
+        </div>
         <div className="text-sm text-gray-500">
           Mostrando {startIndex + 1} a {Math.min(endIndex, requests.length)} de {requests.length} solicitudes
         </div>
