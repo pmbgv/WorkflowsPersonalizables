@@ -50,6 +50,9 @@ export function ApprovalSchemas() {
     
     if (selectedSchema) {
       // Load existing permissions from schema
+      console.log("Cargando esquema:", selectedSchema);
+      console.log("Permisos de visualización:", selectedSchema.visibilityPermissions);
+      console.log("Permisos de aprobación:", selectedSchema.approvalPermissions);
       setVisibilityPermissions(selectedSchema.visibilityPermissions || []);
       setApprovalPermissions(selectedSchema.approvalPermissions || []);
     } else {
@@ -196,22 +199,17 @@ export function ApprovalSchemas() {
         updateStepMutation.mutateAsync({ stepId: parseInt(stepId), updates: changes })
       );
       
-      // Save schema configuration changes (permissions)
-      const schemaUpdates: any = {};
-      if (visibilityPermissions.length > 0 || approvalPermissions.length > 0) {
-        schemaUpdates.visibilityPermissions = visibilityPermissions;
-        schemaUpdates.approvalPermissions = approvalPermissions;
-      }
+      // Save schema configuration changes (permissions) - always send even if empty
+      const schemaUpdates = {
+        visibilityPermissions: visibilityPermissions,
+        approvalPermissions: approvalPermissions
+      };
       
-      const schemaPromise = Object.keys(schemaUpdates).length > 0 
-        ? apiRequest("PATCH", `/api/approval-schemas/${schemaId}`, schemaUpdates)
-        : Promise.resolve();
+      console.log("Guardando cambios del esquema:", schemaUpdates);
+      const schemaPromise = apiRequest("PATCH", `/api/approval-schemas/${schemaId}`, schemaUpdates);
       
       // Execute all promises
-      const allPromises = [...stepPromises];
-      if (Object.keys(schemaUpdates).length > 0) {
-        allPromises.push(schemaPromise);
-      }
+      const allPromises = [...stepPromises, schemaPromise];
       
       if (allPromises.length > 0) {
         await Promise.all(allPromises);
