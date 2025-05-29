@@ -198,7 +198,11 @@ export function ApprovalSchemas() {
   );
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
+    <div className={`grid gap-6 h-full ${
+      selectedSchema && activeSubTab === "pasos" 
+        ? "grid-cols-1 lg:grid-cols-2" 
+        : "grid-cols-1 lg:grid-cols-3"
+    }`}>
       {/* Left Panel - Schema List */}
       <div className="space-y-4">
         {/* Create Schema */}
