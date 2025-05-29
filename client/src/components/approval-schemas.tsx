@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Trash2, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -34,6 +35,7 @@ export function ApprovalSchemas() {
   const [newSchemaType, setNewSchemaType] = useState("Permiso");
   const [searchTerm, setSearchTerm] = useState("");
   const [profileSearch, setProfileSearch] = useState("");
+  const [activeSubTab, setActiveSubTab] = useState("general");
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -273,35 +275,69 @@ export function ApprovalSchemas() {
       <div className="space-y-4 relative">
         {selectedSchema ? (
           <>
-
-            {/* Approval Steps */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Pasos de aprobación</CardTitle>
-                <Button onClick={handleAddStep} size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Agregar paso
-                </Button>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-4 gap-2 text-sm font-medium text-gray-600 border-b pb-2">
-                    <div>Orden</div>
-                    <div>Descripción</div>
-                    <div>Perfiles</div>
-                    <div>Obligatorio</div>
-                  </div>
-                  {steps.map((step) => (
-                    <ApprovalStepRow 
-                      key={step.id} 
-                      step={step} 
-                      onDelete={() => deleteStepMutation.mutate(step.id)}
-                      isDeleting={deleteStepMutation.isPending}
-                    />
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            <Tabs value={activeSubTab} onValueChange={setActiveSubTab}>
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="general">General</TabsTrigger>
+                <TabsTrigger value="pasos">Pasos de Aprobación</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="general" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Información General</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <Label>Nombre</Label>
+                      <Input value={selectedSchema.nombre} readOnly />
+                    </div>
+                    <div>
+                      <Label>Tipo de solicitud</Label>
+                      <Select value={selectedSchema.tipoSolicitud} disabled>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Permiso">Permisos</SelectItem>
+                          <SelectItem value="Vacaciones">Vacaciones</SelectItem>
+                          <SelectItem value="Marca">Marcas</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              
+              <TabsContent value="pasos" className="space-y-4">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle>Pasos de aprobación</CardTitle>
+                    <Button onClick={handleAddStep} size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Agregar paso
+                    </Button>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-4 gap-2 text-sm font-medium text-gray-600 border-b pb-2">
+                        <div>Orden</div>
+                        <div>Descripción</div>
+                        <div>Perfiles</div>
+                        <div>Obligatorio</div>
+                      </div>
+                      {steps.map((step) => (
+                        <ApprovalStepRow 
+                          key={step.id} 
+                          step={step} 
+                          onDelete={() => deleteStepMutation.mutate(step.id)}
+                          isDeleting={deleteStepMutation.isPending}
+                        />
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
 
             {/* Desactivar Button - Positioned at bottom right */}
             <div className="absolute bottom-0 right-0">
