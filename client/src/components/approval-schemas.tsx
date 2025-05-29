@@ -20,16 +20,12 @@ const PERMISSION_TYPES = [
 ];
 
 const PROFILES = [
-  "Reportes Jefes",
-  "Jefe grupo",
-  "Seleccionar",
-  "Supervisor",
   "Administrador",
-  "Usuario",
-  "Jefe grupo",
-  "Administradora Asistencia",
-  "Supervisor Asistencia"
-];
+  "Jefe de Grupo", 
+  "Perfil Personalizado 1",
+  "Perfil Personalizado 2",
+  "Supervisor"
+].sort();
 
 export function ApprovalSchemas() {
   const [selectedSchema, setSelectedSchema] = useState<ApprovalSchema | null>(null);
@@ -396,7 +392,7 @@ function ApprovalStepRow({
         className="text-sm h-8"
         readOnly
       />
-      <Select defaultValue={step.perfil} disabled>
+      <Select defaultValue={step.perfil}>
         <SelectTrigger className="h-8">
           <SelectValue />
         </SelectTrigger>
