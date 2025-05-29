@@ -117,26 +117,22 @@ export function RequestDetailsModal({ request, open, onOpenChange, onDownload, o
 
           <div className="flex justify-between items-center pt-4 border-t border-gray-200">
             <div className="flex space-x-3">
-              {onStatusChange && (
+              {request.estado === 'Pendiente' && onStatusChange && (
                 <>
-                  {request.estado === 'Pendiente' && (
-                    <Button 
-                      variant="destructive"
-                      onClick={() => onStatusChange(request.id, "Cancelada")}
-                    >
-                      <X className="w-4 h-4 mr-2" />
-                      Cancelar
-                    </Button>
-                  )}
-                  {request.estado === 'Aprobado' && (
-                    <Button 
-                      variant="destructive"
-                      onClick={() => onStatusChange(request.id, "Anulada")}
-                    >
-                      <X className="w-4 h-4 mr-2" />
-                      Anular
-                    </Button>
-                  )}
+                  <Button 
+                    className="bg-green-600 hover:bg-green-700"
+                    onClick={() => onStatusChange(request.id, "Aprobado")}
+                  >
+                    <Check className="w-4 h-4 mr-2" />
+                    Aceptar
+                  </Button>
+                  <Button 
+                    variant="destructive"
+                    onClick={() => onStatusChange(request.id, "Rechazado")}
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Rechazar
+                  </Button>
                 </>
               )}
             </div>

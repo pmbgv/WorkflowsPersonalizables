@@ -47,43 +47,23 @@ export function RequestTable({ requests, isLoading, onViewDetails, onDownload, t
   };
 
   const renderStatusCell = (request: Request) => {
-    // Show dropdown only if status change is allowed and we have the callback
-    if (allowStatusChange && onStatusChange) {
-      // For Pendiente status - can only cancel
-      if (request.estado === "Pendiente") {
-        return (
-          <Select 
-            defaultValue={request.estado}
-            onValueChange={(newStatus) => onStatusChange(request.id, newStatus)}
-          >
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Pendiente">Pendiente</SelectItem>
-              <SelectItem value="Cancelada">Cancelada</SelectItem>
-            </SelectContent>
-          </Select>
-        );
-      }
-      
-      // For Aprobado status - can only anular
-      if (request.estado === "Aprobado") {
-        return (
-          <Select 
-            defaultValue={request.estado}
-            onValueChange={(newStatus) => onStatusChange(request.id, newStatus)}
-          >
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Aprobado">Aprobado</SelectItem>
-              <SelectItem value="Anulada">Anulada</SelectItem>
-            </SelectContent>
-          </Select>
-        );
-      }
+    // Show dropdown only if status change is allowed, status is "Pendiente", and we have the callback
+    if (allowStatusChange && request.estado === "Pendiente" && onStatusChange) {
+      return (
+        <Select 
+          defaultValue={request.estado}
+          onValueChange={(newStatus) => onStatusChange(request.id, newStatus)}
+        >
+          <SelectTrigger className="w-32">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Pendiente">Pendiente</SelectItem>
+            <SelectItem value="Aprobado">Aceptar</SelectItem>
+            <SelectItem value="Rechazado">Rechazar</SelectItem>
+          </SelectContent>
+        </Select>
+      );
     }
     
     // Otherwise show the regular badge
