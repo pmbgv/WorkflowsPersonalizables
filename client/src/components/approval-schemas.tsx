@@ -32,6 +32,8 @@ export function ApprovalSchemas() {
   const [selectedSchema, setSelectedSchema] = useState<ApprovalSchema | null>(null);
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
   const [stepChanges, setStepChanges] = useState<Record<number, Partial<ApprovalStep>>>({});
+  const [visibilityPermissions, setVisibilityPermissions] = useState<string[]>([]);
+  const [approvalPermissions, setApprovalPermissions] = useState<string[]>([]);
   const [newSchemaName, setNewSchemaName] = useState("");
   const [newSchemaType, setNewSchemaType] = useState("Permiso");
   const [searchTerm, setSearchTerm] = useState("");
@@ -45,6 +47,8 @@ export function ApprovalSchemas() {
   useEffect(() => {
     setStepChanges({});
     setSelectedPermissions([]);
+    setVisibilityPermissions([]);
+    setApprovalPermissions([]);
   }, [selectedSchema]);
 
   // Fetch approval schemas
@@ -181,18 +185,38 @@ export function ApprovalSchemas() {
   const saveSchemaChangesMutation = useMutation({
     mutationFn: async (schemaId: number) => {
       // Save all pending step changes
-      const promises = Object.entries(stepChanges).map(([stepId, changes]) => 
+      const stepPromises = Object.entries(stepChanges).map(([stepId, changes]) => 
         updateStepMutation.mutateAsync({ stepId: parseInt(stepId), updates: changes })
       );
       
-      if (promises.length > 0) {
-        await Promise.all(promises);
+      // Save schema configuration changes (permissions)
+      const schemaUpdates: any = {};
+      if (visibilityPermissions.length > 0 || approvalPermissions.length > 0) {
+        schemaUpdates.visibilityPermissions = visibilityPermissions;
+        schemaUpdates.approvalPermissions = approvalPermissions;
+      }
+      
+      const schemaPromise = Object.keys(schemaUpdates).length > 0 
+        ? apiRequest("PATCH", `/api/approval-schemas/${schemaId}`, schemaUpdates)
+        : Promise.resolve();
+      
+      // Execute all promises
+      const allPromises = [...stepPromises];
+      if (Object.keys(schemaUpdates).length > 0) {
+        allPromises.push(schemaPromise);
+      }
+      
+      if (allPromises.length > 0) {
+        await Promise.all(allPromises);
       }
       
       return { success: true };
     },
     onSuccess: () => {
       setStepChanges({}); // Clear pending changes
+      setVisibilityPermissions([]);
+      setApprovalPermissions([]);
+      queryClient.invalidateQueries({ queryKey: ["/api/approval-schemas"] });
       toast({
         title: "Configuración guardada",
         description: "Los cambios en el esquema han sido guardados exitosamente.",
@@ -252,6 +276,22 @@ export function ApprovalSchemas() {
         [field]: value
       }
     }));
+  };
+
+  const handleVisibilityPermissionToggle = (permission: string) => {
+    setVisibilityPermissions(prev => 
+      prev.includes(permission) 
+        ? prev.filter(p => p !== permission)
+        : [...prev, permission]
+    );
+  };
+
+  const handleApprovalPermissionToggle = (permission: string) => {
+    setApprovalPermissions(prev => 
+      prev.includes(permission) 
+        ? prev.filter(p => p !== permission)
+        : [...prev, permission]
+    );
   };
 
   const filteredSchemas = schemas.filter(schema =>
@@ -383,19 +423,35 @@ export function ApprovalSchemas() {
                           <Label className="text-sm font-medium text-gray-700">Permiso para visualización</Label>
                           <div className="space-y-2">
                             <div className="flex items-center space-x-2">
-                              <Checkbox id="vis-usuarios" />
+                              <Checkbox 
+                                id="vis-usuarios"
+                                checked={visibilityPermissions.includes("Usuarios")}
+                                onCheckedChange={() => handleVisibilityPermissionToggle("Usuarios")}
+                              />
                               <Label htmlFor="vis-usuarios" className="text-sm">Usuarios</Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <Checkbox id="vis-jefes" />
+                              <Checkbox 
+                                id="vis-jefes"
+                                checked={visibilityPermissions.includes("Jefes de grupo")}
+                                onCheckedChange={() => handleVisibilityPermissionToggle("Jefes de grupo")}
+                              />
                               <Label htmlFor="vis-jefes" className="text-sm">Jefes de grupo</Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <Checkbox id="vis-rrhh" />
+                              <Checkbox 
+                                id="vis-rrhh"
+                                checked={visibilityPermissions.includes("Recursos humanos")}
+                                onCheckedChange={() => handleVisibilityPermissionToggle("Recursos humanos")}
+                              />
                               <Label htmlFor="vis-rrhh" className="text-sm">Recursos humanos</Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <Checkbox id="vis-admin" />
+                              <Checkbox 
+                                id="vis-admin"
+                                checked={visibilityPermissions.includes("Administradores")}
+                                onCheckedChange={() => handleVisibilityPermissionToggle("Administradores")}
+                              />
                               <Label htmlFor="vis-admin" className="text-sm">Administradores</Label>
                             </div>
                           </div>
