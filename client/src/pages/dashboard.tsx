@@ -200,6 +200,7 @@ export default function Dashboard() {
           open={detailsModalOpen}
           onOpenChange={setDetailsModalOpen}
           onDownload={handleDownload}
+          onStatusChange={handleStatusChange}
         />
       </div>
     </div>

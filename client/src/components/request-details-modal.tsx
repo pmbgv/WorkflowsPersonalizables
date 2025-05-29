@@ -10,9 +10,10 @@ interface RequestDetailsModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onDownload: (requestId: number) => void;
+  onStatusChange?: (requestId: number, newStatus: string) => void;
 }
 
-export function RequestDetailsModal({ request, open, onOpenChange, onDownload }: RequestDetailsModalProps) {
+export function RequestDetailsModal({ request, open, onOpenChange, onDownload, onStatusChange }: RequestDetailsModalProps) {
   if (!request) return null;
 
   const getStatusBadge = (status: string) => {
@@ -116,15 +117,21 @@ export function RequestDetailsModal({ request, open, onOpenChange, onDownload }:
 
           <div className="flex justify-between items-center pt-4 border-t border-gray-200">
             <div className="flex space-x-3">
-              {request.estado === 'Pendiente' && (
+              {request.estado === 'Pendiente' && onStatusChange && (
                 <>
-                  <Button className="bg-green-600 hover:bg-green-700">
+                  <Button 
+                    className="bg-green-600 hover:bg-green-700"
+                    onClick={() => onStatusChange(request.id, "Aprobado")}
+                  >
                     <Check className="w-4 h-4 mr-2" />
-                    Aprobar
+                    Cerrar
                   </Button>
-                  <Button variant="destructive">
+                  <Button 
+                    variant="destructive"
+                    onClick={() => onStatusChange(request.id, "Rechazado")}
+                  >
                     <X className="w-4 h-4 mr-2" />
-                    Rechazar
+                    Anular
                   </Button>
                 </>
               )}
