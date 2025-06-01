@@ -19,8 +19,9 @@ export function RequestDetailsModal({ request, open, onOpenChange, onDownload, o
   if (!request) return null;
 
   // Get request history
-  const { data: history = [] } = useQuery<RequestHistory[]>({
-    queryKey: ['/api/requests', request.id, 'history'],
+  const { data: history = [], isLoading: isLoadingHistory } = useQuery<RequestHistory[]>({
+    queryKey: ['requests', request.id, 'history'],
+    queryFn: () => fetch(`/api/requests/${request.id}/history`).then(res => res.json()),
     enabled: open && !!request.id,
   });
 

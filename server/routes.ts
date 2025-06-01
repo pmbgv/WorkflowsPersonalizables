@@ -48,6 +48,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertRequestSchema.parse(req.body);
       console.log("Validated data:", validatedData);
       const newRequest = await storage.createRequest(validatedData);
+      
+      // Add initial history entry
+      await storage.addRequestHistory({
+        requestId: newRequest.id,
+        previousState: null,
+        newState: "Pendiente",
+        changedBy: validatedData.solicitadoPor,
+        changeReason: "Solicitud creada"
+      });
+      
       res.status(201).json(newRequest);
     } catch (error) {
       console.error("Error creating request:", error);
