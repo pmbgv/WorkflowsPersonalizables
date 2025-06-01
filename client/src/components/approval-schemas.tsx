@@ -201,6 +201,34 @@ export function ApprovalSchemas() {
     setLocalSteps(steps);
   }, [steps]);
 
+  // Función para manejar el drag and drop
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = localSteps.findIndex((step) => step.id === active.id);
+      const newIndex = localSteps.findIndex((step) => step.id === over.id);
+      
+      const newSteps = arrayMove(localSteps, oldIndex, newIndex);
+      
+      // Actualizar el orden de los pasos
+      const updatedSteps = newSteps.map((step, index) => ({
+        ...step,
+        orden: index + 1
+      }));
+      
+      setLocalSteps(updatedSteps);
+      
+      // Marcar los cambios para guardar
+      updatedSteps.forEach(step => {
+        setStepChanges(prev => ({
+          ...prev,
+          [step.id]: { ...prev[step.id], orden: step.orden }
+        }));
+      });
+    }
+  };
+
   // Create schema mutation
   const createSchemaMutation = useMutation({
     mutationFn: async (data: InsertApprovalSchema) => {
@@ -1125,22 +1153,34 @@ export function ApprovalSchemas() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      <div className="grid grid-cols-4 gap-2 text-sm font-medium text-gray-600 border-b pb-2">
+                      <div className="grid grid-cols-5 gap-2 text-sm font-medium text-gray-600 border-b pb-2 pl-10">
                         <div>Orden</div>
                         <div>Descripción</div>
-                        <div>Perfiles</div>
-                        <div>Obligatorio</div>
+                        <div>Perfil</div>
+                        <div>Tipo</div>
+                        <div></div>
                       </div>
-                      {steps.map((step) => (
-                        <ApprovalStepRow 
-                          key={step.id} 
-                          step={step} 
-                          onDelete={() => deleteStepMutation.mutate(step.id)}
-                          isDeleting={deleteStepMutation.isPending}
-                          onChange={handleStepChange}
-                          pendingChanges={stepChanges[step.id]}
-                        />
-                      ))}
+                      <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleDragEnd}
+                      >
+                        <SortableContext
+                          items={localSteps.map(step => step.id)}
+                          strategy={verticalListSortingStrategy}
+                        >
+                          {localSteps.map((step) => (
+                            <SortableApprovalStepRow 
+                              key={step.id} 
+                              step={step} 
+                              onDelete={() => deleteStepMutation.mutate(step.id)}
+                              isDeleting={deleteStepMutation.isPending}
+                              onChange={handleStepChange}
+                              pendingChanges={stepChanges[step.id]}
+                            />
+                          ))}
+                        </SortableContext>
+                      </DndContext>
                     </div>
                   </CardContent>
                 </Card>
@@ -1180,6 +1220,110 @@ export function ApprovalSchemas() {
       </div>
 
 
+    </div>
+  );
+}
+
+// Componente sortable para pasos de aprobación
+function SortableApprovalStepRow({ 
+  step, 
+  onDelete, 
+  isDeleting, 
+  onChange, 
+  pendingChanges 
+}: {
+  step: ApprovalStep;
+  onDelete: () => void;
+  isDeleting: boolean;
+  onChange: (id: number, field: string, value: any) => void;
+  pendingChanges?: Partial<ApprovalStep>;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({ id: step.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  const currentObligatorio = pendingChanges?.obligatorio ?? step.obligatorio;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center space-x-3 p-3 border rounded-lg bg-white"
+    >
+      <div
+        {...attributes}
+        {...listeners}
+        className="cursor-grab active:cursor-grabbing"
+      >
+        <GripVertical className="h-4 w-4 text-gray-400" />
+      </div>
+      
+      <div className="flex-1 grid grid-cols-4 gap-3 items-center">
+        <div>
+          <Label className="text-xs text-gray-600">Orden</Label>
+          <div className="text-sm font-medium">{step.orden}</div>
+        </div>
+        
+        <div>
+          <Label className="text-xs text-gray-600">Descripción</Label>
+          <Input
+            value={pendingChanges?.descripcion ?? step.descripcion}
+            onChange={(e) => onChange(step.id, "descripcion", e.target.value)}
+            className="text-sm"
+          />
+        </div>
+        
+        <div>
+          <Label className="text-xs text-gray-600">Perfil</Label>
+          <Select
+            value={pendingChanges?.perfil ?? step.perfil}
+            onValueChange={(value) => onChange(step.id, "perfil", value)}
+          >
+            <SelectTrigger className="text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Recursos humanos">Recursos humanos</SelectItem>
+              <SelectItem value="Jefes de grupo">Jefes de grupo</SelectItem>
+              <SelectItem value="Administradores">Administradores</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div>
+          <Label className="text-xs text-gray-600">Tipo</Label>
+          <Select
+            value={currentObligatorio}
+            onValueChange={(value) => onChange(step.id, "obligatorio", value)}
+          >
+            <SelectTrigger className="text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Si">Obligatorio</SelectItem>
+              <SelectItem value="No">Opcional</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      
+      <Button
+        variant="destructive"
+        size="sm"
+        onClick={onDelete}
+        disabled={isDeleting}
+      >
+        <Trash2 className="h-4 w-4" />
+      </Button>
     </div>
   );
 }
