@@ -204,42 +204,7 @@ export function ApprovalSchemas() {
     },
   });
 
-  // Update schema configuration mutation
-  const updateSchemaConfigMutation = useMutation({
-    mutationFn: async (configData: any) => {
-      if (!selectedSchema) throw new Error("No schema selected");
-      
-      const updateData = {
-        tiposPermiso: configData.tiposPermiso,
-        adjuntarDocumentos: configData.adjuntarDocumentos ? "true" : "false",
-        comentarioRequerido: configData.comentarioRequerido ? "true" : "false", 
-        enviarCorreoNotificacion: configData.enviarCorreoNotificacion ? "true" : "false",
-        permitirSolicitudTerceros: configData.permitirSolicitudTerceros ? "true" : "false",
-        diasMinimo: configData.diasMinimo ? parseInt(configData.diasMinimo) : null,
-        diasMaximo: configData.diasMaximo ? parseInt(configData.diasMaximo) : null,
-        diasMultiplo: configData.diasMultiplo ? parseInt(configData.diasMultiplo) : null,
-        visibilityPermissions,
-        approvalPermissions
-      };
-      
-      const response = await apiRequest("PATCH", `/api/approval-schemas/${selectedSchema.id}`, updateData);
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/approval-schemas"] });
-      toast({
-        title: "Configuración guardada",
-        description: "La configuración del esquema ha sido actualizada exitosamente.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Ocurrió un error al guardar la configuración.",
-        variant: "destructive",
-      });
-    },
-  });
+
 
   // Delete schema mutation
   const deleteSchemaMutation = useMutation({
@@ -271,10 +236,18 @@ export function ApprovalSchemas() {
         updateStepMutation.mutateAsync({ stepId: parseInt(stepId), updates: changes })
       );
       
-      // Save schema configuration changes (permissions) - always send even if empty
+      // Save schema configuration changes (includes all config and permissions)
       const schemaUpdates = {
         visibilityPermissions: visibilityPermissions,
-        approvalPermissions: approvalPermissions
+        approvalPermissions: approvalPermissions,
+        tiposPermiso: schemaConfig.tiposPermiso,
+        adjuntarDocumentos: schemaConfig.adjuntarDocumentos ? "true" : "false",
+        comentarioRequerido: schemaConfig.comentarioRequerido ? "true" : "false", 
+        enviarCorreoNotificacion: schemaConfig.enviarCorreoNotificacion ? "true" : "false",
+        permitirSolicitudTerceros: schemaConfig.permitirSolicitudTerceros ? "true" : "false",
+        diasMinimo: schemaConfig.diasMinimo ? parseInt(schemaConfig.diasMinimo) : null,
+        diasMaximo: schemaConfig.diasMaximo ? parseInt(schemaConfig.diasMaximo) : null,
+        diasMultiplo: schemaConfig.diasMultiplo ? parseInt(schemaConfig.diasMultiplo) : null
       };
       
       console.log("Guardando cambios del esquema:", schemaUpdates);
@@ -648,17 +621,7 @@ export function ApprovalSchemas() {
                       </div>
                     </div>
 
-                    {/* Save button for configuration */}
-                    <div className="flex justify-end pt-4 border-t">
-                      <Button 
-                        onClick={() => updateSchemaConfigMutation.mutate(schemaConfig)}
-                        disabled={updateSchemaConfigMutation.isPending}
-                        className="flex items-center space-x-2"
-                      >
-                        <Save className="h-4 w-4" />
-                        <span>{updateSchemaConfigMutation.isPending ? "Guardando..." : "Guardar configuración"}</span>
-                      </Button>
-                    </div>
+
                     
                     {/* Visibility section */}
                     <div className="space-y-3 pt-4 border-t">
