@@ -191,7 +191,7 @@ export function RequestDetailsModal({ request, open, onOpenChange, onDownload, o
             </div>
           </div>
 
-          {/* Acciones de aprobación */}
+          {/* Acciones de aprobación - solo visible en pestaña "Todas las solicitudes" */}
           {isAllRequestsTab && onStatusChange && request.estado === "Pendiente" && (
             <div className="flex justify-center gap-4 pt-4 border-t border-gray-200">
               <Button
@@ -209,6 +209,32 @@ export function RequestDetailsModal({ request, open, onOpenChange, onDownload, o
                 <X className="w-4 h-4 mr-2" />
                 Rechazar
               </Button>
+            </div>
+          )}
+
+          {/* Acciones de usuario - solo visible en pestaña "Mis solicitudes" */}
+          {!isAllRequestsTab && onStatusChange && (
+            <div className="flex justify-center gap-4 pt-4 border-t border-gray-200">
+              {request.estado === "Pendiente" && (
+                <Button
+                  onClick={() => onStatusChange(request.id, "Cancelada")}
+                  variant="outline"
+                  className="border-red-600 text-red-600 hover:bg-red-50"
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Cancelar solicitud
+                </Button>
+              )}
+              {request.estado === "Aprobado" && (
+                <Button
+                  onClick={() => onStatusChange(request.id, "Anulada")}
+                  variant="outline"
+                  className="border-red-600 text-red-600 hover:bg-red-50"
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Anular solicitud
+                </Button>
+              )}
             </div>
           )}
         </div>
