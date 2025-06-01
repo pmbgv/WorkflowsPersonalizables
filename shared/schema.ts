@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, varchar, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -106,6 +106,23 @@ export const insertUserVacationBalanceSchema = createInsertSchema(userVacationBa
   fechaActualizacion: true,
 });
 
+// Tabla para motivos de permisos organizados por categorías
+export const motivosPermisos = pgTable("motivos_permisos", {
+  id: serial("id").primaryKey(),
+  categoria: varchar("categoria", { length: 50 }).notNull(), // "Comunes", "Turno completo", "Parciales"
+  motivo: varchar("motivo", { length: 100 }).notNull(),
+  activo: boolean("activo").default(true),
+  orden: integer("orden").default(0), // Para ordenar los motivos dentro de cada categoría
+  fechaCreacion: timestamp("fecha_creacion").defaultNow(),
+  fechaActualizacion: timestamp("fecha_actualizacion").defaultNow(),
+});
+
+export const insertMotivoPermisoSchema = createInsertSchema(motivosPermisos).omit({
+  id: true,
+  fechaCreacion: true,
+  fechaActualizacion: true,
+});
+
 export type InsertRequest = z.infer<typeof insertRequestSchema>;
 export type Request = typeof requests.$inferSelect;
 export type ApprovalSchema = typeof approvalSchemas.$inferSelect;
@@ -116,3 +133,5 @@ export type RequestHistory = typeof requestHistory.$inferSelect;
 export type InsertRequestHistory = z.infer<typeof insertRequestHistorySchema>;
 export type UserVacationBalance = typeof userVacationBalance.$inferSelect;
 export type InsertUserVacationBalance = z.infer<typeof insertUserVacationBalanceSchema>;
+export type MotivoPermiso = typeof motivosPermisos.$inferSelect;
+export type InsertMotivoPermiso = z.infer<typeof insertMotivoPermisoSchema>;
