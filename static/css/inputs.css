@@ -1,0 +1,308 @@
+.gv-input {
+    height: 28px;
+    padding: 4px 8px;
+    border: 1px solid var(--gv-gray5);
+    border-radius: 4px;
+    font-size: 14px;
+    color: var(--gv-gray2);
+}
+
+    .gv-input:focus-visible, .gv-input.focus-visible {
+        outline: none;
+        border: 1px solid var(--gv-lightblue2) !important;
+        box-shadow: 0px 0px 0px 4px rgba(0, 155, 217, 0.25);
+    }
+
+    .gv-input::placeholder {
+        color: var(--gv-gray4);
+    }
+
+
+    .gv-input:disabled {
+        background-color: var(--gv-gray5);
+    }
+
+    .gv-input.gv-input-error {
+        border-color: var(--gv-red1);
+    }
+
+    .gv-input.gv-input-error-text {
+        border-color: var(--gv-red1);
+    }
+
+        .gv-input.gv-input-error-text + .message-error {
+            color: var(--gv-red1);
+            font-size: 14px;
+        }
+
+    .gv-input.input-with-left-icon {
+        z-index: 3;
+        background-color: transparent;
+        padding-left: 32px;
+    }
+
+        .gv-input.input-with-left-icon:disabled {
+            padding-left: 8px;
+            background-color: var(--gv-gray5);
+        }
+
+    .gv-input.input-with-right-icon {
+        padding-right: 32px;
+        z-index: 3;
+        background-color: transparent;
+    }
+
+        .gv-input.input-with-right-icon:disabled {
+            padding-right: 8px;
+            background-color: var(--gv-gray5);
+        }
+
+            .gv-input.input-with-left-icon:disabled + .input-icon, .gv-input.input-with-right-icon:disabled + .input-icon {
+                display: none;
+            }
+
+.input-icon {
+    position: relative;
+    z-index: 2;
+}
+
+    .input-icon.input-left-icon {
+        float: left;
+        margin-left: 0.5rem;
+        margin-top: -1.5rem;
+        margin-right: auto;
+    }
+
+    .input-icon.input-right-icon {
+        float: right;
+        margin-right: 0.5rem;
+        margin-top: -1.5rem;
+        margin-left: auto;
+    }
+
+.gv-input.gv-input-date[type="date"] {
+    padding-right: 8px;
+}
+
+    .gv-input.gv-input-date[type="date"]::-webkit-calendar-picker-indicator {
+        background-image: none;
+        cursor: pointer;
+    }
+
+.gv-input.gv-textarea {
+    resize: none;
+    min-height: 56px;
+}
+
+/* Estilos Input Buscar */
+#search-input-test .autocomplete-results {
+    width: 100%;
+    border-radius: 4px;
+    border: 1px solid var(--gv-gray9);
+    background: var(--gv-white);
+    padding: 0;
+    opacity: 0;
+    pointer-events: none;
+    max-height: 160px;
+    overflow-y: auto;
+    margin: 0;
+}
+
+#search-input-test.active .autocomplete-results {
+    position: relative;
+    margin-top: 2px;
+    max-width: 100%;
+    z-index: 1;
+    padding: 8px;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.autocomplete-results li {
+    list-style: none;
+    padding: 8px 4px;
+    display: none;
+    width: 100%;
+    cursor: default;
+    border-radius: 3px;
+}
+
+#search-input-test.active .autocomplete-results li {
+    display: block;
+}
+
+.autocomplete-results li:hover {
+    background: var(--gv-gray6);
+    cursor: pointer;
+}
+
+.gv-input-checkbox {
+    margin: 4px;
+    appearance: none;
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border: none;
+    cursor: pointer;
+    display: inline-block;
+    position: relative;
+    background-image: url(../Assets/Icons/checkbox-unchecked.svg);
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+    .gv-input-checkbox + label.checkbox-dropdown {
+        cursor: pointer;
+        width: 100%;
+    }
+
+    .gv-input-checkbox:hover {
+        box-shadow: 0px 0px 16px 0.2px rgba(0, 0, 0, 0.15);
+    }
+
+    .gv-input-checkbox:checked {
+        background-image: url(../Assets/Icons/checkbox-checked.svg);
+    }
+
+    .gv-input-checkbox:indeterminate {
+        background-image: url(../Assets/Icons/checkbox-indeterminate.svg);
+    }
+
+.gv-input-radio {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border: 1px solid var(--gv-lightblue2);
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+    .gv-input-radio:hover {
+        box-shadow: 0px 0px 16px 0.2px rgba(0, 0, 0, 0.15);
+    }
+
+
+    .gv-input-radio:before {
+        content: '';
+        display: block;
+        width: 8px;
+        height: 8px;
+        margin: 20% auto;
+        border-radius: 50%;
+    }
+
+    .gv-input-radio:checked:before {
+        background: var(--gv-lightblue2);
+    }
+
+td .gv-input-switch {
+    text-align: left;
+    vertical-align: middle;
+}
+
+.gv-input-switch {
+    height: 16px;
+    width: 28px;
+}
+
+    .gv-input-switch input {
+        display: none;
+    }
+
+.gv-input-switch-slider {
+    position: absolute;
+    cursor: pointer;
+    border: 1px solid var(--gv-gray2);
+    -webkit-transition: .4s;
+    transition: .4s;
+    width: 28px;
+    height: 16px;
+    border-radius: 8px;
+}
+
+    .gv-input-switch-slider:before {
+        position: absolute;
+        content: "";
+        height: 12px;
+        width: 12px;
+        left: 2px;
+        bottom: 1px;
+        border-radius: 50%;
+        background-color: var(--gv-gray2);
+        -webkit-transition: .4s;
+        transition: .4s;
+    }
+
+.gv-input-switch input:checked + .gv-input-switch-slider {
+    border-color: var(--gv-lightblue2);
+}
+
+    .gv-input-switch input:checked + .gv-input-switch-slider:before {
+        -webkit-transform: translateX(10px);
+        -ms-transform: translateX(10px);
+        transform: translateX(10px);
+        background-color: var(--gv-lightblue2);
+    }
+
+.gv-input-switch input:disabled + .gv-input-switch-slider {
+    border-color: var(--gv-gray3);
+    cursor: default;
+}
+
+    .gv-input-switch input:disabled + .gv-input-switch-slider:before {
+        background-color: var(--gv-gray3);
+    }
+
+/* Estilos input de tiempo */
+.gv-time-input, .gv-time-input:focus-visible {
+    border-width: 0 !important;
+    outline: none !important;
+    color: #555;
+    text-align: center;
+    width: 25px;
+    -moz-appearance: textfield;
+    padding: 0;
+    margin: 0;
+}
+
+    .gv-time-input::-webkit-outer-spin-button,
+    .gv-time-input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+/* Estilos Chips de búsqueda */
+.chip {
+    color: var(--gv-gray2);
+    cursor: pointer;
+    font-weight: 400;
+    line-height: 20px;
+    letter-spacing: -0.42px;
+    border: 1px solid var(--gv-lightblue2) !important;
+    border-radius: 4px;
+    background-color: var(--gv-white) !important;
+    display: inline-block;
+    padding: 4px !important;
+    margin: 4px 8px;
+}
+
+    .chip span {
+        padding: 0 !important;
+        vertical-align: middle;
+        margin-right: 4px
+    }
+
+    .chip .remove {
+        cursor: pointer !important;
+        padding: 0 !important;
+        min-width: 16px;
+        width: 16px;
+        height: 16px;
+        background-image: url(../assets/icons/x-icon.svg);
+        background-repeat: no-repeat;
+        background-position: center center;
+        vertical-align: middle;
+        border: none;
+        background-color: transparent;
+    }

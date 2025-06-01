@@ -1,0 +1,73 @@
+.dropzone {
+    border: 1px dashed var(--gv-gray2) !important;
+    border-radius: 6px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.dropzone .dz-message {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.dropzone.dz-drag-hover {
+    border: 1px dashed var(--gv-lightblue2) !important;
+}
+
+.dropzone.dz-drag-hover .dz-message {
+    opacity: 1 !important;
+}
+
+
+
+/* Progress bar */
+:root {
+    --gv-light-blue: #00AFF2;
+}
+
+.validating-information-container {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+}
+
+.progress-bar-container {
+    width: 294px;
+    background: #F7FAFB;
+    border-radius: 4px;
+    margin-top: 8px;
+}
+  
+.progress-bar {	
+    height: 16px;
+    width: 70%;
+    border-radius: 4px;
+    background-color: #009BD9; 
+    background-size: 15px 15px;
+    background-image: linear-gradient(
+        45deg,
+        var(--gv-light-blue) 25%,
+        transparent 25%,
+        transparent 50%,
+        var(--gv-light-blue) 50%,
+        var(--gv-light-blue) 75%,
+        transparent 75%,
+        transparent
+    );
+    animation: animateStripes 1.5s linear infinite, progressAnimationBar 3s;
+}
+
+@keyframes progressAnimationBar {
+    0% { width: 0 }
+    100% { width: 70% }
+}
+
+@keyframes animateStripes {
+    0% { background-position: 0 0 }
+
+    100% { background-position: 60px 0 }
+}

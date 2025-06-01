@@ -11,6 +11,7 @@ export const requests = pgTable("requests", {
   descripcion: text("descripcion"),
   estado: varchar("estado", { length: 20 }).notNull().default("Pendiente"),
   solicitadoPor: varchar("solicitado_por", { length: 100 }).notNull(),
+  identificador: varchar("identificador", { length: 20 }),
   motivo: varchar("motivo", { length: 100 }),
   archivosAdjuntos: text("archivos_adjuntos").array(),
   fechaCreacion: timestamp("fecha_creacion").defaultNow().notNull(),

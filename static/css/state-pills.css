@@ -1,0 +1,18 @@
+.state-pill {
+    padding: 4px 8px;
+    border-radius: 30px;
+    letter-spacing: -0.03em;
+    border: 1px solid var(--gv-gray5);
+}
+
+.state-pill.green-state {
+    background-color: var(--gv-green4);
+}
+
+.state-pill.yellow-state {
+    background-color: var(--gv-yellow2);
+}
+
+.state-pill.red-state {
+    background-color: var(--gv-red3);
+}

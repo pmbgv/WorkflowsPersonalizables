@@ -1,0 +1,31 @@
+.gap-12px {
+    gap: 12px;
+}
+
+.ps-6px {
+    padding-left: 6px;
+}
+
+.pe-6px {
+    padding-right: 6px;
+}
+
+.p-12px {
+    padding: 12px;
+}
+
+.align-left {
+    margin-right: auto;
+}
+
+.align-right {
+    margin-left: auto;
+}
+
+.rounded-1 {
+    border-radius: 6px;
+}
+
+.d-grid {
+    display: grid;
+}
