@@ -5,11 +5,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Upload } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Plus, Upload, Calendar as CalendarIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 import type { InsertRequest } from "@shared/schema";
+import type { DateRange } from "react-day-picker";
 
 interface CreateRequestModalProps {
   onRequestCreated?: () => void;
@@ -17,6 +22,7 @@ interface CreateRequestModalProps {
 
 export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps) {
   const [open, setOpen] = useState(false);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [formData, setFormData] = useState<Partial<InsertRequest>>({
     tipo: "",
     fechaSolicitada: "",
@@ -68,6 +74,20 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
       motivo: "",
       archivosAdjuntos: [],
     });
+    setDateRange(undefined);
+  };
+
+  // Función para manejar el cambio de rango de fechas
+  const handleDateRangeChange = (range: DateRange | undefined) => {
+    setDateRange(range);
+    if (range?.from) {
+      handleInputChange('fechaSolicitada', format(range.from, "yyyy-MM-dd"));
+    }
+    if (range?.to) {
+      handleInputChange('fechaFin', format(range.to, "yyyy-MM-dd"));
+    } else {
+      handleInputChange('fechaFin', "");
+    }
   };
 
   // Define motivos based on tipo selection
@@ -179,17 +199,58 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="fechaSolicitada" className="text-gray-700">Fecha</Label>
-                  <div className="relative">
-                    <Input
-                      id="fechaSolicitada"
-                      type="date"
-                      value={formData.fechaSolicitada}
-                      onChange={(e) => handleInputChange('fechaSolicitada', e.target.value)}
-                      placeholder="Seleccionar"
-                      className="pr-10"
-                    />
-                  </div>
+                  <Label className="text-gray-700">Fecha</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start text-left font-normal"
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {dateRange?.from ? (
+                          dateRange.to ? (
+                            `${format(dateRange.from, "dd/MM/yyyy", { locale: es })} - ${format(dateRange.to, "dd/MM/yyyy", { locale: es })}`
+                          ) : (
+                            format(dateRange.from, "dd/MM/yyyy", { locale: es })
+                          )
+                        ) : (
+                          "Seleccionar"
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        initialFocus
+                        mode="range"
+                        defaultMonth={dateRange?.from}
+                        selected={dateRange}
+                        onSelect={handleDateRangeChange}
+                        numberOfMonths={2}
+                        locale={es}
+                      />
+                      <div className="flex justify-end space-x-2 p-3 border-t">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setDateRange(undefined);
+                            handleInputChange('fechaSolicitada', "");
+                            handleInputChange('fechaFin', "");
+                          }}
+                        >
+                          Cancelar
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            // Close the popover - this will be handled by the calendar selection
+                          }}
+                        >
+                          Aplicar
+                        </Button>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 </div>
 
                 <div className="space-y-2">
