@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -150,6 +150,9 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
           <DialogTitle className="text-lg font-medium text-gray-900">
             Crear solicitud
           </DialogTitle>
+          <DialogDescription>
+            Complete los campos para crear una nueva solicitud
+          </DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-6">
