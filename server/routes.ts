@@ -170,6 +170,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user vacation balance
+  app.get("/api/vacation-balance/:identificador", async (req, res) => {
+    try {
+      const identificador = req.params.identificador;
+      const balance = await storage.getUserVacationBalance(identificador);
+      
+      if (!balance) {
+        return res.status(404).json({ error: "User vacation balance not found" });
+      }
+      
+      res.json(balance);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch vacation balance" });
+    }
+  });
+
   // Delete a request
   app.delete("/api/requests/:id", async (req, res) => {
     try {

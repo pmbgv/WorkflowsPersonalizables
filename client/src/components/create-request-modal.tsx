@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,12 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [showDateConflictAlert, setShowDateConflictAlert] = useState(false);
+  const [vacationCalculation, setVacationCalculation] = useState({
+    diasDisponibles: 0,
+    diasSolicitados: 0,
+    diasEfectivos: 0,
+    diasRestantes: 0
+  });
   const [formData, setFormData] = useState<Partial<InsertRequest>>({
     tipo: "",
     fechaSolicitada: "",
@@ -49,6 +55,37 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
       return response.json();
     },
   });
+
+  // Obtener saldo de vacaciones del usuario
+  const { data: userVacationBalance } = useQuery<UserVacationBalance>({
+    queryKey: ['vacation-balance', formData.identificador],
+    queryFn: () => fetch(`/api/vacation-balance/${formData.identificador}`).then(res => res.json()),
+    enabled: Boolean(open && formData.identificador && formData.tipo === "Vacaciones"),
+  });
+
+  // Función para calcular días laborables (excluyendo fines de semana)
+  const calculateWorkingDays = (startDate: Date, endDate: Date): number => {
+    if (!startDate || !endDate) return 0;
+    
+    const days = eachDayOfInterval({ start: startDate, end: endDate });
+    return days.filter(day => !isWeekend(day)).length;
+  };
+
+  // Efecto para calcular días de vacaciones cuando cambian las fechas
+  useEffect(() => {
+    if (formData.tipo === "Vacaciones" && dateRange?.from && dateRange?.to && userVacationBalance) {
+      const diasSolicitados = differenceInDays(dateRange.to, dateRange.from) + 1;
+      const diasEfectivos = calculateWorkingDays(dateRange.from, dateRange.to);
+      const diasRestantes = (userVacationBalance as any).diasDisponibles - diasEfectivos;
+
+      setVacationCalculation({
+        diasDisponibles: (userVacationBalance as any).diasDisponibles || 0,
+        diasSolicitados,
+        diasEfectivos,
+        diasRestantes
+      });
+    }
+  }, [dateRange, formData.tipo, userVacationBalance]);
 
   const createRequestMutation = useMutation({
     mutationFn: async (data: InsertRequest) => {
