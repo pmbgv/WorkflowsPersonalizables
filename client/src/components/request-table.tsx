@@ -161,8 +161,8 @@ export function RequestTable({ requests, isLoading, onViewDetails, onDownload, t
                 <TableRow key={request.id} className="hover:bg-gray-50">
                   <TableCell className="text-sm">
                     {request.fechaFin ? 
-                      `${request.fechaSolicitada} - ${request.fechaFin}` : 
-                      request.fechaSolicitada
+                      `${formatDate(request.fechaSolicitada)} - ${formatDate(request.fechaFin)}` : 
+                      formatDate(request.fechaSolicitada)
                     }
                   </TableCell>
                   <TableCell className="text-sm">{request.tipo}</TableCell>
@@ -206,8 +206,8 @@ export function RequestTable({ requests, isLoading, onViewDetails, onDownload, t
                   <h4 className="font-medium text-gray-900">{request.tipo}</h4>
                   <p className="text-sm text-gray-500">
                     {request.fechaFin ? 
-                      `${request.fechaSolicitada} - ${request.fechaFin}` : 
-                      request.fechaSolicitada
+                      `${formatDate(request.fechaSolicitada)} - ${formatDate(request.fechaFin)}` : 
+                      formatDate(request.fechaSolicitada)
                     }
                   </p>
                 </div>
