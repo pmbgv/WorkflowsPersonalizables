@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,13 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Plus, Upload, Calendar as CalendarIcon } from "lucide-react";
+import { Plus, Upload, Calendar as CalendarIcon, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import type { InsertRequest } from "@shared/schema";
+import type { InsertRequest, Request } from "@shared/schema";
 import type { DateRange } from "react-day-picker";
 
 interface CreateRequestModalProps {
@@ -24,6 +25,7 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
   const [open, setOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [showDateConflictAlert, setShowDateConflictAlert] = useState(false);
   const [formData, setFormData] = useState<Partial<InsertRequest>>({
     tipo: "",
     fechaSolicitada: "",
@@ -38,6 +40,15 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Obtener todas las solicitudes existentes para verificar conflictos de fechas
+  const { data: existingRequests = [] } = useQuery<Request[]>({
+    queryKey: ["/api/requests"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/requests");
+      return response.json();
+    },
+  });
 
   const createRequestMutation = useMutation({
     mutationFn: async (data: InsertRequest) => {
@@ -76,6 +87,24 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
       archivosAdjuntos: [],
     });
     setDateRange(undefined);
+  };
+
+  // Función para verificar conflictos de fechas
+  const checkDateConflicts = (startDate: string, endDate?: string): boolean => {
+    if (!startDate) return false;
+
+    const requestStart = new Date(startDate);
+    const requestEnd = endDate ? new Date(endDate) : requestStart;
+
+    return existingRequests.some(request => {
+      if (request.solicitadoPor !== formData.solicitadoPor) return false;
+      
+      const existingStart = new Date(request.fechaSolicitada);
+      const existingEnd = request.fechaFin ? new Date(request.fechaFin) : existingStart;
+
+      // Verificar si hay solapamiento
+      return (requestStart <= existingEnd) && (requestEnd >= existingStart);
+    });
   };
 
   // Función para manejar el cambio de rango de fechas
@@ -121,6 +150,12 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
         description: "Por favor selecciona un tipo de solicitud.",
         variant: "destructive",
       });
+      return;
+    }
+
+    // Verificar conflictos de fechas si hay fechas seleccionadas
+    if (formData.fechaSolicitada && checkDateConflicts(formData.fechaSolicitada, formData.fechaFin ?? undefined)) {
+      setShowDateConflictAlert(true);
       return;
     }
 
@@ -333,6 +368,38 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
           </div>
         </form>
       </DialogContent>
+
+      {/* Modal de alerta para conflicto de fechas */}
+      <AlertDialog open={showDateConflictAlert} onOpenChange={setShowDateConflictAlert}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader className="text-center">
+            <div className="flex justify-end">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowDateConflictAlert(false)}
+                className="h-6 w-6 p-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <AlertDialogTitle className="text-lg font-medium text-gray-900">
+              Ya tienes una solicitud en las fechas seleccionadas.
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm text-gray-600 mt-2">
+              No puedes enviar esta nueva solicitud porque ya existe otra que coincide con las fechas seleccionadas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex justify-center">
+            <Button
+              onClick={() => setShowDateConflictAlert(false)}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-2 rounded"
+            >
+              Cerrar
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }
