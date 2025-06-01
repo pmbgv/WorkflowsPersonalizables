@@ -143,22 +143,27 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="prioridad">Prioridad</Label>
-              <Select 
-                value={formData.prioridad ?? "normal"} 
-                onValueChange={(value) => handleInputChange('prioridad', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="normal">Normal</SelectItem>
-                  <SelectItem value="alta">Alta</SelectItem>
-                  <SelectItem value="urgente">Urgente</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {formData.tipo && getMotivosForTipo(formData.tipo).length > 0 && (
+              <div className="space-y-2">
+                <Label htmlFor="motivo">Motivo *</Label>
+                <Select 
+                  value={formData.motivo ?? ""} 
+                  onValueChange={(value) => handleInputChange('motivo', value)}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar motivo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {getMotivosForTipo(formData.tipo).map((motivo) => (
+                      <SelectItem key={motivo} value={motivo}>
+                        {motivo}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="fechaSolicitada">Fecha solicitada *</Label>
