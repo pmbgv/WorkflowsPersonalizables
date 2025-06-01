@@ -157,15 +157,45 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
     const requestStart = new Date(startDate);
     const requestEnd = endDate ? new Date(endDate) : requestStart;
 
-    return existingRequests.some(request => {
+    const conflicts = existingRequests.filter(request => {
+      // Solo verificar solicitudes del mismo usuario
       if (request.solicitadoPor !== formData.solicitadoPor) return false;
       
+      // Solo verificar solicitudes que no estén rechazadas o canceladas
+      if (request.estado === "Rechazada" || request.estado === "Cancelada") return false;
+      
+      // Verificar que las fechas de la solicitud existente sean válidas
+      if (!request.fechaSolicitada || request.fechaSolicitada === "") return false;
+      
       const existingStart = new Date(request.fechaSolicitada);
-      const existingEnd = request.fechaFin ? new Date(request.fechaFin) : existingStart;
+      const existingEnd = request.fechaFin && request.fechaFin !== "" ? new Date(request.fechaFin) : existingStart;
+
+      // Verificar que las fechas sean válidas
+      if (isNaN(existingStart.getTime()) || isNaN(existingEnd.getTime())) return false;
+      if (isNaN(requestStart.getTime()) || isNaN(requestEnd.getTime())) return false;
 
       // Verificar si hay solapamiento
-      return (requestStart <= existingEnd) && (requestEnd >= existingStart);
+      const hasOverlap = (requestStart <= existingEnd) && (requestEnd >= existingStart);
+      
+      if (hasOverlap) {
+        console.log("Conflicto detectado:", {
+          solicitudExistente: request,
+          fechasSolicitadas: { inicio: startDate, fin: endDate },
+          solapamiento: hasOverlap
+        });
+      }
+      
+      return hasOverlap;
     });
+
+    console.log("Validación de fechas:", {
+      fechaSolicitada: startDate,
+      fechaFin: endDate,
+      solicitudesExistentes: existingRequests.length,
+      conflictosEncontrados: conflicts.length
+    });
+
+    return conflicts.length > 0;
   };
 
   // Función para manejar el cambio de rango de fechas
