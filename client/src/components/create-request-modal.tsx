@@ -94,16 +94,22 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.tipo || !formData.fechaSolicitada || !formData.asunto || !formData.solicitadoPor) {
+    if (!formData.tipo || !formData.solicitadoPor) {
       toast({
         title: "Campos requeridos",
-        description: "Por favor completa todos los campos requeridos.",
+        description: "Por favor selecciona un tipo de solicitud.",
         variant: "destructive",
       });
       return;
     }
 
-    createRequestMutation.mutate(formData as InsertRequest);
+    // Para permisos, usar descripcion como asunto si no hay asunto definido
+    const requestData = {
+      ...formData,
+      asunto: formData.asunto || "Solicitud de Permiso",
+    };
+
+    createRequestMutation.mutate(requestData as InsertRequest);
   };
 
   const handleInputChange = (field: keyof InsertRequest, value: string) => {
@@ -171,16 +177,29 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
           {/* Campos adicionales que aparecen cuando se selecciona Permiso */}
           {formData.tipo === "Permiso" && (
             <>
-              {getMotivosForTipo(formData.tipo).length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="motivo" className="text-gray-700">Motivo *</Label>
+                  <Label htmlFor="fechaSolicitada" className="text-gray-700">Fecha</Label>
+                  <div className="relative">
+                    <Input
+                      id="fechaSolicitada"
+                      type="date"
+                      value={formData.fechaSolicitada}
+                      onChange={(e) => handleInputChange('fechaSolicitada', e.target.value)}
+                      placeholder="Seleccionar"
+                      className="pr-10"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="motivo" className="text-gray-700">Motivo</Label>
                   <Select 
                     value={formData.motivo ?? ""} 
                     onValueChange={(value) => handleInputChange('motivo', value)}
-                    required
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar motivo" />
+                      <SelectValue placeholder="Seleccionar" />
                     </SelectTrigger>
                     <SelectContent>
                       {getMotivosForTipo(formData.tipo).map((motivo) => (
@@ -191,63 +210,20 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
                     </SelectContent>
                   </Select>
                 </div>
-              )}
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="fechaSolicitada" className="text-gray-700">Fecha solicitada *</Label>
-                  <Input
-                    id="fechaSolicitada"
-                    type="date"
-                    value={formData.fechaSolicitada}
-                    onChange={(e) => handleInputChange('fechaSolicitada', e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="fechaFin" className="text-gray-700">Fecha de fin</Label>
-                  <Input
-                    id="fechaFin"
-                    type="date"
-                    value={formData.fechaFin ?? ""}
-                    onChange={(e) => handleInputChange('fechaFin', e.target.value)}
-                  />
-                </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="asunto" className="text-gray-700">Asunto *</Label>
-                <Input
-                  id="asunto"
-                  placeholder="Ingresa el asunto de la solicitud"
-                  value={formData.asunto}
-                  onChange={(e) => handleInputChange('asunto', e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="descripcion" className="text-gray-700">Descripción</Label>
-                <Textarea
-                  id="descripcion"
-                  placeholder="Describe los detalles de tu solicitud..."
-                  rows={4}
-                  value={formData.descripcion ?? ""}
-                  onChange={(e) => handleInputChange('descripcion', e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-gray-700">Documentos adjuntos</Label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
-                  <Upload className="mx-auto h-8 w-8 text-gray-400" />
-                  <p className="mt-2 text-sm text-gray-600">
-                    Arrastra archivos aquí o <span className="text-blue-600 cursor-pointer">selecciona archivos</span>
+                <Label className="text-gray-700">Adjuntar archivos</Label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                  <p className="text-gray-600 mb-4">
+                    Arrastra tu archivo aquí o utiliza el siguiente botón
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    PDF, DOC, DOCX, JPG, PNG (máx. 10MB)
-                  </p>
+                  <Button 
+                    type="button"
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded"
+                  >
+                    Subir archivo
+                  </Button>
                   <input
                     type="file"
                     multiple
@@ -255,6 +231,18 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
                     className="hidden"
                   />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="comentario" className="text-gray-700">Comentario</Label>
+                <Textarea
+                  id="comentario"
+                  placeholder=""
+                  rows={4}
+                  value={formData.descripcion ?? ""}
+                  onChange={(e) => handleInputChange('descripcion', e.target.value)}
+                  className="min-h-[100px]"
+                />
               </div>
             </>
           )}
