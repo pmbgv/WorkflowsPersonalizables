@@ -340,9 +340,20 @@ export function ApprovalSchemas() {
       return;
     }
 
+    // Validar que para permisos se haya seleccionado un motivo
+    if (newSchemaType === "Permiso" && !newSchemaMotivo) {
+      toast({
+        title: "Motivo requerido",
+        description: "Por favor selecciona un motivo específico para el permiso.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     createSchemaMutation.mutate({
       nombre: newSchemaName,
       tipoSolicitud: newSchemaType,
+      motivo: newSchemaType === "Permiso" ? newSchemaMotivo : null,
     });
   };
 
@@ -423,7 +434,10 @@ export function ApprovalSchemas() {
               value={newSchemaName}
               onChange={(e) => setNewSchemaName(e.target.value)}
             />
-            <Select value={newSchemaType} onValueChange={setNewSchemaType}>
+            <Select value={newSchemaType} onValueChange={(value) => {
+              setNewSchemaType(value);
+              setNewSchemaMotivo(""); // Reset motivo when type changes
+            }}>
               <SelectTrigger>
                 <SelectValue placeholder="Tipo de solicitud" />
               </SelectTrigger>
@@ -432,6 +446,22 @@ export function ApprovalSchemas() {
                 <SelectItem value="Vacaciones">Vacaciones</SelectItem>
               </SelectContent>
             </Select>
+            
+            {/* Campo motivo - Solo para permisos */}
+            {newSchemaType === "Permiso" && (
+              <Select value={newSchemaMotivo} onValueChange={setNewSchemaMotivo}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Motivo específico" />
+                </SelectTrigger>
+                <SelectContent>
+                  {MOTIVOS_PERMISO.map((motivo) => (
+                    <SelectItem key={motivo} value={motivo}>
+                      {motivo}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             <Button 
               onClick={handleCreateSchema}
               disabled={createSchemaMutation.isPending}

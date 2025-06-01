@@ -57,10 +57,15 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
     },
   });
 
-  // Obtener el esquema activo para el tipo de solicitud seleccionado
-  const activeSchema = approvalSchemas.find(schema => 
-    schema.tipoSolicitud === formData.tipo
-  );
+  // Obtener el esquema activo para el tipo de solicitud y motivo seleccionados
+  const activeSchema = approvalSchemas.find(schema => {
+    if (formData.tipo === "Vacaciones") {
+      return schema.tipoSolicitud === "Vacaciones";
+    } else if (formData.tipo === "Permiso") {
+      return schema.tipoSolicitud === "Permiso" && (schema as any).motivo === formData.motivo;
+    }
+    return false;
+  });
 
   // Obtener todas las solicitudes existentes para verificar conflictos de fechas
   const { data: existingRequests = [] } = useQuery<Request[]>({
