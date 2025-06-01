@@ -1,4 +1,4 @@
-import { requests, approvalSchemas, approvalSteps, requestHistory, type Request, type InsertRequest, type ApprovalSchema, type InsertApprovalSchema, type ApprovalStep, type InsertApprovalStep, type RequestHistory, type InsertRequestHistory } from "@shared/schema";
+import { requests, approvalSchemas, approvalSteps, requestHistory, userVacationBalance, type Request, type InsertRequest, type ApprovalSchema, type InsertApprovalSchema, type ApprovalStep, type InsertApprovalStep, type RequestHistory, type InsertRequestHistory, type UserVacationBalance, type InsertUserVacationBalance } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, like, gte, lte, or } from "drizzle-orm";
 
@@ -31,6 +31,11 @@ export interface IStorage {
   // Request History
   getRequestHistory(requestId: number): Promise<RequestHistory[]>;
   addRequestHistory(history: InsertRequestHistory): Promise<RequestHistory>;
+  
+  // User Vacation Balance
+  getUserVacationBalance(identificador: string): Promise<UserVacationBalance | undefined>;
+  createUserVacationBalance(balance: InsertUserVacationBalance): Promise<UserVacationBalance>;
+  updateUserVacationBalance(identificador: string, diasDisponibles: number): Promise<UserVacationBalance | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -182,6 +187,44 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error("Error adding request history:", error);
       throw error;
+    }
+  }
+
+  async getUserVacationBalance(identificador: string): Promise<UserVacationBalance | undefined> {
+    try {
+      const [balance] = await db
+        .select()
+        .from(userVacationBalance)
+        .where(eq(userVacationBalance.identificador, identificador))
+        .limit(1);
+      return balance;
+    } catch (error) {
+      console.error("Error fetching user vacation balance:", error);
+      return undefined;
+    }
+  }
+
+  async createUserVacationBalance(balance: InsertUserVacationBalance): Promise<UserVacationBalance> {
+    try {
+      const [newBalance] = await db.insert(userVacationBalance).values(balance).returning();
+      return newBalance;
+    } catch (error) {
+      console.error("Error creating user vacation balance:", error);
+      throw error;
+    }
+  }
+
+  async updateUserVacationBalance(identificador: string, diasDisponibles: number): Promise<UserVacationBalance | undefined> {
+    try {
+      const [updatedBalance] = await db
+        .update(userVacationBalance)
+        .set({ diasDisponibles, fechaActualizacion: new Date() })
+        .where(eq(userVacationBalance.identificador, identificador))
+        .returning();
+      return updatedBalance;
+    } catch (error) {
+      console.error("Error updating user vacation balance:", error);
+      return undefined;
     }
   }
 }

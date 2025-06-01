@@ -14,7 +14,18 @@ export const requests = pgTable("requests", {
   identificador: varchar("identificador", { length: 20 }),
   motivo: varchar("motivo", { length: 100 }),
   archivosAdjuntos: text("archivos_adjuntos").array(),
+  diasSolicitados: integer("dias_solicitados"),
+  diasEfectivos: integer("dias_efectivos"),
   fechaCreacion: timestamp("fecha_creacion").defaultNow().notNull(),
+  fechaActualizacion: timestamp("fecha_actualizacion").defaultNow().notNull(),
+});
+
+// Tabla para manejar saldos de vacaciones de usuarios
+export const userVacationBalance = pgTable("user_vacation_balance", {
+  id: serial("id").primaryKey(),
+  identificador: varchar("identificador", { length: 20 }).notNull().unique(),
+  nombreUsuario: varchar("nombre_usuario", { length: 100 }).notNull(),
+  diasDisponibles: integer("dias_disponibles").notNull().default(15),
   fechaActualizacion: timestamp("fecha_actualizacion").defaultNow().notNull(),
 });
 
@@ -72,6 +83,11 @@ export const insertRequestHistorySchema = createInsertSchema(requestHistory).omi
   fechaCreacion: true,
 });
 
+export const insertUserVacationBalanceSchema = createInsertSchema(userVacationBalance).omit({
+  id: true,
+  fechaActualizacion: true,
+});
+
 export type InsertRequest = z.infer<typeof insertRequestSchema>;
 export type Request = typeof requests.$inferSelect;
 export type ApprovalSchema = typeof approvalSchemas.$inferSelect;
@@ -80,3 +96,5 @@ export type ApprovalStep = typeof approvalSteps.$inferSelect;
 export type InsertApprovalStep = z.infer<typeof insertApprovalStepSchema>;
 export type RequestHistory = typeof requestHistory.$inferSelect;
 export type InsertRequestHistory = z.infer<typeof insertRequestHistorySchema>;
+export type UserVacationBalance = typeof userVacationBalance.$inferSelect;
+export type InsertUserVacationBalance = z.infer<typeof insertUserVacationBalanceSchema>;

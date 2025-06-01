@@ -8,13 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Plus, Upload, Calendar as CalendarIcon, X } from "lucide-react";
+import { Plus, Upload, Calendar as CalendarIcon, X, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { format } from "date-fns";
+import { format, differenceInDays, isWeekend, eachDayOfInterval } from "date-fns";
 import { es } from "date-fns/locale";
-import type { InsertRequest, Request } from "@shared/schema";
+import type { InsertRequest, Request, UserVacationBalance } from "@shared/schema";
 import type { DateRange } from "react-day-picker";
 
 interface CreateRequestModalProps {
