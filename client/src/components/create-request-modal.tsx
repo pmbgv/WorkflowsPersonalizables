@@ -14,7 +14,7 @@ import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { format, differenceInDays, isWeekend, eachDayOfInterval } from "date-fns";
 import { es } from "date-fns/locale";
-import type { InsertRequest, Request, UserVacationBalance } from "@shared/schema";
+import type { InsertRequest, Request, UserVacationBalance, ApprovalSchema } from "@shared/schema";
 import type { DateRange } from "react-day-picker";
 
 interface CreateRequestModalProps {
@@ -46,6 +46,21 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Obtener esquemas de aprobación para aplicar configuración
+  const { data: approvalSchemas = [] } = useQuery<ApprovalSchema[]>({
+    queryKey: ["/api/approval-schemas"],
+    queryFn: async () => {
+      const response = await fetch("/api/approval-schemas");
+      if (!response.ok) throw new Error("Failed to fetch approval schemas");
+      return response.json();
+    },
+  });
+
+  // Obtener el esquema activo para el tipo de solicitud seleccionado
+  const activeSchema = approvalSchemas.find(schema => 
+    schema.tipoSolicitud === formData.tipo
+  );
 
   // Obtener todas las solicitudes existentes para verificar conflictos de fechas
   const { data: existingRequests = [] } = useQuery<Request[]>({
@@ -365,26 +380,39 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-gray-700">Adjuntar archivos</Label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                  <p className="text-gray-600 mb-4">
-                    Arrastra tu archivo aquí o utiliza el siguiente botón
-                  </p>
-                  <Button 
-                    type="button"
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded"
-                  >
-                    Subir archivo
-                  </Button>
-                  <input
-                    type="file"
-                    multiple
-                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                    className="hidden"
-                  />
+              {/* Adjuntar archivos - Condicional según configuración del esquema */}
+              {activeSchema && (activeSchema as any).adjuntarDocumentos === "true" && (
+                <div className="space-y-2">
+                  <Label className="text-gray-700">
+                    Adjuntar archivos
+                    {(activeSchema as any).adjuntarDocumentosObligatorio === "true" && (
+                      <span className="text-red-500 ml-1">*</span>
+                    )}
+                  </Label>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                    <p className="text-gray-600 mb-4">
+                      Arrastra tu archivo aquí o utiliza el siguiente botón
+                    </p>
+                    <Button 
+                      type="button"
+                      className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded"
+                    >
+                      Subir archivo
+                    </Button>
+                    <input
+                      type="file"
+                      multiple
+                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                      className="hidden"
+                    />
+                    {(activeSchema as any).adjuntarDocumentosObligatorio === "true" && (
+                      <p className="text-red-500 text-sm mt-2">
+                        * Este campo es obligatorio
+                      </p>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="comentario" className="text-gray-700">Comentario</Label>
