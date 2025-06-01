@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Trash2, Search, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { MOTIVOS_PERMISO } from "@/lib/constants";
+import { CATEGORIAS_PERMISO, TODOS_LOS_MOTIVOS } from "@/lib/constants";
 import type { ApprovalSchema, ApprovalStep, InsertApprovalSchema, InsertApprovalStep } from "@shared/schema";
 
 const PERMISSION_TYPES = [
@@ -41,7 +41,7 @@ export function ApprovalSchemas() {
   const [approvalPermissions, setApprovalPermissions] = useState<string[]>([]);
   const [newSchemaName, setNewSchemaName] = useState("");
   const [newSchemaType, setNewSchemaType] = useState("Permiso");
-  const [newSchemaMotivo, setNewSchemaMotivo] = useState("");
+  const [newSchemaMotivos, setNewSchemaMotivos] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [profileSearch, setProfileSearch] = useState("");
   const [activeSubTab, setActiveSubTab] = useState("general");
@@ -335,11 +335,11 @@ export function ApprovalSchemas() {
       return;
     }
 
-    // Validar que para permisos se haya seleccionado un motivo
-    if (newSchemaType === "Permiso" && !newSchemaMotivo) {
+    // Validar que para permisos se haya seleccionado al menos un motivo
+    if (newSchemaType === "Permiso" && newSchemaMotivos.length === 0) {
       toast({
-        title: "Motivo requerido",
-        description: "Por favor selecciona un motivo específico para el permiso.",
+        title: "Motivos requeridos",
+        description: "Por favor selecciona al menos un motivo para el permiso.",
         variant: "destructive",
       });
       return;
@@ -348,7 +348,7 @@ export function ApprovalSchemas() {
     createSchemaMutation.mutate({
       nombre: newSchemaName,
       tipoSolicitud: newSchemaType,
-      motivo: newSchemaType === "Permiso" ? newSchemaMotivo : null,
+      motivos: newSchemaType === "Permiso" ? newSchemaMotivos : null,
     });
   };
 
@@ -431,7 +431,7 @@ export function ApprovalSchemas() {
             />
             <Select value={newSchemaType} onValueChange={(value) => {
               setNewSchemaType(value);
-              setNewSchemaMotivo(""); // Reset motivo when type changes
+              setNewSchemaMotivos([]); // Reset motivos when type changes
             }}>
               <SelectTrigger>
                 <SelectValue placeholder="Tipo de solicitud" />
@@ -442,20 +442,36 @@ export function ApprovalSchemas() {
               </SelectContent>
             </Select>
             
-            {/* Campo motivo - Solo para permisos */}
+            {/* Campo motivos - Solo para permisos */}
             {newSchemaType === "Permiso" && (
-              <Select value={newSchemaMotivo} onValueChange={setNewSchemaMotivo}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Motivo específico" />
-                </SelectTrigger>
-                <SelectContent>
-                  {MOTIVOS_PERMISO.map((motivo) => (
-                    <SelectItem key={motivo} value={motivo}>
-                      {motivo}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Motivos aplicables</Label>
+                {Object.entries(CATEGORIAS_PERMISO).map(([categoria, motivos]) => (
+                  <div key={categoria} className="space-y-2">
+                    <Label className="text-xs text-gray-600">{categoria}</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {motivos.map((motivo) => (
+                        <div key={motivo} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={motivo}
+                            checked={newSchemaMotivos.includes(motivo)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setNewSchemaMotivos(prev => [...prev, motivo]);
+                              } else {
+                                setNewSchemaMotivos(prev => prev.filter(m => m !== motivo));
+                              }
+                            }}
+                          />
+                          <Label htmlFor={motivo} className="text-xs">
+                            {motivo}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
             <Button 
               onClick={handleCreateSchema}

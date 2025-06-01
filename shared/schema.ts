@@ -34,7 +34,7 @@ export const approvalSchemas = pgTable("approval_schemas", {
   id: serial("id").primaryKey(),
   nombre: varchar("nombre", { length: 100 }).notNull(),
   tipoSolicitud: varchar("tipo_solicitud", { length: 50 }).notNull(),
-  motivo: varchar("motivo", { length: 255 }), // Específico para permisos: "Licencia Médica", "Capacitación", etc.
+  motivos: text("motivos").array(), // Array de motivos específicos para permisos
   visibilityPermissions: text("visibility_permissions").array(),
   approvalPermissions: text("approval_permissions").array(),
   // Configuración de tipos de permiso

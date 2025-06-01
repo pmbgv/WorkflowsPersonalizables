@@ -1,17 +1,31 @@
-// Constantes compartidas para motivos de permisos
-export const MOTIVOS_PERMISO = [
-  "Licencia Médica",
-  "Capacitación", 
-  "Permiso con goce",
-  "Permiso por horas",
-  "Permiso personal"
-].sort();
+// Constantes para categorías de permisos y sus motivos
+export const CATEGORIAS_PERMISO = {
+  "Comunes": [
+    "Licencia Médica Estándar",
+    "Otro",
+    "P. Administrativo", 
+    "P. Fallecimiento",
+    "Capacitación",
+    "P. Sindical",
+    "Reunión",
+    "Accidentes",
+    "Compensación",
+    "Amamantamiento (Fuero)",
+    "Permiso con Goce",
+    "Permiso sin Goce",
+    "Ley 20823"
+  ],
+  "Turno completo": [
+    "Permiso Turno Completo",
+    "Licencia Médica Turno Completo",
+    "Capacitación Turno Completo"
+  ],
+  "Parciales": [
+    "Permiso Parcial",
+    "Licencia Médica Parcial", 
+    "Capacitación Parcial"
+  ]
+};
 
-// Otros motivos usados en el sistema
-export const MOTIVOS_ANTIGUOS = [
-  "Permiso administrativo",
-  "Permiso parcial", 
-  "Permiso lactancia",
-  "Permiso por horas",
-  "Permiso otro"
-];
+// Lista plana de todos los motivos para facilitar búsquedas
+export const TODOS_LOS_MOTIVOS = Object.values(CATEGORIAS_PERMISO).flat().sort();

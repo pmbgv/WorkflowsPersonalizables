@@ -12,7 +12,7 @@ import { Plus, Upload, Calendar as CalendarIcon, X, Info, AlertTriangle } from "
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { MOTIVOS_PERMISO } from "@/lib/constants";
+import { CATEGORIAS_PERMISO, TODOS_LOS_MOTIVOS } from "@/lib/constants";
 import { format, differenceInDays, isWeekend, eachDayOfInterval } from "date-fns";
 import { es } from "date-fns/locale";
 import type { InsertRequest, Request, UserVacationBalance, ApprovalSchema } from "@shared/schema";
@@ -63,7 +63,9 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
     if (formData.tipo === "Vacaciones") {
       return schema.tipoSolicitud === "Vacaciones";
     } else if (formData.tipo === "Permiso") {
-      return schema.tipoSolicitud === "Permiso" && (schema as any).motivo === formData.motivo;
+      return schema.tipoSolicitud === "Permiso" && 
+             (schema as any).motivos && 
+             (schema as any).motivos.includes(formData.motivo);
     }
     return false;
   });
@@ -215,7 +217,7 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
   const getMotivosForTipo = (tipo: string) => {
     switch (tipo) {
       case "Permiso":
-        return MOTIVOS_PERMISO;
+        return TODOS_LOS_MOTIVOS;
       default:
         return [];
     }
