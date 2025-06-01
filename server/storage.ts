@@ -1,4 +1,4 @@
-import { requests, approvalSchemas, approvalSteps, type Request, type InsertRequest, type ApprovalSchema, type InsertApprovalSchema, type ApprovalStep, type InsertApprovalStep } from "@shared/schema";
+import { requests, approvalSchemas, approvalSteps, requestHistory, type Request, type InsertRequest, type ApprovalSchema, type InsertApprovalSchema, type ApprovalStep, type InsertApprovalStep, type RequestHistory, type InsertRequestHistory } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, like, gte, lte, or } from "drizzle-orm";
 
@@ -27,6 +27,10 @@ export interface IStorage {
   createApprovalStep(step: InsertApprovalStep): Promise<ApprovalStep>;
   updateApprovalStep(id: number, updates: Partial<ApprovalStep>): Promise<ApprovalStep | undefined>;
   deleteApprovalStep(id: number): Promise<boolean>;
+  
+  // Request History
+  getRequestHistory(requestId: number): Promise<RequestHistory[]>;
+  addRequestHistory(history: InsertRequestHistory): Promise<RequestHistory>;
 }
 
 export class DatabaseStorage implements IStorage {

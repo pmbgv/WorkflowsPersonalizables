@@ -151,6 +151,32 @@ export function RequestDetailsModal({ request, open, onOpenChange, onDownload, o
             </div>
           </div>
 
+          {/* Historial de estados */}
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-3">Historial de estados</label>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded border">
+                <div className="flex items-center gap-4">
+                  <span className="text-sm text-gray-600">{formatDate(request.fechaCreacion)}</span>
+                  <span className="text-sm font-medium">Estado: Pendiente</span>
+                  <span className="text-sm text-gray-600">Por: {request.solicitadoPor}</span>
+                </div>
+                <span className="text-xs text-gray-500">Solicitud creada</span>
+              </div>
+              
+              {request.estado !== "Pendiente" && (
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded border">
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm text-gray-600">{formatDate(request.fechaCreacion)}</span>
+                    <span className="text-sm font-medium">Estado: {request.estado}</span>
+                    <span className="text-sm text-gray-600">Por: Sistema</span>
+                  </div>
+                  <span className="text-xs text-gray-500">Cambio de estado</span>
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Acciones de aprobación */}
           {isAllRequestsTab && onStatusChange && request.estado === "Pendiente" && (
             <div className="flex justify-center gap-4 pt-4 border-t border-gray-200">

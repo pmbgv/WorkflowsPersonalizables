@@ -40,6 +40,16 @@ export const approvalSteps = pgTable("approval_steps", {
   fechaCreacion: timestamp("fecha_creacion").defaultNow().notNull(),
 });
 
+export const requestHistory = pgTable("request_history", {
+  id: serial("id").primaryKey(),
+  requestId: integer("request_id").references(() => requests.id, { onDelete: 'cascade' }).notNull(),
+  previousState: varchar("previous_state", { length: 20 }),
+  newState: varchar("new_state", { length: 20 }).notNull(),
+  changedBy: varchar("changed_by", { length: 100 }).notNull(),
+  changeReason: text("change_reason"),
+  fechaCreacion: timestamp("fecha_creacion").defaultNow().notNull(),
+});
+
 export const insertRequestSchema = createInsertSchema(requests).omit({
   id: true,
   fechaCreacion: true,
@@ -57,9 +67,16 @@ export const insertApprovalStepSchema = createInsertSchema(approvalSteps).omit({
   fechaCreacion: true,
 });
 
+export const insertRequestHistorySchema = createInsertSchema(requestHistory).omit({
+  id: true,
+  fechaCreacion: true,
+});
+
 export type InsertRequest = z.infer<typeof insertRequestSchema>;
 export type Request = typeof requests.$inferSelect;
 export type ApprovalSchema = typeof approvalSchemas.$inferSelect;
 export type InsertApprovalSchema = z.infer<typeof insertApprovalSchemaSchema>;
 export type ApprovalStep = typeof approvalSteps.$inferSelect;
 export type InsertApprovalStep = z.infer<typeof insertApprovalStepSchema>;
+export type RequestHistory = typeof requestHistory.$inferSelect;
+export type InsertRequestHistory = z.infer<typeof insertRequestHistorySchema>;
