@@ -40,6 +40,18 @@ export function ApprovalSchemas() {
   const [searchTerm, setSearchTerm] = useState("");
   const [profileSearch, setProfileSearch] = useState("");
   const [activeSubTab, setActiveSubTab] = useState("general");
+  
+  // Estados para configuración del esquema
+  const [schemaConfig, setSchemaConfig] = useState({
+    tiposPermiso: ["Comunes", "Turno completo", "Parciales"],
+    adjuntarDocumentos: false,
+    comentarioRequerido: false,
+    enviarCorreoNotificacion: false,
+    permitirSolicitudTerceros: false,
+    diasMinimo: "",
+    diasMaximo: "",
+    diasMultiplo: ""
+  });
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -56,9 +68,31 @@ export function ApprovalSchemas() {
       console.log("Permisos de aprobación:", selectedSchema.approvalPermissions);
       setVisibilityPermissions(selectedSchema.visibilityPermissions || []);
       setApprovalPermissions(selectedSchema.approvalPermissions || []);
+      
+      // Load schema configuration
+      setSchemaConfig({
+        tiposPermiso: (selectedSchema as any).tiposPermiso || ["Comunes", "Turno completo", "Parciales"],
+        adjuntarDocumentos: (selectedSchema as any).adjuntarDocumentos === "true",
+        comentarioRequerido: (selectedSchema as any).comentarioRequerido === "true",
+        enviarCorreoNotificacion: (selectedSchema as any).enviarCorreoNotificacion === "true",
+        permitirSolicitudTerceros: (selectedSchema as any).permitirSolicitudTerceros === "true",
+        diasMinimo: (selectedSchema as any).diasMinimo?.toString() || "",
+        diasMaximo: (selectedSchema as any).diasMaximo?.toString() || "",
+        diasMultiplo: (selectedSchema as any).diasMultiplo?.toString() || ""
+      });
     } else {
       setVisibilityPermissions([]);
       setApprovalPermissions([]);
+      setSchemaConfig({
+        tiposPermiso: ["Comunes", "Turno completo", "Parciales"],
+        adjuntarDocumentos: false,
+        comentarioRequerido: false,
+        enviarCorreoNotificacion: false,
+        permitirSolicitudTerceros: false,
+        diasMinimo: "",
+        diasMaximo: "",
+        diasMultiplo: ""
+      });
     }
   }, [selectedSchema]);
 
@@ -165,6 +199,43 @@ export function ApprovalSchemas() {
       toast({
         title: "Error",
         description: "Ocurrió un error al actualizar el paso.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Update schema configuration mutation
+  const updateSchemaConfigMutation = useMutation({
+    mutationFn: async (configData: any) => {
+      if (!selectedSchema) throw new Error("No schema selected");
+      
+      const updateData = {
+        tiposPermiso: configData.tiposPermiso,
+        adjuntarDocumentos: configData.adjuntarDocumentos ? "true" : "false",
+        comentarioRequerido: configData.comentarioRequerido ? "true" : "false", 
+        enviarCorreoNotificacion: configData.enviarCorreoNotificacion ? "true" : "false",
+        permitirSolicitudTerceros: configData.permitirSolicitudTerceros ? "true" : "false",
+        diasMinimo: configData.diasMinimo ? parseInt(configData.diasMinimo) : null,
+        diasMaximo: configData.diasMaximo ? parseInt(configData.diasMaximo) : null,
+        diasMultiplo: configData.diasMultiplo ? parseInt(configData.diasMultiplo) : null,
+        visibilityPermissions,
+        approvalPermissions
+      };
+      
+      const response = await apiRequest("PATCH", `/api/approval-schemas/${selectedSchema.id}`, updateData);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/approval-schemas"] });
+      toast({
+        title: "Configuración guardada",
+        description: "La configuración del esquema ha sido actualizada exitosamente.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Ocurrió un error al guardar la configuración.",
         variant: "destructive",
       });
     },
@@ -415,6 +486,178 @@ export function ApprovalSchemas() {
                           <SelectItem value="Marca">Marcas</SelectItem>
                         </SelectContent>
                       </Select>
+                    </div>
+
+                    {/* Tipos de Permiso */}
+                    <div className="space-y-3">
+                      <Label className="text-base font-medium">Permisos</Label>
+                      <div className="flex items-center space-x-6">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="tipo-comunes"
+                            checked={schemaConfig.tiposPermiso.includes("Comunes")}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSchemaConfig(prev => ({ 
+                                  ...prev, 
+                                  tiposPermiso: [...prev.tiposPermiso, "Comunes"] 
+                                }));
+                              } else {
+                                setSchemaConfig(prev => ({ 
+                                  ...prev, 
+                                  tiposPermiso: prev.tiposPermiso.filter(t => t !== "Comunes") 
+                                }));
+                              }
+                            }}
+                          />
+                          <Label htmlFor="tipo-comunes" className="text-sm">Comunes</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="tipo-turno"
+                            checked={schemaConfig.tiposPermiso.includes("Turno completo")}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSchemaConfig(prev => ({ 
+                                  ...prev, 
+                                  tiposPermiso: [...prev.tiposPermiso, "Turno completo"] 
+                                }));
+                              } else {
+                                setSchemaConfig(prev => ({ 
+                                  ...prev, 
+                                  tiposPermiso: prev.tiposPermiso.filter(t => t !== "Turno completo") 
+                                }));
+                              }
+                            }}
+                          />
+                          <Label htmlFor="tipo-turno" className="text-sm">Turno completo</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="tipo-parciales"
+                            checked={schemaConfig.tiposPermiso.includes("Parciales")}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSchemaConfig(prev => ({ 
+                                  ...prev, 
+                                  tiposPermiso: [...prev.tiposPermiso, "Parciales"] 
+                                }));
+                              } else {
+                                setSchemaConfig(prev => ({ 
+                                  ...prev, 
+                                  tiposPermiso: prev.tiposPermiso.filter(t => t !== "Parciales") 
+                                }));
+                              }
+                            }}
+                          />
+                          <Label htmlFor="tipo-parciales" className="text-sm">Parciales</Label>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Configuración */}
+                    <div className="space-y-4">
+                      <Label className="text-base font-medium">Configuración</Label>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="adjuntar-docs" className="text-sm">Adjuntar documentos</Label>
+                          <Switch
+                            id="adjuntar-docs"
+                            checked={schemaConfig.adjuntarDocumentos}
+                            onCheckedChange={(checked) => 
+                              setSchemaConfig(prev => ({ ...prev, adjuntarDocumentos: checked }))
+                            }
+                          />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="comentario" className="text-sm">Comentario</Label>
+                          <Switch
+                            id="comentario"
+                            checked={schemaConfig.comentarioRequerido}
+                            onCheckedChange={(checked) => 
+                              setSchemaConfig(prev => ({ ...prev, comentarioRequerido: checked }))
+                            }
+                          />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="email-notif" className="text-sm">Enviar correo de notificación</Label>
+                          <Switch
+                            id="email-notif"
+                            checked={schemaConfig.enviarCorreoNotificacion}
+                            onCheckedChange={(checked) => 
+                              setSchemaConfig(prev => ({ ...prev, enviarCorreoNotificacion: checked }))
+                            }
+                          />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="terceros" className="text-sm">Permitir solicitud a terceros</Label>
+                          <Switch
+                            id="terceros"
+                            checked={schemaConfig.permitirSolicitudTerceros}
+                            onCheckedChange={(checked) => 
+                              setSchemaConfig(prev => ({ ...prev, permitirSolicitudTerceros: checked }))
+                            }
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Cantidad de días */}
+                    <div className="space-y-3">
+                      <Label className="text-base font-medium">Cantidad de días</Label>
+                      <div>
+                        <Label className="text-sm">Días calendario</Label>
+                        <div className="grid grid-cols-3 gap-4 mt-2">
+                          <div>
+                            <Label htmlFor="dias-min" className="text-xs text-gray-600">Mínimo</Label>
+                            <Input
+                              id="dias-min"
+                              type="number"
+                              placeholder="0"
+                              value={schemaConfig.diasMinimo}
+                              onChange={(e) => 
+                                setSchemaConfig(prev => ({ ...prev, diasMinimo: e.target.value }))
+                              }
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="dias-max" className="text-xs text-gray-600">Máximo</Label>
+                            <Input
+                              id="dias-max"
+                              type="number"
+                              placeholder="0"
+                              value={schemaConfig.diasMaximo}
+                              onChange={(e) => 
+                                setSchemaConfig(prev => ({ ...prev, diasMaximo: e.target.value }))
+                              }
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="dias-mult" className="text-xs text-gray-600">Múltiplo</Label>
+                            <Input
+                              id="dias-mult"
+                              type="number"
+                              placeholder="0"
+                              value={schemaConfig.diasMultiplo}
+                              onChange={(e) => 
+                                setSchemaConfig(prev => ({ ...prev, diasMultiplo: e.target.value }))
+                              }
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Save button for configuration */}
+                    <div className="flex justify-end pt-4 border-t">
+                      <Button 
+                        onClick={() => updateSchemaConfigMutation.mutate(schemaConfig)}
+                        disabled={updateSchemaConfigMutation.isPending}
+                        className="flex items-center space-x-2"
+                      >
+                        <Save className="h-4 w-4" />
+                        <span>{updateSchemaConfigMutation.isPending ? "Guardando..." : "Guardar configuración"}</span>
+                      </Button>
                     </div>
                     
                     {/* Visibility section */}
