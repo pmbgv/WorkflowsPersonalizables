@@ -1,5 +1,24 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import {
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,10 +28,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, Search, Save } from "lucide-react";
+import { Plus, Trash2, Search, Save, GripVertical } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { CATEGORIAS_PERMISO } from "@/lib/constants";
 import type { MotivoPermiso } from "@shared/schema";
 import type { ApprovalSchema, ApprovalStep, InsertApprovalSchema, InsertApprovalStep } from "@shared/schema";
 
@@ -82,6 +100,17 @@ export function ApprovalSchemas() {
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Estado local para los pasos de aprobación (para drag and drop)
+  const [localSteps, setLocalSteps] = useState<ApprovalStep[]>([]);
+
+  // Sensores para drag and drop
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   // Reset changes and load schema data when switching schemas
   useEffect(() => {
@@ -166,6 +195,11 @@ export function ApprovalSchemas() {
     },
     enabled: !!selectedSchema,
   });
+
+  // Sincronizar pasos locales con los datos de la base de datos
+  useEffect(() => {
+    setLocalSteps(steps);
+  }, [steps]);
 
   // Create schema mutation
   const createSchemaMutation = useMutation({
