@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertRequestSchema, insertApprovalSchemaSchema, insertApprovalStepSchema } from "@shared/schema";
+import { insertRequestSchema, insertApprovalSchemaSchema, insertApprovalStepSchema, insertMotivoPermisoSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -335,6 +335,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Error deleting approval step" });
+    }
+  });
+
+  // ===== MOTIVOS DE PERMISOS ROUTES =====
+  
+  // Get all motivos de permisos organizados por categoría
+  app.get("/api/motivos-permisos", async (req, res) => {
+    try {
+      const motivos = await storage.getMotivosPermisos();
+      res.json(motivos);
+    } catch (error) {
+      console.error("Error fetching motivos permisos:", error);
+      res.status(500).json({ message: "Error fetching motivos permisos" });
+    }
+  });
+
+  // Get motivos por categoría específica
+  app.get("/api/motivos-permisos/categoria/:categoria", async (req, res) => {
+    try {
+      const { categoria } = req.params;
+      const motivos = await storage.getMotivosPorCategoria(categoria);
+      res.json(motivos);
+    } catch (error) {
+      console.error("Error fetching motivos by categoria:", error);
+      res.status(500).json({ message: "Error fetching motivos by categoria" });
+    }
+  });
+
+  // Create new motivo
+  app.post("/api/motivos-permisos", async (req, res) => {
+    try {
+      const validatedData = insertMotivoPermisoSchema.parse(req.body);
+      const newMotivo = await storage.createMotivoPermiso(validatedData);
+      res.status(201).json(newMotivo);
+    } catch (error) {
+      console.error("Error creating motivo permiso:", error);
+      res.status(400).json({ message: "Error creating motivo permiso" });
+    }
+  });
+
+  // Update motivo
+  app.patch("/api/motivos-permisos/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updates = req.body;
+      const updatedMotivo = await storage.updateMotivoPermiso(id, updates);
+      
+      if (!updatedMotivo) {
+        return res.status(404).json({ message: "Motivo not found" });
+      }
+      
+      res.json(updatedMotivo);
+    } catch (error) {
+      console.error("Error updating motivo permiso:", error);
+      res.status(400).json({ message: "Error updating motivo permiso" });
+    }
+  });
+
+  // Delete motivo (soft delete)
+  app.delete("/api/motivos-permisos/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteMotivoPermiso(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Motivo not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting motivo permiso:", error);
+      res.status(400).json({ message: "Error deleting motivo permiso" });
     }
   });
 

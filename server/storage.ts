@@ -234,6 +234,53 @@ export class DatabaseStorage implements IStorage {
       return undefined;
     }
   }
+
+  // Implementación de funciones para motivos de permisos
+  async getMotivosPermisos(): Promise<MotivoPermiso[]> {
+    return await db
+      .select()
+      .from(motivosPermisos)
+      .where(eq(motivosPermisos.activo, "true"))
+      .orderBy(motivosPermisos.categoria, motivosPermisos.orden);
+  }
+
+  async getMotivosPorCategoria(categoria: string): Promise<MotivoPermiso[]> {
+    return await db
+      .select()
+      .from(motivosPermisos)
+      .where(and(
+        eq(motivosPermisos.categoria, categoria),
+        eq(motivosPermisos.activo, "true")
+      ))
+      .orderBy(motivosPermisos.orden);
+  }
+
+  async createMotivoPermiso(motivo: InsertMotivoPermiso): Promise<MotivoPermiso> {
+    const [created] = await db
+      .insert(motivosPermisos)
+      .values(motivo)
+      .returning();
+    return created;
+  }
+
+  async updateMotivoPermiso(id: number, updates: Partial<MotivoPermiso>): Promise<MotivoPermiso | undefined> {
+    const [updated] = await db
+      .update(motivosPermisos)
+      .set({ ...updates, fechaActualizacion: new Date() })
+      .where(eq(motivosPermisos.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteMotivoPermiso(id: number): Promise<boolean> {
+    // Soft delete - solo marcar como inactivo
+    const [updated] = await db
+      .update(motivosPermisos)
+      .set({ activo: "false", fechaActualizacion: new Date() })
+      .where(eq(motivosPermisos.id, id))
+      .returning();
+    return !!updated;
+  }
 }
 
 export const storage = new DatabaseStorage();

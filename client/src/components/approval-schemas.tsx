@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Trash2, Search, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { CATEGORIAS_PERMISO, TODOS_LOS_MOTIVOS } from "@/lib/constants";
+import type { MotivoPermiso } from "@shared/schema";
 import type { ApprovalSchema, ApprovalStep, InsertApprovalSchema, InsertApprovalStep } from "@shared/schema";
 
 const PERMISSION_TYPES = [
