@@ -18,12 +18,18 @@ export const CATEGORIAS_PERMISO = {
   "Turno completo": [
     "Permiso Turno Completo",
     "Licencia Médica Turno Completo",
-    "Capacitación Turno Completo"
+    "Capacitación Turno Completo",
+    "Permiso Descuenta",
+    "Permiso No Descuenta"
   ],
   "Parciales": [
     "Permiso Parcial",
     "Licencia Médica Parcial", 
-    "Capacitación Parcial"
+    "Capacitación Parcial",
+    "Parcial Agrega H",
+    "Parcial No Agrega H",
+    "administrativo 1/2",
+    "Fijo por Horas"
   ]
 };
 
