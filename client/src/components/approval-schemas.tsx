@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Trash2, Search, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -57,6 +58,21 @@ export function ApprovalSchemas() {
     diasMinimo: "",
     diasMaximo: "",
     diasMultiplo: ""
+  });
+
+  // Estados para configuración de saldos (vacaciones)
+  const [saldosConfig, setSaldosConfig] = useState({
+    tipoLiberacion: "diaria", // diaria o anual
+    fechasLiberacion: "actual", // actual o siguiente
+    anoActual: new Date().getFullYear().toString(),
+    anoSiguiente: (new Date().getFullYear() + 1).toString(),
+    caducidadPeriodoActual: "",
+    minimoInicioSolicitud: "12",
+    excluirSabado: false,
+    excluirDomingo: false,
+    excluirFeriado: false,
+    excluirDescanso: false,
+    extenderDiasNoLaborables: false
   });
 
   const { toast } = useToast();
@@ -456,8 +472,11 @@ export function ApprovalSchemas() {
         {selectedSchema ? (
           <>
             <Tabs value={activeSubTab} onValueChange={setActiveSubTab}>
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className={`grid w-full ${selectedSchema?.tipoSolicitud === 'Vacaciones' ? 'grid-cols-3' : 'grid-cols-2'}`}>
                 <TabsTrigger value="general">General</TabsTrigger>
+                {selectedSchema?.tipoSolicitud === 'Vacaciones' && (
+                  <TabsTrigger value="saldos">Saldos</TabsTrigger>
+                )}
                 <TabsTrigger value="pasos">Pasos de Aprobación</TabsTrigger>
               </TabsList>
               
@@ -839,6 +858,176 @@ export function ApprovalSchemas() {
                   </CardContent>
                 </Card>
               </TabsContent>
+
+              {/* Pestaña Saldos - Solo para esquemas de Vacaciones */}
+              {selectedSchema?.tipoSolicitud === 'Vacaciones' && (
+                <TabsContent value="saldos" className="space-y-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Configuración de Saldos</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      {/* Tipo de liberación de días */}
+                      <div className="space-y-3">
+                        <Label className="text-base font-medium">Tipo de liberación de días</Label>
+                        <RadioGroup 
+                          value={saldosConfig.tipoLiberacion}
+                          onValueChange={(value) => setSaldosConfig(prev => ({ ...prev, tipoLiberacion: value }))}
+                          className="flex space-x-6"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="diaria" id="liberacion-diaria" />
+                            <Label htmlFor="liberacion-diaria" className="text-sm">Liberación diaria</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="anual" id="liberacion-anual" />
+                            <Label htmlFor="liberacion-anual" className="text-sm">Liberación anual</Label>
+                          </div>
+                        </RadioGroup>
+                      </div>
+
+                      {/* Fechas de liberación de períodos */}
+                      <div className="space-y-3">
+                        <Label className="text-base font-medium">Fechas de liberación de períodos</Label>
+                        <div className="space-y-3">
+                          <RadioGroup 
+                            value={saldosConfig.fechasLiberacion}
+                            onValueChange={(value) => setSaldosConfig(prev => ({ ...prev, fechasLiberacion: value }))}
+                          >
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="actual" id="periodo-actual" />
+                              <Label htmlFor="periodo-actual" className="text-sm">Actual</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="siguiente" id="periodo-siguiente" />
+                              <Label htmlFor="periodo-siguiente" className="text-sm">Siguiente período</Label>
+                            </div>
+                          </RadioGroup>
+                          
+                          <div className="grid grid-cols-2 gap-4 mt-3">
+                            <div>
+                              <Label className="text-sm text-gray-600">Año actual</Label>
+                              <Input
+                                type="number"
+                                value={saldosConfig.anoActual}
+                                onChange={(e) => setSaldosConfig(prev => ({ ...prev, anoActual: e.target.value }))}
+                                placeholder="2025"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-sm text-gray-600">Año siguiente</Label>
+                              <Input
+                                type="number"
+                                value={saldosConfig.anoSiguiente}
+                                onChange={(e) => setSaldosConfig(prev => ({ ...prev, anoSiguiente: e.target.value }))}
+                                placeholder="2026"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Caducidad del período actual */}
+                      <div className="space-y-3">
+                        <Label className="text-base font-medium">Caducidad del período actual</Label>
+                        <div className="flex items-center space-x-2">
+                          <Input
+                            value={saldosConfig.caducidadPeriodoActual}
+                            onChange={(e) => setSaldosConfig(prev => ({ ...prev, caducidadPeriodoActual: e.target.value }))}
+                            placeholder="del"
+                            className="w-20"
+                          />
+                          <span className="text-sm">del</span>
+                          <Input
+                            value={saldosConfig.anoActual}
+                            onChange={(e) => setSaldosConfig(prev => ({ ...prev, anoActual: e.target.value }))}
+                            className="w-20"
+                            readOnly
+                          />
+                        </div>
+                      </div>
+
+                      {/* Excluir de la solicitud */}
+                      <div className="space-y-3">
+                        <Label className="text-base font-medium">Excluir de la solicitud</Label>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="flex items-center space-x-2">
+                            <Checkbox 
+                              id="excluir-sabado"
+                              checked={saldosConfig.excluirSabado}
+                              onCheckedChange={(checked) => 
+                                setSaldosConfig(prev => ({ ...prev, excluirSabado: !!checked }))
+                              }
+                            />
+                            <Label htmlFor="excluir-sabado" className="text-sm">Sábado</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox 
+                              id="excluir-domingo"
+                              checked={saldosConfig.excluirDomingo}
+                              onCheckedChange={(checked) => 
+                                setSaldosConfig(prev => ({ ...prev, excluirDomingo: !!checked }))
+                              }
+                            />
+                            <Label htmlFor="excluir-domingo" className="text-sm">Domingo</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox 
+                              id="excluir-feriado"
+                              checked={saldosConfig.excluirFeriado}
+                              onCheckedChange={(checked) => 
+                                setSaldosConfig(prev => ({ ...prev, excluirFeriado: !!checked }))
+                              }
+                            />
+                            <Label htmlFor="excluir-feriado" className="text-sm">Feriado</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox 
+                              id="excluir-descanso"
+                              checked={saldosConfig.excluirDescanso}
+                              onCheckedChange={(checked) => 
+                                setSaldosConfig(prev => ({ ...prev, excluirDescanso: !!checked }))
+                              }
+                            />
+                            <Label htmlFor="excluir-descanso" className="text-sm">Descanso</Label>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Extender días no laborables */}
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="extender-dias" className="text-sm">Extender días no laborables</Label>
+                          <Switch
+                            id="extender-dias"
+                            checked={saldosConfig.extenderDiasNoLaborables}
+                            onCheckedChange={(checked) => 
+                              setSaldosConfig(prev => ({ ...prev, extenderDiasNoLaborables: checked }))
+                            }
+                          />
+                        </div>
+                      </div>
+
+                      {/* Vacaciones base */}
+                      <div className="space-y-3">
+                        <Label className="text-base font-medium">Vacaciones base</Label>
+                        <div>
+                          <Label className="text-sm text-gray-600">Mínimo inicio de solicitud</Label>
+                          <div className="flex items-center space-x-2 mt-1">
+                            <Input
+                              type="number"
+                              value={saldosConfig.minimoInicioSolicitud}
+                              onChange={(e) => setSaldosConfig(prev => ({ ...prev, minimoInicioSolicitud: e.target.value }))}
+                              className="w-20"
+                            />
+                            <span className="text-sm">meses</span>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              )}
               
               <TabsContent value="pasos" className="space-y-4">
                 <Card>
