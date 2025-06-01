@@ -30,6 +30,14 @@ const PROFILES = [
   "Supervisor"
 ].sort();
 
+const MOTIVOS_PERMISO = [
+  "Licencia Médica",
+  "Capacitación", 
+  "Permiso con goce",
+  "Permiso por horas",
+  "Permiso personal"
+].sort();
+
 export function ApprovalSchemas() {
   const [selectedSchema, setSelectedSchema] = useState<ApprovalSchema | null>(null);
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
@@ -38,6 +46,7 @@ export function ApprovalSchemas() {
   const [approvalPermissions, setApprovalPermissions] = useState<string[]>([]);
   const [newSchemaName, setNewSchemaName] = useState("");
   const [newSchemaType, setNewSchemaType] = useState("Permiso");
+  const [newSchemaMotivo, setNewSchemaMotivo] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [profileSearch, setProfileSearch] = useState("");
   const [activeSubTab, setActiveSubTab] = useState("general");
