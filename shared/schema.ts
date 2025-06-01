@@ -36,6 +36,17 @@ export const approvalSchemas = pgTable("approval_schemas", {
   tipoSolicitud: varchar("tipo_solicitud", { length: 50 }).notNull(),
   visibilityPermissions: text("visibility_permissions").array(),
   approvalPermissions: text("approval_permissions").array(),
+  // Configuración de tipos de permiso
+  tiposPermiso: text("tipos_permiso").array().default(["Comunes", "Turno completo", "Parciales"]),
+  // Configuración de características
+  adjuntarDocumentos: varchar("adjuntar_documentos", { length: 5 }).default("false"),
+  comentarioRequerido: varchar("comentario_requerido", { length: 5 }).default("false"),
+  enviarCorreoNotificacion: varchar("enviar_correo_notificacion", { length: 5 }).default("false"),
+  permitirSolicitudTerceros: varchar("permitir_solicitud_terceros", { length: 5 }).default("false"),
+  // Configuración de días
+  diasMinimo: integer("dias_minimo"),
+  diasMaximo: integer("dias_maximo"),
+  diasMultiplo: integer("dias_multiplo"),
   fechaCreacion: timestamp("fecha_creacion").defaultNow().notNull(),
   fechaActualizacion: timestamp("fecha_actualizacion").defaultNow().notNull(),
 });
