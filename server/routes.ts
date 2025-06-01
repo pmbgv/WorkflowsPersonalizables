@@ -44,17 +44,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create a new request
   app.post("/api/requests", async (req, res) => {
     try {
+      console.log("Request body:", req.body);
       const validatedData = insertRequestSchema.parse(req.body);
+      console.log("Validated data:", validatedData);
       const newRequest = await storage.createRequest(validatedData);
       res.status(201).json(newRequest);
     } catch (error) {
+      console.error("Error creating request:", error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ 
           message: "Validation error", 
           errors: error.errors 
         });
       }
-      res.status(500).json({ message: "Error creating request" });
+      res.status(500).json({ message: "Error creating request", error: error.message });
     }
   });
 
