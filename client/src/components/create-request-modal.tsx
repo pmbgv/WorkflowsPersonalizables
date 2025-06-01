@@ -24,7 +24,7 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
     asunto: "",
     descripcion: "",
     solicitadoPor: "Andrés Acevedo", // Default user
-    prioridad: "normal",
+    motivo: "",
     archivosAdjuntos: [],
   });
 
@@ -63,9 +63,30 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
       asunto: "",
       descripcion: "",
       solicitadoPor: "Andrés Acevedo",
-      prioridad: "normal",
+      motivo: "",
       archivosAdjuntos: [],
     });
+  };
+
+  // Define motivos based on tipo selection
+  const getMotivosForTipo = (tipo: string) => {
+    switch (tipo) {
+      case "Permiso":
+        return [
+          "Permiso Licencia Médica",
+          "Permiso con goce",
+          "Permiso por horas",
+          "Permiso Capacitación"
+        ];
+      default:
+        return [];
+    }
+  };
+
+  const handleTipoChange = (value: string) => {
+    handleInputChange('tipo', value);
+    // Reset motivo when tipo changes
+    handleInputChange('motivo', "");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -109,7 +130,7 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
               <Label htmlFor="tipo">Tipo de solicitud *</Label>
               <Select 
                 value={formData.tipo} 
-                onValueChange={(value) => handleInputChange('tipo', value)}
+                onValueChange={handleTipoChange}
                 required
               >
                 <SelectTrigger>
