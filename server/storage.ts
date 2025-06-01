@@ -1,4 +1,4 @@
-import { requests, approvalSchemas, approvalSteps, requestHistory, userVacationBalance, type Request, type InsertRequest, type ApprovalSchema, type InsertApprovalSchema, type ApprovalStep, type InsertApprovalStep, type RequestHistory, type InsertRequestHistory, type UserVacationBalance, type InsertUserVacationBalance } from "@shared/schema";
+import { requests, approvalSchemas, approvalSteps, requestHistory, userVacationBalance, motivosPermisos, type Request, type InsertRequest, type ApprovalSchema, type InsertApprovalSchema, type ApprovalStep, type InsertApprovalStep, type RequestHistory, type InsertRequestHistory, type UserVacationBalance, type InsertUserVacationBalance, type MotivoPermiso, type InsertMotivoPermiso } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, like, gte, lte, or } from "drizzle-orm";
 
@@ -36,6 +36,13 @@ export interface IStorage {
   getUserVacationBalance(identificador: string): Promise<UserVacationBalance | undefined>;
   createUserVacationBalance(balance: InsertUserVacationBalance): Promise<UserVacationBalance>;
   updateUserVacationBalance(identificador: string, diasDisponibles: number): Promise<UserVacationBalance | undefined>;
+  
+  // Motivos de Permisos
+  getMotivosPermisos(): Promise<MotivoPermiso[]>;
+  getMotivosPorCategoria(categoria: string): Promise<MotivoPermiso[]>;
+  createMotivoPermiso(motivo: InsertMotivoPermiso): Promise<MotivoPermiso>;
+  updateMotivoPermiso(id: number, updates: Partial<MotivoPermiso>): Promise<MotivoPermiso | undefined>;
+  deleteMotivoPermiso(id: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {

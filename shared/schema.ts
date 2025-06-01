@@ -111,7 +111,7 @@ export const motivosPermisos = pgTable("motivos_permisos", {
   id: serial("id").primaryKey(),
   categoria: varchar("categoria", { length: 50 }).notNull(), // "Comunes", "Turno completo", "Parciales"
   motivo: varchar("motivo", { length: 100 }).notNull(),
-  activo: boolean("activo").default(true),
+  activo: varchar("activo", { length: 5 }).default("true"), // Usar varchar como los otros campos booleanos
   orden: integer("orden").default(0), // Para ordenar los motivos dentro de cada categoría
   fechaCreacion: timestamp("fecha_creacion").defaultNow(),
   fechaActualizacion: timestamp("fecha_actualizacion").defaultNow(),
