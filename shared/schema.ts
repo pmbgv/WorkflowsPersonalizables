@@ -40,8 +40,14 @@ export const approvalSchemas = pgTable("approval_schemas", {
   tiposPermiso: text("tipos_permiso").array().default(["Comunes", "Turno completo", "Parciales"]),
   // Configuración de características
   adjuntarDocumentos: varchar("adjuntar_documentos", { length: 5 }).default("false"),
+  adjuntarDocumentosObligatorio: varchar("adjuntar_documentos_obligatorio", { length: 5 }).default("false"),
+  permitirModificarDocumentos: varchar("permitir_modificar_documentos", { length: 5 }).default("false"),
   comentarioRequerido: varchar("comentario_requerido", { length: 5 }).default("false"),
+  comentarioObligatorio: varchar("comentario_obligatorio", { length: 5 }).default("false"),
+  comentarioOpcional: varchar("comentario_opcional", { length: 5 }).default("true"),
   enviarCorreoNotificacion: varchar("enviar_correo_notificacion", { length: 5 }).default("false"),
+  solicitudCreada: varchar("solicitud_creada", { length: 5 }).default("false"),
+  solicitudAprobadaRechazada: varchar("solicitud_aprobada_rechazada", { length: 5 }).default("false"),
   permitirSolicitudTerceros: varchar("permitir_solicitud_terceros", { length: 5 }).default("false"),
   // Configuración de días
   diasMinimo: integer("dias_minimo"),

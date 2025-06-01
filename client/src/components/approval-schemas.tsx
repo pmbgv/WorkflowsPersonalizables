@@ -45,8 +45,14 @@ export function ApprovalSchemas() {
   const [schemaConfig, setSchemaConfig] = useState({
     tiposPermiso: ["Comunes", "Turno completo", "Parciales"],
     adjuntarDocumentos: false,
+    adjuntarDocumentosObligatorio: false,
+    permitirModificarDocumentos: false,
     comentarioRequerido: false,
+    comentarioObligatorio: false,
+    comentarioOpcional: true,
     enviarCorreoNotificacion: false,
+    solicitudCreada: false,
+    solicitudAprobadaRechazada: false,
     permitirSolicitudTerceros: false,
     diasMinimo: "",
     diasMaximo: "",
@@ -73,8 +79,14 @@ export function ApprovalSchemas() {
       setSchemaConfig({
         tiposPermiso: (selectedSchema as any).tiposPermiso || ["Comunes", "Turno completo", "Parciales"],
         adjuntarDocumentos: (selectedSchema as any).adjuntarDocumentos === "true",
+        adjuntarDocumentosObligatorio: (selectedSchema as any).adjuntarDocumentosObligatorio === "true",
+        permitirModificarDocumentos: (selectedSchema as any).permitirModificarDocumentos === "true",
         comentarioRequerido: (selectedSchema as any).comentarioRequerido === "true",
+        comentarioObligatorio: (selectedSchema as any).comentarioObligatorio === "true",
+        comentarioOpcional: (selectedSchema as any).comentarioOpcional !== "false",
         enviarCorreoNotificacion: (selectedSchema as any).enviarCorreoNotificacion === "true",
+        solicitudCreada: (selectedSchema as any).solicitudCreada === "true",
+        solicitudAprobadaRechazada: (selectedSchema as any).solicitudAprobadaRechazada === "true",
         permitirSolicitudTerceros: (selectedSchema as any).permitirSolicitudTerceros === "true",
         diasMinimo: (selectedSchema as any).diasMinimo?.toString() || "",
         diasMaximo: (selectedSchema as any).diasMaximo?.toString() || "",
@@ -86,8 +98,14 @@ export function ApprovalSchemas() {
       setSchemaConfig({
         tiposPermiso: ["Comunes", "Turno completo", "Parciales"],
         adjuntarDocumentos: false,
+        adjuntarDocumentosObligatorio: false,
+        permitirModificarDocumentos: false,
         comentarioRequerido: false,
+        comentarioObligatorio: false,
+        comentarioOpcional: true,
         enviarCorreoNotificacion: false,
+        solicitudCreada: false,
+        solicitudAprobadaRechazada: false,
         permitirSolicitudTerceros: false,
         diasMinimo: "",
         diasMaximo: "",
@@ -242,8 +260,14 @@ export function ApprovalSchemas() {
         approvalPermissions: approvalPermissions,
         tiposPermiso: schemaConfig.tiposPermiso,
         adjuntarDocumentos: schemaConfig.adjuntarDocumentos ? "true" : "false",
-        comentarioRequerido: schemaConfig.comentarioRequerido ? "true" : "false", 
+        adjuntarDocumentosObligatorio: schemaConfig.adjuntarDocumentosObligatorio ? "true" : "false",
+        permitirModificarDocumentos: schemaConfig.permitirModificarDocumentos ? "true" : "false",
+        comentarioRequerido: schemaConfig.comentarioRequerido ? "true" : "false",
+        comentarioObligatorio: schemaConfig.comentarioObligatorio ? "true" : "false",
+        comentarioOpcional: schemaConfig.comentarioOpcional ? "true" : "false",
         enviarCorreoNotificacion: schemaConfig.enviarCorreoNotificacion ? "true" : "false",
+        solicitudCreada: schemaConfig.solicitudCreada ? "true" : "false",
+        solicitudAprobadaRechazada: schemaConfig.solicitudAprobadaRechazada ? "true" : "false",
         permitirSolicitudTerceros: schemaConfig.permitirSolicitudTerceros ? "true" : "false",
         diasMinimo: schemaConfig.diasMinimo ? parseInt(schemaConfig.diasMinimo) : null,
         diasMaximo: schemaConfig.diasMaximo ? parseInt(schemaConfig.diasMaximo) : null,
@@ -531,37 +555,130 @@ export function ApprovalSchemas() {
                     {/* Configuración */}
                     <div className="space-y-4">
                       <Label className="text-base font-medium">Configuración</Label>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor="adjuntar-docs" className="text-sm">Adjuntar documentos</Label>
-                          <Switch
-                            id="adjuntar-docs"
-                            checked={schemaConfig.adjuntarDocumentos}
-                            onCheckedChange={(checked) => 
-                              setSchemaConfig(prev => ({ ...prev, adjuntarDocumentos: checked }))
-                            }
-                          />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Adjuntar documentos */}
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <Label htmlFor="adjuntar-docs" className="text-sm">Adjuntar documentos</Label>
+                            <Switch
+                              id="adjuntar-docs"
+                              checked={schemaConfig.adjuntarDocumentos}
+                              onCheckedChange={(checked) => 
+                                setSchemaConfig(prev => ({ ...prev, adjuntarDocumentos: checked }))
+                              }
+                            />
+                          </div>
+                          {schemaConfig.adjuntarDocumentos && (
+                            <div className="ml-4 space-y-2">
+                              <div className="flex items-center space-x-2">
+                                <Checkbox 
+                                  id="docs-obligatorio"
+                                  checked={schemaConfig.adjuntarDocumentosObligatorio}
+                                  onCheckedChange={(checked) => 
+                                    setSchemaConfig(prev => ({ ...prev, adjuntarDocumentosObligatorio: !!checked }))
+                                  }
+                                />
+                                <Label htmlFor="docs-obligatorio" className="text-sm">Obligatorio</Label>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <Checkbox 
+                                  id="modificar-docs"
+                                  checked={schemaConfig.permitirModificarDocumentos}
+                                  onCheckedChange={(checked) => 
+                                    setSchemaConfig(prev => ({ ...prev, permitirModificarDocumentos: !!checked }))
+                                  }
+                                />
+                                <Label htmlFor="modificar-docs" className="text-sm">Permite modificar documentos</Label>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor="comentario" className="text-sm">Comentario</Label>
-                          <Switch
-                            id="comentario"
-                            checked={schemaConfig.comentarioRequerido}
-                            onCheckedChange={(checked) => 
-                              setSchemaConfig(prev => ({ ...prev, comentarioRequerido: checked }))
-                            }
-                          />
+
+                        {/* Comentario */}
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <Label htmlFor="comentario" className="text-sm">Comentario</Label>
+                            <Switch
+                              id="comentario"
+                              checked={schemaConfig.comentarioRequerido}
+                              onCheckedChange={(checked) => 
+                                setSchemaConfig(prev => ({ ...prev, comentarioRequerido: checked }))
+                              }
+                            />
+                          </div>
+                          {schemaConfig.comentarioRequerido && (
+                            <div className="ml-4 space-y-2">
+                              <div className="flex items-center space-x-2">
+                                <Checkbox 
+                                  id="comentario-obligatorio"
+                                  checked={schemaConfig.comentarioObligatorio}
+                                  onCheckedChange={(checked) => {
+                                    setSchemaConfig(prev => ({ 
+                                      ...prev, 
+                                      comentarioObligatorio: !!checked,
+                                      comentarioOpcional: !checked
+                                    }));
+                                  }}
+                                />
+                                <Label htmlFor="comentario-obligatorio" className="text-sm">Obligatorio</Label>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <Checkbox 
+                                  id="comentario-opcional"
+                                  checked={schemaConfig.comentarioOpcional}
+                                  onCheckedChange={(checked) => {
+                                    setSchemaConfig(prev => ({ 
+                                      ...prev, 
+                                      comentarioOpcional: !!checked,
+                                      comentarioObligatorio: !checked
+                                    }));
+                                  }}
+                                />
+                                <Label htmlFor="comentario-opcional" className="text-sm">Opcional</Label>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor="email-notif" className="text-sm">Enviar correo de notificación</Label>
-                          <Switch
-                            id="email-notif"
-                            checked={schemaConfig.enviarCorreoNotificacion}
-                            onCheckedChange={(checked) => 
-                              setSchemaConfig(prev => ({ ...prev, enviarCorreoNotificacion: checked }))
-                            }
-                          />
+
+                        {/* Enviar correo de notificación */}
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <Label htmlFor="email-notif" className="text-sm">Enviar correo de notificación</Label>
+                            <Switch
+                              id="email-notif"
+                              checked={schemaConfig.enviarCorreoNotificacion}
+                              onCheckedChange={(checked) => 
+                                setSchemaConfig(prev => ({ ...prev, enviarCorreoNotificacion: checked }))
+                              }
+                            />
+                          </div>
+                          {schemaConfig.enviarCorreoNotificacion && (
+                            <div className="ml-4 space-y-2">
+                              <div className="flex items-center space-x-2">
+                                <Checkbox 
+                                  id="solicitud-creada"
+                                  checked={schemaConfig.solicitudCreada}
+                                  onCheckedChange={(checked) => 
+                                    setSchemaConfig(prev => ({ ...prev, solicitudCreada: !!checked }))
+                                  }
+                                />
+                                <Label htmlFor="solicitud-creada" className="text-sm">Solicitud creada</Label>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <Checkbox 
+                                  id="solicitud-aprobada"
+                                  checked={schemaConfig.solicitudAprobadaRechazada}
+                                  onCheckedChange={(checked) => 
+                                    setSchemaConfig(prev => ({ ...prev, solicitudAprobadaRechazada: !!checked }))
+                                  }
+                                />
+                                <Label htmlFor="solicitud-aprobada" className="text-sm">Solicitud aprobada o rechazada</Label>
+                              </div>
+                            </div>
+                          )}
                         </div>
+
+                        {/* Permitir solicitud a terceros */}
                         <div className="flex items-center justify-between">
                           <Label htmlFor="terceros" className="text-sm">Permitir solicitud a terceros</Label>
                           <Switch
