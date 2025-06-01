@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Plus, Upload, Calendar as CalendarIcon, X, Info } from "lucide-react";
+import { Plus, Upload, Calendar as CalendarIcon, X, Info, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -57,9 +57,12 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
   });
 
   // Obtener saldo de vacaciones del usuario
-  const { data: userVacationBalance } = useQuery<UserVacationBalance>({
+  const { data: userVacationBalance } = useQuery({
     queryKey: ['vacation-balance', formData.identificador],
-    queryFn: () => fetch(`/api/vacation-balance/${formData.identificador}`).then(res => res.json()),
+    queryFn: async () => {
+      const response = await fetch(`/api/vacation-balance/${formData.identificador}`);
+      return response.json();
+    },
     enabled: Boolean(open && formData.identificador && formData.tipo === "Vacaciones"),
   });
 
@@ -76,10 +79,10 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
     if (formData.tipo === "Vacaciones" && dateRange?.from && dateRange?.to && userVacationBalance) {
       const diasSolicitados = differenceInDays(dateRange.to, dateRange.from) + 1;
       const diasEfectivos = calculateWorkingDays(dateRange.from, dateRange.to);
-      const diasRestantes = (userVacationBalance as any).diasDisponibles - diasEfectivos;
+      const diasRestantes = userVacationBalance.diasDisponibles - diasEfectivos;
 
       setVacationCalculation({
-        diasDisponibles: (userVacationBalance as any).diasDisponibles || 0,
+        diasDisponibles: userVacationBalance.diasDisponibles || 0,
         diasSolicitados,
         diasEfectivos,
         diasRestantes
@@ -196,11 +199,22 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
       return;
     }
 
-    // Para permisos, usar descripcion como asunto si no hay asunto definido
-    const requestData = {
-      ...formData,
-      asunto: formData.asunto || "Solicitud de Permiso",
-    };
+    // Preparar datos según el tipo de solicitud
+    let requestData;
+    
+    if (formData.tipo === "Vacaciones") {
+      requestData = {
+        ...formData,
+        asunto: formData.asunto || "Solicitud de Vacaciones",
+        diasSolicitados: vacationCalculation.diasSolicitados,
+        diasEfectivos: vacationCalculation.diasEfectivos,
+      };
+    } else {
+      requestData = {
+        ...formData,
+        asunto: formData.asunto || "Solicitud de Permiso",
+      };
+    }
 
     createRequestMutation.mutate(requestData as InsertRequest);
   };
@@ -386,6 +400,148 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
             </>
           )}
 
+          {/* Campos específicos para Vacaciones */}
+          {formData.tipo === "Vacaciones" && (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label className="text-gray-700">Días disponibles</Label>
+                  <Input
+                    value={vacationCalculation.diasDisponibles.toString()}
+                    readOnly
+                    className="bg-gray-100"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-gray-700">Identificador</Label>
+                  <Input
+                    value={formData.identificador || ""}
+                    readOnly
+                    className="bg-gray-100"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-gray-700">Fecha</Label>
+                <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal"
+                      onClick={() => setCalendarOpen(true)}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dateRange?.from ? (
+                        dateRange.to ? (
+                          `${format(dateRange.from, "dd/MM/yyyy", { locale: es })} - ${format(dateRange.to, "dd/MM/yyyy", { locale: es })}`
+                        ) : (
+                          format(dateRange.from, "dd/MM/yyyy", { locale: es })
+                        )
+                      ) : (
+                        "Seleccionar"
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      initialFocus
+                      mode="range"
+                      defaultMonth={dateRange?.from}
+                      selected={dateRange}
+                      onSelect={handleDateRangeChange}
+                      numberOfMonths={2}
+                      locale={es}
+                    />
+                    <div className="flex justify-end space-x-2 p-3 border-t">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setDateRange(undefined);
+                          handleInputChange('fechaSolicitada', "");
+                          handleInputChange('fechaFin', "");
+                          setCalendarOpen(false);
+                        }}
+                      >
+                        Limpiar
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => setCalendarOpen(false)}
+                      >
+                        Confirmar
+                      </Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-gray-700">Días solicitados</Label>
+                  <Input
+                    value={vacationCalculation.diasSolicitados.toString()}
+                    readOnly
+                    className="bg-gray-100"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-gray-700">Días efectivos</Label>
+                  <Input
+                    value={vacationCalculation.diasEfectivos.toString()}
+                    readOnly
+                    className="bg-gray-100"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-gray-700">Días restantes</Label>
+                  <Input
+                    value={vacationCalculation.diasRestantes.toString()}
+                    readOnly
+                    className={`${vacationCalculation.diasRestantes < 0 ? 'bg-red-100 text-red-600' : 'bg-gray-100'}`}
+                  />
+                </div>
+              </div>
+
+              {/* Información sobre fines de semana */}
+              {dateRange?.from && dateRange?.to && (
+                <div className="flex items-start space-x-2 p-3 bg-blue-50 rounded-lg">
+                  <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-blue-800">
+                    <p className="font-medium">1 día no se tomó en cuenta por los siguientes motivos:</p>
+                    <ul className="mt-1 space-y-1">
+                      <li>[ Fecha: {format(dateRange.from, "dd/MM/yyyy", { locale: es })} Razón: Domingo ]</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
+
+              {/* Validación de días insuficientes */}
+              {vacationCalculation.diasRestantes < 0 && (
+                <div className="flex items-start space-x-2 p-3 bg-red-50 rounded-lg border border-red-200">
+                  <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-red-800">
+                    <p className="font-medium">No tienes suficientes días de vacaciones disponibles.</p>
+                    <p>Necesitas {Math.abs(vacationCalculation.diasRestantes)} días adicionales.</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="comentario" className="text-gray-700">Comentario</Label>
+                <Textarea
+                  id="comentario"
+                  placeholder=""
+                  rows={4}
+                  value={formData.descripcion ?? ""}
+                  onChange={(e) => handleInputChange('descripcion', e.target.value)}
+                  className="min-h-[100px]"
+                />
+              </div>
+            </>
+          )}
+
           <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
             <Button 
               type="button" 
@@ -397,7 +553,7 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
             </Button>
             <Button 
               type="submit"
-              disabled={createRequestMutation.isPending || !formData.tipo}
+              disabled={createRequestMutation.isPending || !formData.tipo || (formData.tipo === "Vacaciones" && vacationCalculation.diasRestantes < 0)}
               className="px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
             >
               {createRequestMutation.isPending ? "Creando..." : "Solicitar"}
