@@ -12,6 +12,7 @@ import { Plus, Upload, Calendar as CalendarIcon, X, Info, AlertTriangle } from "
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { MOTIVOS_PERMISO } from "@/lib/constants";
 import { format, differenceInDays, isWeekend, eachDayOfInterval } from "date-fns";
 import { es } from "date-fns/locale";
 import type { InsertRequest, Request, UserVacationBalance, ApprovalSchema } from "@shared/schema";
@@ -184,12 +185,7 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
   const getMotivosForTipo = (tipo: string) => {
     switch (tipo) {
       case "Permiso":
-        return [
-          "Permiso Licencia Médica",
-          "Permiso con goce",
-          "Permiso por horas",
-          "Permiso Capacitación"
-        ];
+        return MOTIVOS_PERMISO;
       default:
         return [];
     }

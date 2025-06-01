@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Trash2, Search, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { MOTIVOS_PERMISO } from "@/lib/constants";
 import type { ApprovalSchema, ApprovalStep, InsertApprovalSchema, InsertApprovalStep } from "@shared/schema";
 
 const PERMISSION_TYPES = [
@@ -30,13 +31,7 @@ const PROFILES = [
   "Supervisor"
 ].sort();
 
-const MOTIVOS_PERMISO = [
-  "Licencia Médica",
-  "Capacitación", 
-  "Permiso con goce",
-  "Permiso por horas",
-  "Permiso personal"
-].sort();
+
 
 export function ApprovalSchemas() {
   const [selectedSchema, setSelectedSchema] = useState<ApprovalSchema | null>(null);
