@@ -89,10 +89,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid status" });
       }
       
+      // Get current request to track previous state
+      const currentRequest = await storage.getRequest(id);
+      if (!currentRequest) {
+        return res.status(404).json({ message: "Request not found" });
+      }
+      
       const updatedRequest = await storage.updateRequest(id, { estado });
       
       if (!updatedRequest) {
         return res.status(404).json({ message: "Request not found" });
+      }
+
+      // Add to history if state changed
+      if (currentRequest.estado !== estado) {
+        await storage.addRequestHistory({
+          requestId: id,
+          previousState: currentRequest.estado,
+          newState: estado,
+          changedBy: "Sistema", // You could get this from authentication
+          changeReason: "Cambio de estado manual"
+        });
       }
 
       // If status changed to "Aprobado", send notification to external system
@@ -129,6 +146,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating request status:", error);
       res.status(500).json({ message: "Error updating request status" });
+    }
+  });
+
+  // Get request history
+  app.get("/api/requests/:id/history", async (req, res) => {
+    try {
+      const requestId = parseInt(req.params.id);
+      const history = await storage.getRequestHistory(requestId);
+      res.json(history);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch request history" });
     }
   });
 

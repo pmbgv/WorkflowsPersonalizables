@@ -160,6 +160,30 @@ export class DatabaseStorage implements IStorage {
     const result = await db.delete(approvalSteps).where(eq(approvalSteps.id, id));
     return (result.rowCount || 0) > 0;
   }
+
+  async getRequestHistory(requestId: number): Promise<RequestHistory[]> {
+    try {
+      const history = await db
+        .select()
+        .from(requestHistory)
+        .where(eq(requestHistory.requestId, requestId))
+        .orderBy(requestHistory.fechaCreacion);
+      return history;
+    } catch (error) {
+      console.error("Error fetching request history:", error);
+      return [];
+    }
+  }
+
+  async addRequestHistory(history: InsertRequestHistory): Promise<RequestHistory> {
+    try {
+      const [newHistory] = await db.insert(requestHistory).values(history).returning();
+      return newHistory;
+    } catch (error) {
+      console.error("Error adding request history:", error);
+      throw error;
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();
