@@ -208,6 +208,33 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
       return;
     }
 
+    // Validar campos obligatorios según configuración del esquema
+    if (activeSchema) {
+      // Validar comentario obligatorio
+      if ((activeSchema as any).comentarioRequerido === "true" && 
+          (activeSchema as any).comentarioObligatorio === "true" && 
+          (!formData.descripcion || formData.descripcion.trim() === "")) {
+        toast({
+          title: "Campo obligatorio",
+          description: "El comentario es obligatorio para este tipo de solicitud.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validar adjuntar documentos obligatorio
+      if ((activeSchema as any).adjuntarDocumentos === "true" && 
+          (activeSchema as any).adjuntarDocumentosObligatorio === "true" && 
+          (!formData.archivosAdjuntos || formData.archivosAdjuntos.length === 0)) {
+        toast({
+          title: "Campo obligatorio",
+          description: "Es obligatorio adjuntar documentos para este tipo de solicitud.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     // Verificar conflictos de fechas si hay fechas seleccionadas
     if (formData.fechaSolicitada && checkDateConflicts(formData.fechaSolicitada, formData.fechaFin ?? undefined)) {
       setShowDateConflictAlert(true);
