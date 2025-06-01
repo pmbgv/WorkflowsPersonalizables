@@ -22,6 +22,7 @@ interface CreateRequestModalProps {
 
 export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps) {
   const [open, setOpen] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [formData, setFormData] = useState<Partial<InsertRequest>>({
     tipo: "",
@@ -200,11 +201,12 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label className="text-gray-700">Fecha</Label>
-                  <Popover>
+                  <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
                         className="w-full justify-start text-left font-normal"
+                        onClick={() => setCalendarOpen(true)}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
                         {dateRange?.from ? (
@@ -236,6 +238,7 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
                             setDateRange(undefined);
                             handleInputChange('fechaSolicitada', "");
                             handleInputChange('fechaFin', "");
+                            setCalendarOpen(false);
                           }}
                         >
                           Cancelar
@@ -243,7 +246,7 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
                         <Button
                           size="sm"
                           onClick={() => {
-                            // Close the popover - this will be handled by the calendar selection
+                            setCalendarOpen(false);
                           }}
                         >
                           Aplicar
