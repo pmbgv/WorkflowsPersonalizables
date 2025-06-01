@@ -144,6 +144,16 @@ export function ApprovalSchemas() {
     },
   });
 
+  // Fetch motivos de permisos desde la base de datos
+  const { data: motivosPermisos = [] } = useQuery<MotivoPermiso[]>({
+    queryKey: ["/api/motivos-permisos"],
+    queryFn: async () => {
+      const response = await fetch("/api/motivos-permisos");
+      if (!response.ok) throw new Error("Failed to fetch motivos permisos");
+      return response.json();
+    },
+  });
+
   // Fetch steps for selected schema
   const { data: steps = [], isLoading: isLoadingSteps } = useQuery<ApprovalStep[]>({
     queryKey: ["/api/approval-schemas", selectedSchema?.id, "steps"],
@@ -407,6 +417,15 @@ export function ApprovalSchemas() {
     profile.toLowerCase().includes(profileSearch.toLowerCase())
   );
 
+  // Organizar motivos por categorías
+  const motivosPorCategoria = motivosPermisos.reduce((acc, motivo) => {
+    if (!acc[motivo.categoria]) {
+      acc[motivo.categoria] = [];
+    }
+    acc[motivo.categoria].push(motivo);
+    return acc;
+  }, {} as Record<string, MotivoPermiso[]>);
+
   return (
     <div className={`grid gap-6 h-full ${
       selectedSchema 
@@ -446,25 +465,25 @@ export function ApprovalSchemas() {
             {newSchemaType === "Permiso" && (
               <div className="space-y-3">
                 <Label className="text-sm font-medium">Motivos aplicables</Label>
-                {Object.entries(CATEGORIAS_PERMISO).map(([categoria, motivos]) => (
+                {Object.entries(motivosPorCategoria).map(([categoria, motivos]) => (
                   <div key={categoria} className="space-y-2">
                     <Label className="text-xs text-gray-600">{categoria}</Label>
                     <div className="grid grid-cols-2 gap-2">
-                      {motivos.map((motivo) => (
-                        <div key={motivo} className="flex items-center space-x-2">
+                      {motivos.map((motivoObj) => (
+                        <div key={motivoObj.motivo} className="flex items-center space-x-2">
                           <Checkbox
-                            id={motivo}
-                            checked={newSchemaMotivos.includes(motivo)}
+                            id={motivoObj.motivo}
+                            checked={newSchemaMotivos.includes(motivoObj.motivo)}
                             onCheckedChange={(checked) => {
                               if (checked) {
-                                setNewSchemaMotivos(prev => [...prev, motivo]);
+                                setNewSchemaMotivos(prev => [...prev, motivoObj.motivo]);
                               } else {
-                                setNewSchemaMotivos(prev => prev.filter(m => m !== motivo));
+                                setNewSchemaMotivos(prev => prev.filter(m => m !== motivoObj.motivo));
                               }
                             }}
                           />
-                          <Label htmlFor={motivo} className="text-xs">
-                            {motivo}
+                          <Label htmlFor={motivoObj.motivo} className="text-xs">
+                            {motivoObj.motivo}
                           </Label>
                         </div>
                       ))}
