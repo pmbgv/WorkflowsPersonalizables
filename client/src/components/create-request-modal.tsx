@@ -345,12 +345,15 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
                   <SelectValue placeholder="Seleccionar usuario" />
                 </SelectTrigger>
                 <SelectContent>
-                  {users.map((user: any) => (
-                    <SelectItem key={user.id} value={user.employee_id}>
-                      {user.name} - {user.employee_id}
-                      {user.group_name && <span className="text-gray-500 text-xs block">{user.group_name}</span>}
-                    </SelectItem>
-                  ))}
+                  {users
+                    .filter((user: any) => user.employee_id && user.employee_id.trim() !== "")
+                    .map((user: any) => (
+                      <SelectItem key={user.id} value={user.employee_id}>
+                        {user.name} - {user.employee_id}
+                        {user.group_name && <span className="text-gray-500 text-xs block">{user.group_name}</span>}
+                      </SelectItem>
+                    ))
+                  }
                 </SelectContent>
               </Select>
             </div>
