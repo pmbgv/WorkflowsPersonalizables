@@ -39,14 +39,24 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
     fechaFin: "",
     asunto: "",
     descripcion: "",
-    solicitadoPor: "Andrés Acevedo", // Default user
-    identificador: "16345990-8", // Default identifier
+    solicitadoPor: "",
+    identificador: "",
     motivo: "",
     archivosAdjuntos: [],
   });
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Obtener usuarios reales de la API
+  const { data: users = [] } = useQuery({
+    queryKey: ["/api/users"],
+    queryFn: async () => {
+      const response = await fetch("/api/users");
+      if (!response.ok) throw new Error("Failed to fetch users");
+      return response.json();
+    },
+  });
 
   // Obtener esquemas de aprobación para aplicar configuración
   const { data: approvalSchemas = [] } = useQuery<ApprovalSchema[]>({
@@ -320,14 +330,29 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
           {/* Campos básicos iniciales */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="nombreUsuario" className="text-gray-700">Nombre usuario</Label>
-              <Input
-                id="nombreUsuario"
-                value={formData.solicitadoPor}
-                onChange={(e) => handleInputChange('solicitadoPor', e.target.value)}
-                className="bg-gray-100"
-                readOnly
-              />
+              <Label htmlFor="usuario" className="text-gray-700">Usuario</Label>
+              <Select
+                value={formData.identificador || ""}
+                onValueChange={(value) => {
+                  const selectedUser = users.find((user: any) => user.employee_id === value);
+                  if (selectedUser) {
+                    handleInputChange('solicitadoPor', selectedUser.name);
+                    handleInputChange('identificador', selectedUser.employee_id);
+                  }
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar usuario" />
+                </SelectTrigger>
+                <SelectContent>
+                  {users.map((user: any) => (
+                    <SelectItem key={user.id} value={user.employee_id}>
+                      {user.name} - {user.employee_id}
+                      {user.group_name && <span className="text-gray-500 text-xs block">{user.group_name}</span>}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
@@ -335,7 +360,6 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
               <Input
                 id="identificador"
                 value={formData.identificador || ""}
-                onChange={(e) => handleInputChange('identificador', e.target.value)}
                 className="bg-gray-100"
                 readOnly
               />
