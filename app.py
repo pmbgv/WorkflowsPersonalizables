@@ -1,92 +1,103 @@
 #!/usr/bin/env python3
 """
 Script para obtener datos de usuarios reales desde la API de GeoVictoria.
-Este script se autentica y descarga la lista completa de usuarios.
+Este script usa el token de autorización configurado y extrae solo los campos necesarios.
 """
 
 import requests
 import json
 import sys
+import os
+import datetime
+import logging
 from typing import Dict, List, Optional
 
-class GeoVictoriaAPI:
-    def __init__(self):
-        self.base_url = "https://customerapi.geovictoria.com/api/v1"
-        self.token = None
-        self.session = requests.Session()
-        
-    def authenticate(self, user: str = "e82657", password: str = "46ce142d") -> bool:
-        """
-        Autentica con la API de GeoVictoria.
-        
-        Args:
-            user: Usuario para autenticación
-            password: Contraseña para autenticación
-            
-        Returns:
-            True si la autenticación fue exitosa, False en caso contrario
-        """
-        login_url = f"{self.base_url}/login"
-        login_data = {
-            "User": user,
-            "Password": password
-        }
-        
-        try:
-            print("Autenticando con la API de GeoVictoria...")
-            response = self.session.post(login_url, json=login_data)
-            response.raise_for_status()
-            
-            auth_response = response.json()
-            self.token = auth_response.get("token")
-            
-            if self.token:
-                print("✓ Autenticación exitosa")
-                # Configurar el header de autorización para futuras requests
-                self.session.headers.update({
-                    "Authorization": f"Bearer {self.token}",
-                    "Content-Type": "application/json"
-                })
-                return True
-            else:
-                print("✗ Error: No se recibió token de autenticación")
-                return False
-                
-        except requests.exceptions.RequestException as e:
-            print(f"✗ Error de autenticación: {e}")
-            return False
-        except json.JSONDecodeError as e:
-            print(f"✗ Error al procesar respuesta de autenticación: {e}")
-            return False
+# Configurar logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+# Cache para usuarios
+users_cache = {
+    'data': None,
+    'timestamp': None
+}
+
+def is_cache_valid(cache: Dict, max_age_minutes: int = 30) -> bool:
+    """
+    Verifica si el cache es válido basado en su edad.
     
-    def get_users(self) -> Optional[List[Dict]]:
-        """
-        Obtiene la lista completa de usuarios.
+    Args:
+        cache: Diccionario de cache
+        max_age_minutes: Edad máxima en minutos
         
-        Returns:
-            Lista de usuarios o None si hay error
-        """
-        if not self.token:
-            print("✗ Error: No hay token de autenticación")
-            return None
-            
-        users_url = f"{self.base_url}/User/ListComplete"
+    Returns:
+        True si el cache es válido, False en caso contrario
+    """
+    if cache['data'] is None or cache['timestamp'] is None:
+        return False
+    
+    age_seconds = datetime.datetime.now().timestamp() - cache['timestamp']
+    max_age_seconds = max_age_minutes * 60
+    
+    return age_seconds < max_age_seconds
+
+def fetch_users() -> List[Dict]:
+    """
+    Obtiene usuarios de la API con sistema de caché.
+    
+    Returns:
+        Lista de usuarios procesados
+    """
+    # Verificar si el cache es válido
+    if is_cache_valid(users_cache):
+        logging.info("Usando datos de usuarios desde cache")
+        return users_cache['data']
+
+    logging.info("Obteniendo usuarios desde la API")
+    url = "https://customerapi.geovictoria.com/api/v1/User/ListComplete"
+    
+    # Obtener el token desde las variables de entorno
+    auth_header = os.environ.get("AUTHORIZATION_HEADER")
+    if not auth_header:
+        logging.error("AUTHORIZATION_HEADER no encontrado en variables de entorno")
+        return []
+    
+    headers = {
+        "Authorization": auth_header,
+        "Content-Type": "application/json"
+    }
+
+    try:
+        response = requests.post(url, headers=headers)
+        response.raise_for_status()  # Lanza excepción para códigos de error
+        data = response.json()
+
+        # Extraer solo los campos necesarios
+        users = []
+        for user in data:
+            if user.get("Enabled") == "1":  # Solo incluir usuarios activos
+                users.append({
+                    "id": user.get("Id", ""),
+                    "employee_id": user.get("Identifier", ""),
+                    "name": f"{user.get('Name', '')} {user.get('LastName', '')}".strip(),
+                    "group_name": user.get("GroupDescription", ""),
+                    "position_name": user.get("PositionDescription", "")
+                })
+
+        # Guardar en cache
+        users_cache['data'] = users
+        users_cache['timestamp'] = datetime.datetime.now().timestamp()
+
+        logging.info(f"✓ Se obtuvieron {len(users)} usuarios activos")
+        return users
         
-        try:
-            print("Obteniendo lista de usuarios...")
-            response = self.session.get(users_url)
-            response.raise_for_status()
-            
-            users_data = response.json()
-            print(f"✓ Se obtuvieron {len(users_data)} usuarios")
-            return users_data
-            
-        except requests.exceptions.RequestException as e:
-            print(f"✗ Error al obtener usuarios: {e}")
-            return None
-        except json.JSONDecodeError as e:
-            print(f"✗ Error al procesar respuesta de usuarios: {e}")
-            return None
+    except Exception as e:
+        logging.error(f"Error al obtener usuarios: {str(e)}")
+        # Retornar datos de cache si están disponibles, aunque hayan expirado
+        if users_cache['data'] is not None:
+            logging.info("Retornando usuarios desde cache debido a error de API")
+            return users_cache['data']
+        # Retornar lista vacía como fallback
+        return []
 
 def save_users_to_file(users: List[Dict], filename: str = "usuarios.json") -> bool:
     """
@@ -144,18 +155,11 @@ def main():
     print("Script para obtener usuarios de GeoVictoria API")
     print("="*50)
     
-    # Crear instancia de la API
-    api = GeoVictoriaAPI()
+    # Obtener usuarios usando la función optimizada
+    users = fetch_users()
     
-    # Autenticar
-    if not api.authenticate():
-        print("Saliendo debido a error de autenticación")
-        sys.exit(1)
-    
-    # Obtener usuarios
-    users = api.get_users()
     if not users:
-        print("Saliendo debido a error al obtener usuarios")
+        print("No se pudieron obtener usuarios")
         sys.exit(1)
     
     # Mostrar resumen
