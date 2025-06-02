@@ -28,6 +28,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Plus, Trash2, Search, Save, GripVertical } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -103,6 +104,10 @@ export function ApprovalSchemas() {
   
   // Estado local para los pasos de aprobación (para drag and drop)
   const [localSteps, setLocalSteps] = useState<ApprovalStep[]>([]);
+  
+  // Estado para el diálogo de alerta de motivos duplicados
+  const [showDuplicateAlert, setShowDuplicateAlert] = useState(false);
+  const [duplicateMotivos, setDuplicateMotivos] = useState<string[]>([]);
 
   // Sensores para drag and drop
   const sensors = useSensors(
@@ -200,6 +205,30 @@ export function ApprovalSchemas() {
   useEffect(() => {
     setLocalSteps(steps);
   }, [steps]);
+
+  // Función para validar motivos duplicados
+  const validateDuplicateMotivos = (selectedMotivos: string[]): string[] => {
+    const duplicates: string[] = [];
+    
+    for (const schema of schemas) {
+      if (schema.motivos && schema.motivos.length > 0) {
+        const commonMotivos = selectedMotivos.filter(motivo => 
+          schema.motivos!.includes(motivo)
+        );
+        duplicates.push(...commonMotivos);
+      }
+    }
+    
+    // Remove duplicates manually
+    const uniqueDuplicates: string[] = [];
+    for (const duplicate of duplicates) {
+      if (!uniqueDuplicates.includes(duplicate)) {
+        uniqueDuplicates.push(duplicate);
+      }
+    }
+    
+    return uniqueDuplicates;
+  };
 
   // Función para manejar el drag and drop
   const handleDragEnd = (event: DragEndEvent) => {
@@ -416,6 +445,16 @@ export function ApprovalSchemas() {
         variant: "destructive",
       });
       return;
+    }
+
+    // Validar motivos duplicados solo para esquemas de permisos
+    if (newSchemaType === "Permiso") {
+      const duplicates = validateDuplicateMotivos(newSchemaMotivos);
+      if (duplicates.length > 0) {
+        setDuplicateMotivos(duplicates);
+        setShowDuplicateAlert(true);
+        return;
+      }
     }
 
     createSchemaMutation.mutate({
@@ -1219,6 +1258,27 @@ export function ApprovalSchemas() {
         )}
       </div>
 
+      {/* Diálogo de alerta para motivos duplicados */}
+      <AlertDialog open={showDuplicateAlert} onOpenChange={setShowDuplicateAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Motivos duplicados detectados</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ya tienes un esquema con uno o más de los motivos seleccionados:
+              <br />
+              <strong>{duplicateMotivos.join(", ")}</strong>
+              <br />
+              <br />
+              No se puede crear un esquema con motivos que ya están asignados a otro esquema.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setShowDuplicateAlert(false)}>
+              Entendido
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
     </div>
   );
