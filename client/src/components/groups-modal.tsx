@@ -20,6 +20,7 @@ interface UserData {
   Email: string;
   GroupDescription: string;
   PositionDescription: string;
+  UserProfile: string;
   Enabled: string;
 }
 
@@ -140,7 +141,7 @@ export function GroupsModal({ open, onOpenChange }: GroupsModalProps) {
                     <div className="mt-3 space-y-1">
                       {group.users.slice(0, 3).map((user, userIndex) => (
                         <div key={userIndex} className="text-xs text-gray-600 ml-8">
-                          • {user.Name} {user.LastName} - {user.PositionDescription || "Sin cargo"}
+                          • {user.Name} {user.LastName} - {user.UserProfile || "Sin perfil"}
                         </div>
                       ))}
                       {group.users.length > 3 && (
