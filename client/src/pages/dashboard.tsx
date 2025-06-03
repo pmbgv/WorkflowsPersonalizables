@@ -164,20 +164,22 @@ export default function Dashboard() {
           />
         </div>
         
-        <div className="header-content">
+        <div className="header-content flex items-center gap-4">
           <div className="info-buttons cursor-pointer" onClick={() => setGroupsModalOpen(true)}>
             <Globe className="h-5 w-5 color-lightblue2" />
           </div>
           
-          <div className="info-buttons company">
-            <div>{companyData?.name || "Empresa"}</div>
+          <div className="info-buttons company min-w-0 flex-shrink-0">
+            <div className="text-sm font-medium truncate">{companyData?.name || "Empresa"}</div>
           </div>
 
-          <UserSelector
-            users={selectedGroupUsers}
-            selectedGroup={selectedGroup}
-            onUserSelect={handleUserSelect}
-          />
+          <div className="flex-1 min-w-0">
+            <UserSelector
+              users={selectedGroupUsers}
+              selectedGroup={selectedGroup}
+              onUserSelect={handleUserSelect}
+            />
+          </div>
         </div>
       </div>
       

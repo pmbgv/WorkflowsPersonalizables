@@ -41,36 +41,34 @@ export function UserSelector({ users, selectedGroup, onUserSelect }: UserSelecto
   };
 
   return (
-    <div className="info-buttons user">
-      <div className="flex items-center gap-2">
-        <User className="h-6 w-6 color-lightblue2" />
-        {selectedGroup && (
-          <Select value={selectedUser} onValueChange={handleUserSelect}>
-            <SelectTrigger className="w-48 h-8 text-xs border-none shadow-none bg-transparent">
-              <SelectValue placeholder="Seleccionar usuario" />
-            </SelectTrigger>
-            <SelectContent>
-              {uniqueUserProfiles.map((user) => (
-                <SelectItem key={user.Id} value={user.Id}>
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium">
-                      {user.Name} {user.LastName}
-                    </span>
-                    <span className="text-xs text-gray-500">
-                      {user.UserProfile}
-                    </span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
-        {!selectedGroup && (
-          <span className="text-xs text-gray-500">
-            Selecciona un grupo primero
-          </span>
-        )}
-      </div>
+    <div className="flex items-center gap-3 w-full">
+      <User className="h-5 w-5 color-lightblue2 flex-shrink-0" />
+      {selectedGroup && (
+        <Select value={selectedUser} onValueChange={handleUserSelect}>
+          <SelectTrigger className="w-64 h-8 text-xs border border-gray-200 bg-white rounded-md">
+            <SelectValue placeholder="Seleccionar usuario" />
+          </SelectTrigger>
+          <SelectContent>
+            {uniqueUserProfiles.map((user) => (
+              <SelectItem key={user.Id} value={user.Id}>
+                <div className="flex flex-col text-left">
+                  <span className="text-sm font-medium">
+                    {user.Name} {user.LastName}
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    {user.UserProfile}
+                  </span>
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+      {!selectedGroup && (
+        <span className="text-xs text-gray-500">
+          Selecciona un grupo primero
+        </span>
+      )}
     </div>
   );
 }
