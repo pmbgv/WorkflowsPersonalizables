@@ -20,9 +20,10 @@ interface RequestTableProps {
   showCreateButton?: boolean;
   onRequestCreated?: () => void;
   selectedGroupUsers?: any[];
+  selectedUser?: any;
 }
 
-export function RequestTable({ requests, isLoading, onViewDetails, onDownload, title = "Lista de Solicitudes", allowStatusChange = false, onStatusChange, showCreateButton = false, onRequestCreated, selectedGroupUsers = [] }: RequestTableProps) {
+export function RequestTable({ requests, isLoading, onViewDetails, onDownload, title = "Lista de Solicitudes", allowStatusChange = false, onStatusChange, showCreateButton = false, onRequestCreated, selectedGroupUsers = [], selectedUser }: RequestTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');

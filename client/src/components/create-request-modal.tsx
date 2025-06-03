@@ -21,9 +21,10 @@ import type { DateRange } from "react-day-picker";
 interface CreateRequestModalProps {
   onRequestCreated?: () => void;
   selectedGroupUsers?: any[];
+  selectedUser?: any;
 }
 
-export function CreateRequestModal({ onRequestCreated, selectedGroupUsers = [] }: CreateRequestModalProps) {
+export function CreateRequestModal({ onRequestCreated, selectedGroupUsers = [], selectedUser }: CreateRequestModalProps) {
   const [open, setOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
@@ -40,14 +41,25 @@ export function CreateRequestModal({ onRequestCreated, selectedGroupUsers = [] }
     fechaFin: "",
     asunto: "",
     descripcion: "",
-    solicitadoPor: "",
-    identificador: "",
+    solicitadoPor: selectedUser ? `${selectedUser.Name} ${selectedUser.LastName}` : "",
+    identificador: selectedUser ? selectedUser.Identifier : "",
     motivo: "",
     archivosAdjuntos: [],
   });
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Update form data when selected user changes
+  useEffect(() => {
+    if (selectedUser) {
+      setFormData(prev => ({
+        ...prev,
+        solicitadoPor: `${selectedUser.Name} ${selectedUser.LastName}`,
+        identificador: selectedUser.Identifier
+      }));
+    }
+  }, [selectedUser]);
 
   // Obtener usuarios reales de la API
   const { data: allUsers = [] } = useQuery({
@@ -341,31 +353,39 @@ export function CreateRequestModal({ onRequestCreated, selectedGroupUsers = [] }
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label htmlFor="usuario" className="text-gray-700">Usuario</Label>
-              <Select
-                value={formData.identificador || ""}
-                onValueChange={(value) => {
-                  const selectedUser = users.find((user: any) => user.employee_id === value);
-                  if (selectedUser) {
-                    handleInputChange('solicitadoPor', selectedUser.name);
-                    handleInputChange('identificador', selectedUser.employee_id);
-                  }
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar usuario" />
-                </SelectTrigger>
-                <SelectContent>
-                  {users
-                    .filter((user: any) => user.employee_id && user.employee_id.trim() !== "")
-                    .map((user: any) => (
-                      <SelectItem key={user.id} value={user.employee_id}>
-                        {user.name} - {user.employee_id}
-                        {user.group_name && <span className="text-gray-500 text-xs block">{user.group_name}</span>}
-                      </SelectItem>
-                    ))
-                  }
-                </SelectContent>
-              </Select>
+              {selectedUser ? (
+                <Input
+                  value={`${selectedUser.Name} ${selectedUser.LastName} - ${selectedUser.Identifier}`}
+                  disabled
+                  className="bg-gray-100 text-gray-600 cursor-not-allowed"
+                />
+              ) : (
+                <Select
+                  value={formData.identificador || ""}
+                  onValueChange={(value) => {
+                    const selectedUser = users.find((user: any) => user.employee_id === value);
+                    if (selectedUser) {
+                      handleInputChange('solicitadoPor', selectedUser.name);
+                      handleInputChange('identificador', selectedUser.employee_id);
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar usuario" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {users
+                      .filter((user: any) => user.employee_id && user.employee_id.trim() !== "")
+                      .map((user: any) => (
+                        <SelectItem key={user.id} value={user.employee_id}>
+                          {user.name} - {user.employee_id}
+                          {user.group_name && <span className="text-gray-500 text-xs block">{user.group_name}</span>}
+                        </SelectItem>
+                      ))
+                    }
+                  </SelectContent>
+                </Select>
+              )}
             </div>
 
             <div className="space-y-2">
