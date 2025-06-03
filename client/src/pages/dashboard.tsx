@@ -144,6 +144,14 @@ export default function Dashboard() {
   const handleUserSelect = (user: any) => {
     console.log("Usuario seleccionado:", user);
     setSelectedUser(user);
+    
+    // Switch to available tab based on user profile
+    if (user?.UserProfile === "#usuario#") {
+      setActiveTab("lista");
+    } else if (user?.UserProfile === "#JefeGrupo#" && activeTab === "esquemas") {
+      setActiveTab("lista");
+    }
+    // adminCuenta can access all tabs, so no need to change
   };
 
   return (
@@ -215,10 +223,19 @@ export default function Dashboard() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsList className={`grid w-full mb-6 ${
+            selectedUser?.UserProfile === "#usuario#" ? "grid-cols-1" :
+            selectedUser?.UserProfile === "#JefeGrupo#" ? "grid-cols-2" :
+            selectedUser?.UserProfile === "#adminCuenta#" ? "grid-cols-3" :
+            "grid-cols-3"
+          }`}>
             <TabsTrigger value="lista">Mis Solicitudes</TabsTrigger>
-            <TabsTrigger value="todas">Todas las Solicitudes</TabsTrigger>
-            <TabsTrigger value="esquemas">Configuración Esquemas</TabsTrigger>
+            {selectedUser?.UserProfile && ["#JefeGrupo#", "#adminCuenta#"].includes(selectedUser.UserProfile) && (
+              <TabsTrigger value="todas">Todas las Solicitudes</TabsTrigger>
+            )}
+            {selectedUser?.UserProfile === "#adminCuenta#" && (
+              <TabsTrigger value="esquemas">Configuración Esquemas</TabsTrigger>
+            )}
           </TabsList>
           
           <TabsContent value="lista" className="space-y-6">
@@ -236,23 +253,27 @@ export default function Dashboard() {
             />
           </TabsContent>
           
-          <TabsContent value="todas" className="space-y-6">
-            {/* All Requests Table */}
-            <RequestTable
-              requests={allRequests}
-              isLoading={isLoadingAll}
-              onViewDetails={handleViewDetails}
-              onDownload={handleDownload}
-              title="Todas las Solicitudes"
-              allowStatusChange={true}
-              onStatusChange={handleStatusChange}
-            />
-          </TabsContent>
+          {selectedUser?.UserProfile && ["#JefeGrupo#", "#adminCuenta#"].includes(selectedUser.UserProfile) && (
+            <TabsContent value="todas" className="space-y-6">
+              {/* All Requests Table */}
+              <RequestTable
+                requests={allRequests}
+                isLoading={isLoadingAll}
+                onViewDetails={handleViewDetails}
+                onDownload={handleDownload}
+                title="Todas las Solicitudes"
+                allowStatusChange={true}
+                onStatusChange={handleStatusChange}
+              />
+            </TabsContent>
+          )}
           
-          <TabsContent value="esquemas" className="space-y-6">
-            {/* Approval Schemas Configuration */}
-            <ApprovalSchemas />
-          </TabsContent>
+          {selectedUser?.UserProfile === "#adminCuenta#" && (
+            <TabsContent value="esquemas" className="space-y-6">
+              {/* Approval Schemas Configuration */}
+              <ApprovalSchemas />
+            </TabsContent>
+          )}
         </Tabs>
 
           {/* Request Details Modal */}
