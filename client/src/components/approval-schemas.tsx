@@ -32,7 +32,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescript
 import { Plus, Trash2, Search, Save, GripVertical } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import type { MotivoPermiso } from "@shared/schema";
+
 import type { ApprovalSchema, ApprovalStep, InsertApprovalSchema, InsertApprovalStep } from "@shared/schema";
 
 const PERMISSION_TYPES = [
@@ -179,12 +179,12 @@ export function ApprovalSchemas() {
     },
   });
 
-  // Fetch motivos de permisos desde la base de datos
-  const { data: motivosPermisos = [] } = useQuery<MotivoPermiso[]>({
-    queryKey: ["/api/motivos-permisos"],
+  // Fetch motivos desde GeoVictoria API
+  const { data: motivosGeoVictoria = [] } = useQuery<string[]>({
+    queryKey: ["/api/timeoff-types"],
     queryFn: async () => {
-      const response = await fetch("/api/motivos-permisos");
-      if (!response.ok) throw new Error("Failed to fetch motivos permisos");
+      const response = await fetch("/api/timeoff-types");
+      if (!response.ok) throw new Error("Failed to fetch timeoff types");
       return response.json();
     },
   });
@@ -485,7 +485,7 @@ export function ApprovalSchemas() {
     );
   };
 
-  const handleStepChange = (stepId: number, field: keyof ApprovalStep, value: string) => {
+  const handleStepChange = (stepId: number, field: string, value: any) => {
     setStepChanges(prev => ({
       ...prev,
       [stepId]: {
@@ -519,14 +519,8 @@ export function ApprovalSchemas() {
     profile.toLowerCase().includes(profileSearch.toLowerCase())
   );
 
-  // Organizar motivos por categorías
-  const motivosPorCategoria = motivosPermisos.reduce((acc, motivo) => {
-    if (!acc[motivo.categoria]) {
-      acc[motivo.categoria] = [];
-    }
-    acc[motivo.categoria].push(motivo);
-    return acc;
-  }, {} as Record<string, MotivoPermiso[]>);
+  // Los motivos ya vienen como lista desde GeoVictoria API
+  const motivosDisponibles = motivosGeoVictoria;
 
   return (
     <div className={`grid gap-6 h-full ${
@@ -567,31 +561,26 @@ export function ApprovalSchemas() {
             {newSchemaType === "Permiso" && (
               <div className="space-y-3">
                 <Label className="text-sm font-medium">Motivos aplicables</Label>
-                {Object.entries(motivosPorCategoria).map(([categoria, motivos]) => (
-                  <div key={categoria} className="space-y-2">
-                    <Label className="text-xs text-gray-600">{categoria}</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {motivos.map((motivoObj) => (
-                        <div key={motivoObj.motivo} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={motivoObj.motivo}
-                            checked={newSchemaMotivos.includes(motivoObj.motivo)}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setNewSchemaMotivos(prev => [...prev, motivoObj.motivo]);
-                              } else {
-                                setNewSchemaMotivos(prev => prev.filter(m => m !== motivoObj.motivo));
-                              }
-                            }}
-                          />
-                          <Label htmlFor={motivoObj.motivo} className="text-xs">
-                            {motivoObj.motivo}
-                          </Label>
-                        </div>
-                      ))}
+                <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+                  {motivosDisponibles.map((motivo: string, index: number) => (
+                    <div key={`${motivo}-${index}`} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`motivo-${index}`}
+                        checked={newSchemaMotivos.includes(motivo)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setNewSchemaMotivos(prev => [...prev, motivo]);
+                          } else {
+                            setNewSchemaMotivos(prev => prev.filter(m => m !== motivo));
+                          }
+                        }}
+                      />
+                      <Label htmlFor={`motivo-${index}`} className="text-xs">
+                        {motivo}
+                      </Label>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
             <Button 
@@ -1295,7 +1284,7 @@ function SortableApprovalStepRow({
   step: ApprovalStep;
   onDelete: () => void;
   isDeleting: boolean;
-  onChange: (id: number, field: string, value: any) => void;
+  onChange: (id: number, field: keyof ApprovalStep, value: string) => void;
   pendingChanges?: Partial<ApprovalStep>;
 }) {
   const {
