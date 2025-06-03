@@ -8,12 +8,14 @@ import { CreateRequestModal } from "@/components/create-request-modal";
 import { RequestDetailsModal } from "@/components/request-details-modal";
 import { FiltersSection } from "@/components/filters-section";
 import { ApprovalSchemas } from "@/components/approval-schemas";
+import { GroupsModal } from "@/components/groups-modal";
 import { useToast } from "@/hooks/use-toast";
 import type { Request } from "@shared/schema";
 
 export default function Dashboard() {
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [groupsModalOpen, setGroupsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("lista");
   const [filters, setFilters] = useState({
     fechaInicio: "",
@@ -146,7 +148,7 @@ export default function Dashboard() {
         </div>
         
         <div className="header-content">
-          <div className="info-buttons">
+          <div className="info-buttons cursor-pointer" onClick={() => setGroupsModalOpen(true)}>
             <Globe className="h-5 w-5 color-lightblue2" />
           </div>
           
@@ -236,6 +238,12 @@ export default function Dashboard() {
             onDownload={handleDownload}
             onStatusChange={handleStatusChange}
             isAllRequestsTab={activeTab === "todas"}
+          />
+
+          {/* Groups Modal */}
+          <GroupsModal
+            open={groupsModalOpen}
+            onOpenChange={setGroupsModalOpen}
           />
         </div>
       </div>
