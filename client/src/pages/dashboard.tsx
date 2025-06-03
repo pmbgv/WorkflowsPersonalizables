@@ -19,6 +19,7 @@ export default function Dashboard() {
   const [groupsModalOpen, setGroupsModalOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<string>("");
   const [selectedGroupUsers, setSelectedGroupUsers] = useState<any[]>([]);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
   const [activeTab, setActiveTab] = useState("lista");
   const [filters, setFilters] = useState({
     fechaInicio: "",
@@ -142,6 +143,7 @@ export default function Dashboard() {
 
   const handleUserSelect = (user: any) => {
     console.log("Usuario seleccionado:", user);
+    setSelectedUser(user);
   };
 
   return (
@@ -230,6 +232,7 @@ export default function Dashboard() {
               showCreateButton={true}
               onRequestCreated={handleRequestCreated}
               selectedGroupUsers={selectedGroupUsers}
+              selectedUser={selectedUser}
             />
           </TabsContent>
           

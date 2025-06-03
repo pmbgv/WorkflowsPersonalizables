@@ -97,7 +97,7 @@ export function RequestTable({ requests, isLoading, onViewDetails, onDownload, t
         <div className="flex items-center gap-4">
           <CardTitle>{title}</CardTitle>
           {showCreateButton && onRequestCreated && (
-            <CreateRequestModal onRequestCreated={onRequestCreated} selectedGroupUsers={selectedGroupUsers} />
+            <CreateRequestModal onRequestCreated={onRequestCreated} selectedGroupUsers={selectedGroupUsers} selectedUser={selectedUser} />
           )}
         </div>
         <div className="text-sm text-gray-500">
