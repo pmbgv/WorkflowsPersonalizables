@@ -497,7 +497,7 @@ export function CreateRequestModal({ onRequestCreated, selectedGroupUsers = [], 
                       <SelectValue placeholder="Seleccionar" />
                     </SelectTrigger>
                     <SelectContent>
-                      {getMotivosForTipo(formData.tipo).map((motivo) => (
+                      {getMotivosForTipo(formData.tipo).map((motivo: string) => (
                         <SelectItem key={motivo} value={motivo}>
                           {motivo}
                         </SelectItem>
