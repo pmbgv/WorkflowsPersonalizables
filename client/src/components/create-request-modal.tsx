@@ -12,7 +12,7 @@ import { Plus, Upload, Calendar as CalendarIcon, X, Info, AlertTriangle } from "
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { CATEGORIAS_PERMISO, TODOS_LOS_MOTIVOS } from "@/lib/constants";
+
 import { format, differenceInDays, isWeekend, eachDayOfInterval } from "date-fns";
 import { es } from "date-fns/locale";
 import type { InsertRequest, Request, UserVacationBalance, ApprovalSchema } from "@shared/schema";
@@ -79,6 +79,16 @@ export function CreateRequestModal({ onRequestCreated, selectedGroupUsers = [], 
     group_name: user.GroupDescription,
     position_name: user.PositionDescription
   })) : allUsers;
+
+  // Obtener motivos desde GeoVictoria API
+  const { data: motivosGeoVictoria = [] } = useQuery<string[]>({
+    queryKey: ["/api/timeoff-types"],
+    queryFn: async () => {
+      const response = await fetch("/api/timeoff-types");
+      if (!response.ok) throw new Error("Failed to fetch timeoff types");
+      return response.json();
+    },
+  });
 
   // Obtener esquemas de aprobación para aplicar configuración
   const { data: approvalSchemas = [] } = useQuery<ApprovalSchema[]>({
@@ -249,7 +259,7 @@ export function CreateRequestModal({ onRequestCreated, selectedGroupUsers = [], 
   const getMotivosForTipo = (tipo: string) => {
     switch (tipo) {
       case "Permiso":
-        return TODOS_LOS_MOTIVOS;
+        return motivosGeoVictoria;
       default:
         return [];
     }
