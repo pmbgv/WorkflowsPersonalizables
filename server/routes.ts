@@ -482,6 +482,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // API endpoint para obtener información de la empresa
+  app.get("/api/company", async (req, res) => {
+    try {
+      const url = "https://customerapi.geovictoria.com/api/v1/Company/TradeNameList";
+      const authHeader = process.env.AUTHORIZATION_HEADER;
+      
+      if (!authHeader) {
+        return res.status(500).json({ error: "AUTHORIZATION_HEADER not configured" });
+      }
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          "Authorization": authHeader,
+          "Content-Type": "application/json"
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API responded with status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // Buscar la empresa base (IsTradeNameBase = "1")
+      const baseCompany = data.Response?.find((company: any) => company.IsTradeNameBase === "1");
+      
+      if (baseCompany) {
+        res.json({ name: baseCompany.Name });
+      } else {
+        // Si no hay empresa base, tomar la primera
+        const firstCompany = data.Response?.[0];
+        res.json({ name: firstCompany?.Name || "Empresa" });
+      }
+    } catch (error) {
+      console.error("Error fetching company data:", error);
+      res.status(500).json({ error: "Failed to fetch company data" });
+    }
+  });
+
   // Error handling middleware - must be after all routes
   app.use((err: any, req: any, res: any, next: any) => {
     console.error("API Error:", err);

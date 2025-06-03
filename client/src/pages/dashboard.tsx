@@ -29,6 +29,11 @@ export default function Dashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Obtener información de la empresa
+  const { data: companyData } = useQuery<{ name: string }>({
+    queryKey: ["/api/company"],
+  });
+
   // Mutation for updating request status
   const updateStatusMutation = useMutation({
     mutationFn: async ({ requestId, newStatus }: { requestId: number; newStatus: string }) => {
@@ -153,7 +158,7 @@ export default function Dashboard() {
           </div>
           
           <div className="info-buttons company">
-            <div>Empresa</div>
+            <div>{companyData?.name || "Empresa"}</div>
           </div>
 
           <div className="info-buttons user">
