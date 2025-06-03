@@ -52,7 +52,7 @@ export function CreateRequestModal({ onRequestCreated, selectedGroupUsers = [], 
 
   // Update form data when selected user changes
   useEffect(() => {
-    if (selectedUser) {
+    if (selectedUser && !["#JefeGrupo#", "#adminCuenta#"].includes(selectedUser.UserProfile)) {
       setFormData(prev => ({
         ...prev,
         solicitadoPor: `${selectedUser.Name} ${selectedUser.LastName}`,
@@ -353,7 +353,7 @@ export function CreateRequestModal({ onRequestCreated, selectedGroupUsers = [], 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label htmlFor="usuario" className="text-gray-700">Usuario</Label>
-              {selectedUser ? (
+              {selectedUser && !["#JefeGrupo#", "#adminCuenta#"].includes(selectedUser.UserProfile) ? (
                 <Input
                   value={`${selectedUser.Name} ${selectedUser.LastName} - ${selectedUser.Identifier}`}
                   disabled
