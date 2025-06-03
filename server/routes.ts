@@ -559,6 +559,139 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // API endpoint para obtener tipos completos (con IDs) desde GeoVictoria
+  app.get("/api/timeoff-types-complete", async (req, res) => {
+    try {
+      const url = "https://customerapi.geovictoria.com/api/v1/TimeOff/GetTypes";
+      const authHeader = process.env.AUTHORIZATION_HEADER;
+      
+      if (!authHeader) {
+        return res.status(500).json({ error: "AUTHORIZATION_HEADER not configured" });
+      }
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          "Authorization": authHeader,
+          "Content-Type": "application/json"
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API responded with status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // Retornar datos completos para mapping de IDs
+      const timeOffTypes = data
+        .filter((item: any) => item.Status === "enabled")
+        .map((item: any) => ({
+          id: item.Id,
+          translatedDescription: item.TranslatedDescription,
+          status: item.Status,
+          isPayable: item.IsPayable,
+          externalId: item.ExternalId
+        }));
+      
+      res.json(timeOffTypes);
+    } catch (error) {
+      console.error("Error fetching complete timeoff types:", error);
+      res.status(500).json({ error: "Failed to fetch complete timeoff types" });
+    }
+  });
+
+  // API endpoint para sincronizar solicitud aprobada con GeoVictoria
+  app.post("/api/sync-to-geovictoria", async (req, res) => {
+    try {
+      const { userIdentifier, motivo, startDate, endDate } = req.body;
+      const authHeader = process.env.AUTHORIZATION_HEADER;
+      
+      if (!authHeader) {
+        return res.status(500).json({ error: "AUTHORIZATION_HEADER not configured" });
+      }
+
+      // Obtener tipos de timeoff para mapear el motivo al ID
+      const typesUrl = "https://customerapi.geovictoria.com/api/v1/TimeOff/GetTypes";
+      const typesResponse = await fetch(typesUrl, {
+        method: 'POST',
+        headers: {
+          "Authorization": authHeader,
+          "Content-Type": "application/json"
+        }
+      });
+
+      if (!typesResponse.ok) {
+        throw new Error(`Failed to fetch timeoff types: ${typesResponse.status}`);
+      }
+
+      const timeOffTypes = await typesResponse.json();
+      
+      // Buscar el ID del tipo basado en el motivo
+      const timeOffType = timeOffTypes.find((type: any) => 
+        type.TranslatedDescription === motivo && type.Status === "enabled"
+      );
+
+      if (!timeOffType) {
+        return res.status(400).json({ error: `TimeOff type not found for motivo: ${motivo}` });
+      }
+
+      // Formatear fechas para GeoVictoria (YYYYMMDDHHMMSS)
+      const formatDateForGeoVictoria = (dateStr: string) => {
+        const date = new Date(dateStr);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}${month}${day}000000`;
+      };
+
+      const formatEndDateForGeoVictoria = (dateStr: string) => {
+        const date = new Date(dateStr);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}${month}${day}235959`;
+      };
+
+      // Preparar datos para GeoVictoria
+      const geoVictoriaData = {
+        UserIdentifier: userIdentifier,
+        TimeOffTypeId: timeOffType.Id,
+        StartDate: formatDateForGeoVictoria(startDate),
+        EndDate: formatEndDateForGeoVictoria(endDate)
+      };
+
+      // Enviar a GeoVictoria
+      const upsertUrl = "https://customerapi.geovictoria.com/api/v1/TimeOff/Upsert";
+      const upsertResponse = await fetch(upsertUrl, {
+        method: 'POST',
+        headers: {
+          "Authorization": authHeader,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(geoVictoriaData)
+      });
+
+      if (!upsertResponse.ok) {
+        const errorText = await upsertResponse.text();
+        throw new Error(`GeoVictoria API error: ${upsertResponse.status} - ${errorText}`);
+      }
+
+      const result = await upsertResponse.json();
+      
+      res.json({ 
+        success: true, 
+        message: "Request synced to GeoVictoria successfully",
+        geoVictoriaResponse: result,
+        sentData: geoVictoriaData
+      });
+
+    } catch (error) {
+      console.error("Error syncing to GeoVictoria:", error);
+      res.status(500).json({ error: "Failed to sync to GeoVictoria", details: error });
+    }
+  });
+
   // Error handling middleware - must be after all routes
   app.use((err: any, req: any, res: any, next: any) => {
     console.error("API Error:", err);

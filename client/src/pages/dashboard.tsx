@@ -42,13 +42,43 @@ export default function Dashboard() {
   const updateStatusMutation = useMutation({
     mutationFn: async ({ requestId, newStatus }: { requestId: number; newStatus: string }) => {
       const response = await apiRequest("PATCH", `/api/requests/${requestId}/status`, { estado: newStatus });
-      return response.json();
+      const updatedRequest = await response.json();
+      
+      // Si el estado cambió a "Aprobado", sincronizar con GeoVictoria
+      if (newStatus === "Aprobado" && updatedRequest.tipo === "Permiso") {
+        try {
+          const syncResponse = await apiRequest("POST", "/api/sync-to-geovictoria", {
+            userIdentifier: updatedRequest.identificador,
+            motivo: updatedRequest.motivo,
+            startDate: updatedRequest.fechaSolicitada,
+            endDate: updatedRequest.fechaFin || updatedRequest.fechaSolicitada
+          });
+          
+          if (syncResponse.ok) {
+            const syncResult = await syncResponse.json();
+            console.log("Successfully synced to GeoVictoria:", syncResult);
+          } else {
+            console.error("Failed to sync to GeoVictoria:", await syncResponse.text());
+          }
+        } catch (syncError) {
+          console.error("Error syncing to GeoVictoria:", syncError);
+          // No failing the main operation if sync fails
+        }
+      }
+      
+      return updatedRequest;
     },
-    onSuccess: () => {
+    onSuccess: (updatedRequest, { newStatus }) => {
       queryClient.invalidateQueries({ queryKey: ["/api/requests"] });
+      
+      let description = "El estado de la solicitud ha sido actualizado exitosamente.";
+      if (newStatus === "Aprobado" && updatedRequest.tipo === "Permiso") {
+        description += " La solicitud ha sido sincronizada con GeoVictoria.";
+      }
+      
       toast({
         title: "Estado actualizado",
-        description: "El estado de la solicitud ha sido actualizado exitosamente.",
+        description,
       });
     },
     onError: () => {
