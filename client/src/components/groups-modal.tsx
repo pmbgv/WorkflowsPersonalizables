@@ -10,6 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 interface GroupsModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onGroupSelect?: (groupName: string, users: UserData[]) => void;
 }
 
 interface UserData {
@@ -24,7 +25,7 @@ interface UserData {
   Enabled: string;
 }
 
-export function GroupsModal({ open, onOpenChange }: GroupsModalProps) {
+export function GroupsModal({ open, onOpenChange, onGroupSelect }: GroupsModalProps) {
   const [searchTerm, setSearchTerm] = useState("");
 
   // Obtener datos de usuarios desde la API
@@ -120,7 +121,13 @@ export function GroupsModal({ open, onOpenChange }: GroupsModalProps) {
                 {filteredGroups.map((group, index) => (
                   <div
                     key={index}
-                    className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                    className="border rounded-lg p-4 hover:bg-gray-50 transition-colors cursor-pointer"
+                    onClick={() => {
+                      if (onGroupSelect) {
+                        onGroupSelect(group.name, group.users);
+                        onOpenChange(false);
+                      }
+                    }}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">

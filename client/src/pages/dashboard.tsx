@@ -9,6 +9,7 @@ import { RequestDetailsModal } from "@/components/request-details-modal";
 import { FiltersSection } from "@/components/filters-section";
 import { ApprovalSchemas } from "@/components/approval-schemas";
 import { GroupsModal } from "@/components/groups-modal";
+import { UserSelector } from "@/components/user-selector";
 import { useToast } from "@/hooks/use-toast";
 import type { Request } from "@shared/schema";
 
@@ -16,6 +17,8 @@ export default function Dashboard() {
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [groupsModalOpen, setGroupsModalOpen] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState<string>("");
+  const [selectedGroupUsers, setSelectedGroupUsers] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState("lista");
   const [filters, setFilters] = useState({
     fechaInicio: "",
@@ -132,6 +135,15 @@ export default function Dashboard() {
     refetchAll();
   };
 
+  const handleGroupSelect = (groupName: string, users: any[]) => {
+    setSelectedGroup(groupName);
+    setSelectedGroupUsers(users);
+  };
+
+  const handleUserSelect = (user: any) => {
+    console.log("Usuario seleccionado:", user);
+  };
+
   return (
     <>
       {/* Portal Header */}
@@ -161,9 +173,11 @@ export default function Dashboard() {
             <div>{companyData?.name || "Empresa"}</div>
           </div>
 
-          <div className="info-buttons user">
-            <User className="h-6 w-6 color-lightblue2" />
-          </div>
+          <UserSelector
+            users={selectedGroupUsers}
+            selectedGroup={selectedGroup}
+            onUserSelect={handleUserSelect}
+          />
         </div>
       </div>
       
@@ -249,6 +263,7 @@ export default function Dashboard() {
           <GroupsModal
             open={groupsModalOpen}
             onOpenChange={setGroupsModalOpen}
+            onGroupSelect={handleGroupSelect}
           />
         </div>
       </div>
