@@ -137,18 +137,13 @@ export function GroupsModal({ open, onOpenChange }: GroupsModalProps) {
                       </Badge>
                     </div>
                     
-                    {/* Mostrar algunos usuarios del grupo */}
+                    {/* Mostrar todos los usuarios del grupo */}
                     <div className="mt-3 space-y-1">
-                      {group.users.slice(0, 3).map((user, userIndex) => (
+                      {group.users.map((user, userIndex) => (
                         <div key={userIndex} className="text-xs text-gray-600 ml-8">
                           • {user.Name} {user.LastName} - {user.UserProfile || "Sin perfil"}
                         </div>
                       ))}
-                      {group.users.length > 3 && (
-                        <div className="text-xs text-gray-500 ml-8">
-                          ... y {group.users.length - 3} más
-                        </div>
-                      )}
                     </div>
                   </div>
                 ))}
