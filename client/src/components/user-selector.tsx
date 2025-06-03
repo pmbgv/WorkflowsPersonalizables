@@ -23,18 +23,12 @@ interface UserSelectorProps {
 export function UserSelector({ users, selectedGroup, onUserSelect }: UserSelectorProps) {
   const [selectedUser, setSelectedUser] = useState<string>("");
 
-  // Obtener UserProfiles únicos del grupo, si hay duplicados tomar el primero
-  const uniqueUserProfiles = users.reduce((acc: UserData[], user) => {
-    const existingProfile = acc.find(u => u.UserProfile === user.UserProfile);
-    if (!existingProfile) {
-      acc.push(user);
-    }
-    return acc;
-  }, []);
+  // Mostrar todos los usuarios del grupo
+  const allUsers = users;
 
   const handleUserSelect = (userId: string) => {
     setSelectedUser(userId);
-    const user = uniqueUserProfiles.find(u => u.Id === userId);
+    const user = allUsers.find(u => u.Id === userId);
     if (user && onUserSelect) {
       onUserSelect(user);
     }
@@ -49,7 +43,7 @@ export function UserSelector({ users, selectedGroup, onUserSelect }: UserSelecto
             <SelectValue placeholder="Seleccionar usuario" />
           </SelectTrigger>
           <SelectContent>
-            {uniqueUserProfiles.map((user) => (
+            {allUsers.map((user) => (
               <SelectItem key={user.Id} value={user.Id}>
                 <div className="flex flex-col text-left">
                   <span className="text-sm font-medium">
