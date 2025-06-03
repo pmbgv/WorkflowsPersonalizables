@@ -73,7 +73,7 @@ export function GroupsModal({ open, onOpenChange }: GroupsModalProps) {
 
         <div className="space-y-4">
           {/* Estadísticas generales */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <div className="bg-blue-50 p-3 rounded-lg">
               <div className="text-sm text-blue-600 font-medium">Total Grupos</div>
               <div className="text-2xl font-bold text-blue-900">{groups.length}</div>
@@ -81,12 +81,6 @@ export function GroupsModal({ open, onOpenChange }: GroupsModalProps) {
             <div className="bg-green-50 p-3 rounded-lg">
               <div className="text-sm text-green-600 font-medium">Total Usuarios</div>
               <div className="text-2xl font-bold text-green-900">{totalUsers}</div>
-            </div>
-            <div className="bg-purple-50 p-3 rounded-lg">
-              <div className="text-sm text-purple-600 font-medium">Promedio por Grupo</div>
-              <div className="text-2xl font-bold text-purple-900">
-                {groups.length > 0 ? Math.round(totalUsers / groups.length) : 0}
-              </div>
             </div>
           </div>
 
