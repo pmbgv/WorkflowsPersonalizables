@@ -20,9 +20,10 @@ import type { DateRange } from "react-day-picker";
 
 interface CreateRequestModalProps {
   onRequestCreated?: () => void;
+  selectedGroupUsers?: any[];
 }
 
-export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps) {
+export function CreateRequestModal({ onRequestCreated, selectedGroupUsers = [] }: CreateRequestModalProps) {
   const [open, setOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
@@ -49,7 +50,7 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
   const queryClient = useQueryClient();
 
   // Obtener usuarios reales de la API
-  const { data: users = [] } = useQuery({
+  const { data: allUsers = [] } = useQuery({
     queryKey: ["/api/users"],
     queryFn: async () => {
       const response = await fetch("/api/users");
@@ -57,6 +58,15 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
       return response.json();
     },
   });
+
+  // Usar usuarios del grupo seleccionado si están disponibles, sino todos los usuarios
+  const users = selectedGroupUsers.length > 0 ? selectedGroupUsers.map(user => ({
+    id: user.Id,
+    employee_id: user.Identifier,
+    name: `${user.Name} ${user.LastName}`.trim(),
+    group_name: user.GroupDescription,
+    position_name: user.PositionDescription
+  })) : allUsers;
 
   // Obtener esquemas de aprobación para aplicar configuración
   const { data: approvalSchemas = [] } = useQuery<ApprovalSchema[]>({

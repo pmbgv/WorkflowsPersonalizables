@@ -19,9 +19,10 @@ interface RequestTableProps {
   onStatusChange?: (requestId: number, newStatus: string) => void;
   showCreateButton?: boolean;
   onRequestCreated?: () => void;
+  selectedGroupUsers?: any[];
 }
 
-export function RequestTable({ requests, isLoading, onViewDetails, onDownload, title = "Lista de Solicitudes", allowStatusChange = false, onStatusChange, showCreateButton = false, onRequestCreated }: RequestTableProps) {
+export function RequestTable({ requests, isLoading, onViewDetails, onDownload, title = "Lista de Solicitudes", allowStatusChange = false, onStatusChange, showCreateButton = false, onRequestCreated, selectedGroupUsers = [] }: RequestTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
@@ -95,7 +96,7 @@ export function RequestTable({ requests, isLoading, onViewDetails, onDownload, t
         <div className="flex items-center gap-4">
           <CardTitle>{title}</CardTitle>
           {showCreateButton && onRequestCreated && (
-            <CreateRequestModal onRequestCreated={onRequestCreated} />
+            <CreateRequestModal onRequestCreated={onRequestCreated} selectedGroupUsers={selectedGroupUsers} />
           )}
         </div>
         <div className="text-sm text-gray-500">

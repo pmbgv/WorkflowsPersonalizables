@@ -229,6 +229,7 @@ export default function Dashboard() {
               title="Mis Solicitudes"
               showCreateButton={true}
               onRequestCreated={handleRequestCreated}
+              selectedGroupUsers={selectedGroupUsers}
             />
           </TabsContent>
           
