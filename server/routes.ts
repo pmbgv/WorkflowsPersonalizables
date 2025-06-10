@@ -67,7 +67,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           errors: error.errors 
         });
       }
-      res.status(500).json({ message: "Error creating request", error: error.message });
+      res.status(500).json({ message: "Error creating request", error: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -125,6 +125,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // If status changed to "Aprobado", send notification to external system
       if (estado === "Aprobado") {
         try {
+          const authHeader = process.env.AUTHORIZATION_HEADER;
+          
+          if (!authHeader) {
+            console.error("AUTHORIZATION_HEADER not configured");
+          } else {
+            // Obtener tipos de timeoff para mapear el motivo al ID
+            const typesUrl = "https://customerapi.geovictoria.com/api/v1/TimeOff/GetTypes";
+            const typesResponse = await fetch(typesUrl, {
+              method: 'POST',
+              headers: {
+                "Authorization": authHeader,
+                "Content-Type": "application/json"
+              }
+            });
+
+            if (typesResponse.ok) {
+              const timeOffTypes = await typesResponse.json();
+              
+              // Buscar el ID del tipo basado en el motivo
+              const timeOffType = timeOffTypes.find((type: any) => 
+                type.TranslatedDescription === updatedRequest.motivo && type.Status === "enabled"
+              );
+
+              if (timeOffType) {
+                // Formatear fechas para GeoVictoria (YYYYMMDDHHMMSS)
+                const formatDateForGeoVictoria = (dateStr: string) => {
+                  const date = new Date(dateStr);
+                  const year = date.getFullYear();
+                  const month = String(date.getMonth() + 1).padStart(2, '0');
+                  const day = String(date.getDate()).padStart(2, '0');
+                  return `${year}${month}${day}000000`;
+                };
+
+                const formatEndDateForGeoVictoria = (dateStr: string) => {
+                  const date = new Date(dateStr);
+                  const year = date.getFullYear();
+                  const month = String(date.getMonth() + 1).padStart(2, '0');
+                  const day = String(date.getDate()).padStart(2, '0');
+                  return `${year}${month}${day}235959`;
+                };
+
+                // Preparar datos según el formato requerido
+                const geoVictoriaData = {
+                  TimeOffTypeId: timeOffType.Id,
+                  Starts: formatDateForGeoVictoria(updatedRequest.fechaSolicitada),
+                  Ends: updatedRequest.fechaFin ? formatEndDateForGeoVictoria(updatedRequest.fechaFin) : formatEndDateForGeoVictoria(updatedRequest.fechaSolicitada),
+                  TimeOffTypeDescription: timeOffType.TranslatedDescription,
+                  Description: updatedRequest.descripcion || `Solicitud #${updatedRequest.id} aceptada`,
+                  UserIdentifier: updatedRequest.identificador,
+                  isParcial: timeOffType.IsParcial || false
+                };
+
+                console.log("ENVIANDO A GEOVICTORIA:", geoVictoriaData);
+
+                // Enviar a GeoVictoria
+                const upsertUrl = "https://customerapi.geovictoria.com/api/v1/TimeOff/Upsert";
+                const upsertResponse = await fetch(upsertUrl, {
+                  method: 'POST',
+                  headers: {
+                    "Authorization": authHeader,
+                    "Content-Type": "application/json"
+                  },
+                  body: JSON.stringify(geoVictoriaData)
+                });
+
+                if (!upsertResponse.ok) {
+                  const errorText = await upsertResponse.text();
+                  console.error("Failed to sync to GeoVictoria:", upsertResponse.status, errorText);
+                } else {
+                  console.log("Request synced to GeoVictoria successfully");
+                }
+              } else {
+                console.error(`TimeOff type not found for motivo: ${updatedRequest.motivo}`);
+              }
+            } else {
+              console.error("Failed to fetch timeoff types:", typesResponse.status);
+            }
+          }
+
+          // Enviar notificación al sistema de libro (manteniendo funcionalidad existente)
           const notificationData = {
             fecha: updatedRequest.fechaSolicitada,
             texto: `Solicitud #${updatedRequest.id} aceptada`,
