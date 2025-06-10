@@ -546,13 +546,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const data = await response.json();
       
-      // Extraer solo los motivos habilitados y obtener TranslatedDescription
-      const motivos = data
-        .filter((item: any) => item.Status === "enabled")
-        .map((item: any) => item.TranslatedDescription)
-        .filter((description: string) => description && description.trim() !== "");
+      // Filtrar tipos habilitados y organizar por IsParcial
+      const enabledTypes = data
+        .filter((item: any) => item.Status === "enabled" && item.TranslatedDescription && item.TranslatedDescription.trim() !== "");
       
-      res.json(motivos);
+      const permisosCompletos = enabledTypes
+        .filter((item: any) => !item.IsParcial)
+        .map((item: any) => item.TranslatedDescription);
+      
+      const permisosParciales = enabledTypes
+        .filter((item: any) => item.IsParcial)
+        .map((item: any) => item.TranslatedDescription);
+      
+      res.json({
+        permisosCompletos,
+        permisosParciales
+      });
     } catch (error) {
       console.error("Error fetching timeoff types:", error);
       res.status(500).json({ error: "Failed to fetch timeoff types" });

@@ -179,8 +179,8 @@ export function ApprovalSchemas() {
     },
   });
 
-  // Fetch motivos desde GeoVictoria API
-  const { data: motivosGeoVictoria = [] } = useQuery<string[]>({
+  // Fetch motivos desde GeoVictoria API organizados por tipo
+  const { data: motivosData = { permisosCompletos: [], permisosParciales: [] } } = useQuery<{permisosCompletos: string[], permisosParciales: string[]}>({
     queryKey: ["/api/timeoff-types"],
     queryFn: async () => {
       const response = await fetch("/api/timeoff-types");
@@ -519,8 +519,8 @@ export function ApprovalSchemas() {
     profile.toLowerCase().includes(profileSearch.toLowerCase())
   );
 
-  // Los motivos ya vienen como lista desde GeoVictoria API
-  const motivosDisponibles = motivosGeoVictoria;
+  // Combinar todos los motivos para mantener compatibilidad con código existente
+  const motivosDisponibles = [...motivosData.permisosCompletos, ...motivosData.permisosParciales];
 
   return (
     <div className={`grid gap-6 h-full ${
@@ -561,25 +561,60 @@ export function ApprovalSchemas() {
             {newSchemaType === "Permiso" && (
               <div className="space-y-3">
                 <Label className="text-sm font-medium">Motivos aplicables</Label>
-                <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
-                  {motivosDisponibles.map((motivo: string, index: number) => (
-                    <div key={`${motivo}-${index}`} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`motivo-${index}`}
-                        checked={newSchemaMotivos.includes(motivo)}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setNewSchemaMotivos(prev => [...prev, motivo]);
-                          } else {
-                            setNewSchemaMotivos(prev => prev.filter(m => m !== motivo));
-                          }
-                        }}
-                      />
-                      <Label htmlFor={`motivo-${index}`} className="text-xs">
-                        {motivo}
-                      </Label>
+                <div className="max-h-48 overflow-y-auto space-y-4">
+                  {/* Permisos Completos */}
+                  {motivosData.permisosCompletos.length > 0 && (
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold text-gray-600">Permisos Completos</Label>
+                      <div className="grid grid-cols-1 gap-2 pl-2">
+                        {motivosData.permisosCompletos.map((motivo: string, index: number) => (
+                          <div key={`completo-${motivo}-${index}`} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`motivo-completo-${index}`}
+                              checked={newSchemaMotivos.includes(motivo)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setNewSchemaMotivos(prev => [...prev, motivo]);
+                                } else {
+                                  setNewSchemaMotivos(prev => prev.filter(m => m !== motivo));
+                                }
+                              }}
+                            />
+                            <Label htmlFor={`motivo-completo-${index}`} className="text-xs">
+                              {motivo}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  ))}
+                  )}
+                  
+                  {/* Permisos Parciales */}
+                  {motivosData.permisosParciales.length > 0 && (
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold text-gray-600">Permisos Parciales</Label>
+                      <div className="grid grid-cols-1 gap-2 pl-2">
+                        {motivosData.permisosParciales.map((motivo: string, index: number) => (
+                          <div key={`parcial-${motivo}-${index}`} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`motivo-parcial-${index}`}
+                              checked={newSchemaMotivos.includes(motivo)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setNewSchemaMotivos(prev => [...prev, motivo]);
+                                } else {
+                                  setNewSchemaMotivos(prev => prev.filter(m => m !== motivo));
+                                }
+                              }}
+                            />
+                            <Label htmlFor={`motivo-parcial-${index}`} className="text-xs">
+                              {motivo}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
