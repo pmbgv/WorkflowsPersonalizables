@@ -10,7 +10,6 @@ import { FiltersSection } from "@/components/filters-section";
 import { ApprovalSchemas } from "@/components/approval-schemas";
 import { GroupsModal } from "@/components/groups-modal";
 import { UserSelector } from "@/components/user-selector";
-import { ShiftScheduler } from "@/components/shift-scheduler";
 import { useToast } from "@/hooks/use-toast";
 import type { Request } from "@shared/schema";
 
@@ -22,7 +21,6 @@ export default function Dashboard() {
   const [selectedGroupUsers, setSelectedGroupUsers] = useState<any[]>([]);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [activeTab, setActiveTab] = useState("lista");
-  const [shiftSchedulerOpen, setShiftSchedulerOpen] = useState(false);
   const [filters, setFilters] = useState({
     fechaInicio: "",
     fechaFin: "",
@@ -38,11 +36,6 @@ export default function Dashboard() {
   // Obtener información de la empresa
   const { data: companyData } = useQuery<{ name: string }>({
     queryKey: ["/api/company"],
-  });
-
-  // Obtener usuarios para el planificador de turnos
-  const { data: allUsers = [] } = useQuery<any[]>({
-    queryKey: ["/api/users-complete"],
   });
 
   // Mutation for updating request status
@@ -236,10 +229,7 @@ export default function Dashboard() {
           <FileText className="h-5 w-5" />
           <User className="h-5 w-5" />
           <Users className="h-5 w-5" />
-          <Calendar 
-            className="h-5 w-5 cursor-pointer hover:text-blue-600 transition-colors" 
-            onClick={() => setShiftSchedulerOpen(true)}
-          />
+          <Calendar className="h-5 w-5" />
           <Settings className="h-5 w-5" />
         </div>
         
@@ -331,13 +321,6 @@ export default function Dashboard() {
             open={groupsModalOpen}
             onOpenChange={setGroupsModalOpen}
             onGroupSelect={handleGroupSelect}
-          />
-
-          {/* Shift Scheduler Modal */}
-          <ShiftScheduler
-            open={shiftSchedulerOpen}
-            onOpenChange={setShiftSchedulerOpen}
-            users={allUsers}
           />
         </div>
       </div>
