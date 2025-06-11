@@ -68,7 +68,6 @@ export function ApprovalSchemas() {
   
   // Estados para configuración del esquema
   const [schemaConfig, setSchemaConfig] = useState({
-    tiposPermiso: ["Comunes", "Turno completo", "Parciales"],
     adjuntarDocumentos: false,
     adjuntarDocumentosObligatorio: false,
     permitirModificarDocumentos: false,
@@ -132,7 +131,6 @@ export function ApprovalSchemas() {
       
       // Load schema configuration
       setSchemaConfig({
-        tiposPermiso: (selectedSchema as any).tiposPermiso || ["Comunes", "Turno completo", "Parciales"],
         adjuntarDocumentos: (selectedSchema as any).adjuntarDocumentos === "true",
         adjuntarDocumentosObligatorio: (selectedSchema as any).adjuntarDocumentosObligatorio === "true",
         permitirModificarDocumentos: (selectedSchema as any).permitirModificarDocumentos === "true",
@@ -151,7 +149,6 @@ export function ApprovalSchemas() {
       setVisibilityPermissions([]);
       setApprovalPermissions([]);
       setSchemaConfig({
-        tiposPermiso: ["Comunes", "Turno completo", "Parciales"],
         adjuntarDocumentos: false,
         adjuntarDocumentosObligatorio: false,
         permitirModificarDocumentos: false,
@@ -380,7 +377,6 @@ export function ApprovalSchemas() {
       const schemaUpdates = {
         visibilityPermissions: visibilityPermissions,
         approvalPermissions: approvalPermissions,
-        tiposPermiso: schemaConfig.tiposPermiso,
         adjuntarDocumentos: schemaConfig.adjuntarDocumentos ? "true" : "false",
         adjuntarDocumentosObligatorio: schemaConfig.adjuntarDocumentosObligatorio ? "true" : "false",
         permitirModificarDocumentos: schemaConfig.permitirModificarDocumentos ? "true" : "false",
@@ -699,72 +695,7 @@ export function ApprovalSchemas() {
                       </Select>
                     </div>
 
-                    {/* Tipos de Permiso */}
-                    <div className="space-y-3">
-                      <Label className="text-base font-medium">Permisos</Label>
-                      <div className="flex items-center space-x-6">
-                        <div className="flex items-center space-x-2">
-                          <Checkbox 
-                            id="tipo-comunes"
-                            checked={schemaConfig.tiposPermiso.includes("Comunes")}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setSchemaConfig(prev => ({ 
-                                  ...prev, 
-                                  tiposPermiso: [...prev.tiposPermiso, "Comunes"] 
-                                }));
-                              } else {
-                                setSchemaConfig(prev => ({ 
-                                  ...prev, 
-                                  tiposPermiso: prev.tiposPermiso.filter(t => t !== "Comunes") 
-                                }));
-                              }
-                            }}
-                          />
-                          <Label htmlFor="tipo-comunes" className="text-sm">Comunes</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Checkbox 
-                            id="tipo-turno"
-                            checked={schemaConfig.tiposPermiso.includes("Turno completo")}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setSchemaConfig(prev => ({ 
-                                  ...prev, 
-                                  tiposPermiso: [...prev.tiposPermiso, "Turno completo"] 
-                                }));
-                              } else {
-                                setSchemaConfig(prev => ({ 
-                                  ...prev, 
-                                  tiposPermiso: prev.tiposPermiso.filter(t => t !== "Turno completo") 
-                                }));
-                              }
-                            }}
-                          />
-                          <Label htmlFor="tipo-turno" className="text-sm">Turno completo</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Checkbox 
-                            id="tipo-parciales"
-                            checked={schemaConfig.tiposPermiso.includes("Parciales")}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setSchemaConfig(prev => ({ 
-                                  ...prev, 
-                                  tiposPermiso: [...prev.tiposPermiso, "Parciales"] 
-                                }));
-                              } else {
-                                setSchemaConfig(prev => ({ 
-                                  ...prev, 
-                                  tiposPermiso: prev.tiposPermiso.filter(t => t !== "Parciales") 
-                                }));
-                              }
-                            }}
-                          />
-                          <Label htmlFor="tipo-parciales" className="text-sm">Parciales</Label>
-                        </div>
-                      </div>
-                    </div>
+                    
 
                     {/* Configuración */}
                     <div className="space-y-4">
