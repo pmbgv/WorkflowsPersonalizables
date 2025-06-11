@@ -352,8 +352,8 @@ export function CreateRequestModal({ onRequestCreated, selectedGroupUsers = [], 
       const requestedDays = vacationCalculation.diasEfectivos || vacationCalculation.diasSolicitados;
       
       // Validar días mínimos para vacaciones
-      if (activeSchema && activeSchema.diasMinimo && parseInt(activeSchema.diasMinimo) > 0) {
-        const minimumDays = parseInt(activeSchema.diasMinimo);
+      if (activeSchema && activeSchema.diasMinimo && activeSchema.diasMinimo > 0) {
+        const minimumDays = activeSchema.diasMinimo;
         
         if (requestedDays < minimumDays) {
           setMinimumDaysError({ requested: requestedDays, minimum: minimumDays });
@@ -363,8 +363,8 @@ export function CreateRequestModal({ onRequestCreated, selectedGroupUsers = [], 
       }
       
       // Validar días máximos para vacaciones
-      if (activeSchema && activeSchema.diasMaximo && parseInt(activeSchema.diasMaximo) > 0) {
-        const maximumDays = parseInt(activeSchema.diasMaximo);
+      if (activeSchema && activeSchema.diasMaximo && activeSchema.diasMaximo > 0) {
+        const maximumDays = activeSchema.diasMaximo;
         
         if (requestedDays > maximumDays) {
           setMaximumDaysError({ requested: requestedDays, maximum: maximumDays });
@@ -374,8 +374,8 @@ export function CreateRequestModal({ onRequestCreated, selectedGroupUsers = [], 
       }
       
       // Validar múltiplo de días para vacaciones
-      if (activeSchema && activeSchema.diasMultiplo && parseInt(activeSchema.diasMultiplo) > 0) {
-        const multipleDays = parseInt(activeSchema.diasMultiplo);
+      if (activeSchema && activeSchema.diasMultiplo && activeSchema.diasMultiplo > 0) {
+        const multipleDays = activeSchema.diasMultiplo;
         
         if (requestedDays % multipleDays !== 0) {
           setMultipleDaysError({ requested: requestedDays, multiple: multipleDays });

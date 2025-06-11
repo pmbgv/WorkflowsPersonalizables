@@ -572,24 +572,41 @@ export function ApprovalSchemas() {
                     <div className="space-y-2">
                       <Label className="text-xs font-semibold text-gray-600">Permisos Completos</Label>
                       <div className="grid grid-cols-1 gap-2 pl-2">
-                        {motivosData.permisosCompletos.map((motivo: string, index: number) => (
-                          <div key={`completo-${motivo}-${index}`} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`motivo-completo-${index}`}
-                              checked={newSchemaMotivos.includes(motivo)}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  setNewSchemaMotivos(prev => [...prev, motivo]);
-                                } else {
-                                  setNewSchemaMotivos(prev => prev.filter(m => m !== motivo));
-                                }
-                              }}
-                            />
-                            <Label htmlFor={`motivo-completo-${index}`} className="text-xs">
-                              {motivo}
-                            </Label>
-                          </div>
-                        ))}
+                        {motivosData.permisosCompletos.map((motivo: string, index: number) => {
+                          // Verificar si este motivo ya está configurado en otro esquema
+                          const isConfiguredInOtherSchema = schemas.some(schema => 
+                            schema.tipoSolicitud === "Permiso" && 
+                            schema.motivos && 
+                            schema.motivos.includes(motivo)
+                          );
+                          
+                          return (
+                            <div key={`completo-${motivo}-${index}`} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`motivo-completo-${index}`}
+                                checked={newSchemaMotivos.includes(motivo)}
+                                disabled={isConfiguredInOtherSchema}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    // Solo permitir un motivo a la vez
+                                    setNewSchemaMotivos([motivo]);
+                                  } else {
+                                    setNewSchemaMotivos([]);
+                                  }
+                                }}
+                              />
+                              <Label 
+                                htmlFor={`motivo-completo-${index}`} 
+                                className={`text-xs ${isConfiguredInOtherSchema ? 'text-gray-400' : ''}`}
+                              >
+                                {motivo}
+                                {isConfiguredInOtherSchema && (
+                                  <span className="ml-2 text-xs text-blue-600">(configurado)</span>
+                                )}
+                              </Label>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -599,24 +616,41 @@ export function ApprovalSchemas() {
                     <div className="space-y-2">
                       <Label className="text-xs font-semibold text-gray-600">Permisos Parciales</Label>
                       <div className="grid grid-cols-1 gap-2 pl-2">
-                        {motivosData.permisosParciales.map((motivo: string, index: number) => (
-                          <div key={`parcial-${motivo}-${index}`} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`motivo-parcial-${index}`}
-                              checked={newSchemaMotivos.includes(motivo)}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  setNewSchemaMotivos(prev => [...prev, motivo]);
-                                } else {
-                                  setNewSchemaMotivos(prev => prev.filter(m => m !== motivo));
-                                }
-                              }}
-                            />
-                            <Label htmlFor={`motivo-parcial-${index}`} className="text-xs">
-                              {motivo}
-                            </Label>
-                          </div>
-                        ))}
+                        {motivosData.permisosParciales.map((motivo: string, index: number) => {
+                          // Verificar si este motivo ya está configurado en otro esquema
+                          const isConfiguredInOtherSchema = schemas.some(schema => 
+                            schema.tipoSolicitud === "Permiso" && 
+                            schema.motivos && 
+                            schema.motivos.includes(motivo)
+                          );
+                          
+                          return (
+                            <div key={`parcial-${motivo}-${index}`} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`motivo-parcial-${index}`}
+                                checked={newSchemaMotivos.includes(motivo)}
+                                disabled={isConfiguredInOtherSchema}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    // Solo permitir un motivo a la vez
+                                    setNewSchemaMotivos([motivo]);
+                                  } else {
+                                    setNewSchemaMotivos([]);
+                                  }
+                                }}
+                              />
+                              <Label 
+                                htmlFor={`motivo-parcial-${index}`} 
+                                className={`text-xs ${isConfiguredInOtherSchema ? 'text-gray-400' : ''}`}
+                              >
+                                {motivo}
+                                {isConfiguredInOtherSchema && (
+                                  <span className="ml-2 text-xs text-blue-600">(configurado)</span>
+                                )}
+                              </Label>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
