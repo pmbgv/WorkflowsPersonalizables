@@ -29,6 +29,8 @@ export function CreateRequestModal({ onRequestCreated, selectedGroupUsers = [], 
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [showDateConflictAlert, setShowDateConflictAlert] = useState(false);
+  const [showMinimumDaysAlert, setShowMinimumDaysAlert] = useState(false);
+  const [minimumDaysError, setMinimumDaysError] = useState({ requested: 0, minimum: 0 });
   const [vacationCalculation, setVacationCalculation] = useState({
     diasDisponibles: 0,
     diasSolicitados: 0,
@@ -320,6 +322,18 @@ export function CreateRequestModal({ onRequestCreated, selectedGroupUsers = [], 
     let requestData;
     
     if (formData.tipo === "Vacaciones") {
+      // Validar días mínimos para vacaciones
+      if (activeSchema && activeSchema.diasMinimo && parseInt(activeSchema.diasMinimo) > 0) {
+        const minimumDays = parseInt(activeSchema.diasMinimo);
+        const requestedDays = vacationCalculation.diasEfectivos || vacationCalculation.diasSolicitados;
+        
+        if (requestedDays < minimumDays) {
+          setMinimumDaysError({ requested: requestedDays, minimum: minimumDays });
+          setShowMinimumDaysAlert(true);
+          return;
+        }
+      }
+      
       requestData = {
         ...formData,
         asunto: formData.asunto || "Solicitud de Vacaciones",
@@ -741,6 +755,38 @@ export function CreateRequestModal({ onRequestCreated, selectedGroupUsers = [], 
           <AlertDialogFooter className="flex justify-center">
             <Button
               onClick={() => setShowDateConflictAlert(false)}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-2 rounded"
+            >
+              Cerrar
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Modal de alerta para días mínimos */}
+      <AlertDialog open={showMinimumDaysAlert} onOpenChange={setShowMinimumDaysAlert}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader className="text-center">
+            <div className="flex justify-end">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowMinimumDaysAlert(false)}
+                className="h-6 w-6 p-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <AlertDialogTitle className="text-lg font-medium text-gray-900">
+              La cantidad de días es menor al mínimo configurado
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm text-gray-600 mt-2">
+              Has solicitado {minimumDaysError.requested} días, pero el mínimo configurado en el esquema es de {minimumDaysError.minimum} días.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex justify-center">
+            <Button
+              onClick={() => setShowMinimumDaysAlert(false)}
               className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-2 rounded"
             >
               Cerrar
