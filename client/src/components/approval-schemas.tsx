@@ -137,6 +137,13 @@ export function ApprovalSchemas() {
       setVisibilityPermissions(selectedSchema.visibilityPermissions || []);
       setApprovalPermissions(selectedSchema.approvalPermissions || []);
       
+      // Load existing motivos for editing
+      if (selectedSchema.motivos && selectedSchema.motivos.length > 0) {
+        setNewSchemaMotivos(selectedSchema.motivos);
+      } else {
+        setNewSchemaMotivos([]);
+      }
+      
       // Load schema configuration
       setSchemaConfig({
         adjuntarDocumentos: (selectedSchema as any).adjuntarDocumentos === "true",
@@ -157,6 +164,7 @@ export function ApprovalSchemas() {
     } else {
       setVisibilityPermissions([]);
       setApprovalPermissions([]);
+      setNewSchemaMotivos([]);
       setSchemaConfig({
         adjuntarDocumentos: false,
         adjuntarDocumentosObligatorio: false,
@@ -265,6 +273,28 @@ export function ApprovalSchemas() {
     }
   };
 
+  // Update schema mutation
+  const updateSchemaMutation = useMutation({
+    mutationFn: async (data: { id: number; updates: Partial<ApprovalSchema> }) => {
+      const response = await apiRequest("PATCH", `/api/approval-schemas/${data.id}`, data.updates);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/approval-schemas"] });
+      toast({
+        title: "Configuración actualizada",
+        description: "La configuración del esquema ha sido actualizada exitosamente.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Ocurrió un error al actualizar la configuración.",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Create schema mutation
   const createSchemaMutation = useMutation({
     mutationFn: async (data: InsertApprovalSchema) => {
@@ -352,6 +382,33 @@ export function ApprovalSchemas() {
   });
 
 
+
+  // Handle update schema configuration
+  const handleUpdateSchema = () => {
+    if (!selectedSchema) return;
+    
+    const updates = {
+      motivos: newSchemaMotivos.length > 0 ? newSchemaMotivos : selectedSchema.motivos,
+      visibilityPermissions,
+      approvalPermissions,
+      adjuntarDocumentos: schemaConfig.adjuntarDocumentos ? "true" : "false",
+      adjuntarDocumentosObligatorio: schemaConfig.adjuntarDocumentosObligatorio ? "true" : "false",
+      permitirModificarDocumentos: schemaConfig.permitirModificarDocumentos ? "true" : "false",
+      comentarioRequerido: schemaConfig.comentarioRequerido ? "true" : "false",
+      comentarioObligatorio: schemaConfig.comentarioObligatorio ? "true" : "false",
+      comentarioOpcional: schemaConfig.comentarioOpcional ? "true" : "false",
+      enviarCorreoNotificacion: schemaConfig.enviarCorreoNotificacion ? "true" : "false",
+      solicitudCreada: schemaConfig.solicitudCreada ? "true" : "false",
+      solicitudAprobadaRechazada: schemaConfig.solicitudAprobadaRechazada ? "true" : "false",
+      permitirSolicitudTerceros: schemaConfig.permitirSolicitudTerceros ? "true" : "false",
+      diasMinimo: schemaConfig.diasMinimo ? parseInt(schemaConfig.diasMinimo) : null,
+      diasMaximo: schemaConfig.diasMaximo ? parseInt(schemaConfig.diasMaximo) : null,
+      diasMultiplo: schemaConfig.diasMultiplo ? parseInt(schemaConfig.diasMultiplo) : null,
+      tipoDias: schemaConfig.tipoDias,
+    };
+
+    updateSchemaMutation.mutate({ id: selectedSchema.id, updates });
+  };
 
   // Delete schema mutation
   const deleteSchemaMutation = useMutation({
@@ -585,7 +642,6 @@ export function ApprovalSchemas() {
                               <Checkbox
                                 id={`motivo-completo-${index}`}
                                 checked={newSchemaMotivos.includes(motivo)}
-                                disabled={isConfiguredInOtherSchema}
                                 onCheckedChange={(checked) => {
                                   if (checked) {
                                     // Solo permitir un motivo a la vez
@@ -597,7 +653,7 @@ export function ApprovalSchemas() {
                               />
                               <Label 
                                 htmlFor={`motivo-completo-${index}`} 
-                                className={`text-xs ${isConfiguredInOtherSchema ? 'text-gray-400' : ''}`}
+                                className="text-xs"
                               >
                                 {motivo}
                                 {isConfiguredInOtherSchema && (
@@ -629,7 +685,6 @@ export function ApprovalSchemas() {
                               <Checkbox
                                 id={`motivo-parcial-${index}`}
                                 checked={newSchemaMotivos.includes(motivo)}
-                                disabled={isConfiguredInOtherSchema}
                                 onCheckedChange={(checked) => {
                                   if (checked) {
                                     // Solo permitir un motivo a la vez
@@ -641,7 +696,7 @@ export function ApprovalSchemas() {
                               />
                               <Label 
                                 htmlFor={`motivo-parcial-${index}`} 
-                                className={`text-xs ${isConfiguredInOtherSchema ? 'text-gray-400' : ''}`}
+                                className="text-xs"
                               >
                                 {motivo}
                                 {isConfiguredInOtherSchema && (
@@ -1006,6 +1061,16 @@ export function ApprovalSchemas() {
                     </div>
 
                     
+                    {/* Save Configuration Button */}
+                    <div className="pt-4 border-t">
+                      <Button 
+                        onClick={handleUpdateSchema}
+                        disabled={updateSchemaMutation.isPending}
+                        className="w-full bg-green-600 hover:bg-green-700"
+                      >
+                        {updateSchemaMutation.isPending ? "Guardando..." : "Guardar Configuración"}
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               </TabsContent>
