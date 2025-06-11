@@ -28,8 +28,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Trash2, Search, Save, GripVertical } from "lucide-react";
+import { Plus, Trash2, Search, Save, GripVertical, HelpCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -844,7 +845,19 @@ export function ApprovalSchemas() {
                     {/* Cantidad de días - Solo para esquemas de Vacaciones */}
                     {selectedSchema?.tipoSolicitud === 'Vacaciones' && (
                       <div className="space-y-3">
-                        <Label className="text-base font-medium">Cantidad de días</Label>
+                        <div className="flex items-center gap-2">
+                          <Label className="text-base font-medium">Cantidad de días</Label>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <HelpCircle className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Establece los límites mínimos, máximos y múltiplos para las solicitudes de vacaciones</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
                         <div>
                           <div className="mb-3">
                             <Label className="text-sm mb-2 block">Tipo de días</Label>
