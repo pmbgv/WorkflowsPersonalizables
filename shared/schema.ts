@@ -54,7 +54,6 @@ export const approvalSchemas = pgTable("approval_schemas", {
   diasMinimo: integer("dias_minimo"),
   diasMaximo: integer("dias_maximo"),
   diasMultiplo: integer("dias_multiplo"),
-  tipoDias: varchar("tipo_dias", { length: 20 }).default("calendario"),
   fechaCreacion: timestamp("fecha_creacion").defaultNow().notNull(),
   fechaActualizacion: timestamp("fecha_actualizacion").defaultNow().notNull(),
 });
