@@ -109,6 +109,9 @@ export function ApprovalSchemas() {
   // Estado para el diálogo de alerta de motivos duplicados
   const [showDuplicateAlert, setShowDuplicateAlert] = useState(false);
   const [duplicateMotivos, setDuplicateMotivos] = useState<string[]>([]);
+  
+  // Estado para el diálogo de confirmación de eliminación
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Sensores para drag and drop
   const sensors = useSensors(
@@ -411,8 +414,6 @@ export function ApprovalSchemas() {
     },
     onSuccess: () => {
       setStepChanges({}); // Clear pending changes
-      setVisibilityPermissions([]);
-      setApprovalPermissions([]);
       queryClient.invalidateQueries({ queryKey: ["/api/approval-schemas"] });
       toast({
         title: "Configuración guardada",
@@ -1230,7 +1231,7 @@ export function ApprovalSchemas() {
               <Button
                 variant="destructive"
                 size="sm"
-                onClick={() => deleteSchemaMutation.mutate(selectedSchema.id)}
+                onClick={() => setShowDeleteConfirm(true)}
                 disabled={deleteSchemaMutation.isPending}
               >
                 Desactivar
@@ -1265,6 +1266,38 @@ export function ApprovalSchemas() {
           <AlertDialogFooter>
             <AlertDialogAction onClick={() => setShowDuplicateAlert(false)}>
               Entendido
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Diálogo de confirmación para eliminar esquema */}
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción desactivará permanentemente el esquema "{selectedSchema?.nombre}". 
+              No podrás revertir esta acción.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction 
+              variant="outline" 
+              onClick={() => setShowDeleteConfirm(false)}
+            >
+              Cancelar
+            </AlertDialogAction>
+            <AlertDialogAction 
+              variant="destructive"
+              onClick={() => {
+                if (selectedSchema) {
+                  deleteSchemaMutation.mutate(selectedSchema.id);
+                }
+                setShowDeleteConfirm(false);
+              }}
+            >
+              Desactivar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
