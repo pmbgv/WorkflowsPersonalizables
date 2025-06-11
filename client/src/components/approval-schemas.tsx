@@ -1367,19 +1367,19 @@ export function ApprovalSchemas() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogAction 
-              variant="outline" 
               onClick={() => setShowDeleteConfirm(false)}
+              className="mr-2"
             >
               Cancelar
             </AlertDialogAction>
             <AlertDialogAction 
-              variant="destructive"
               onClick={() => {
                 if (selectedSchema) {
                   deleteSchemaMutation.mutate(selectedSchema.id);
                 }
                 setShowDeleteConfirm(false);
               }}
+              className="bg-red-600 hover:bg-red-700 text-white"
             >
               Desactivar
             </AlertDialogAction>
