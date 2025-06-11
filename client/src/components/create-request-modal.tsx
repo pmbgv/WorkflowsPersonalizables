@@ -269,8 +269,12 @@ export function CreateRequestModal({ onRequestCreated, selectedGroupUsers = [], 
 
   const handleTipoChange = (value: string) => {
     handleInputChange('tipo', value);
-    // Reset motivo when tipo changes
-    handleInputChange('motivo', "");
+    // Set appropriate motivo based on tipo
+    if (value === "Vacaciones") {
+      handleInputChange('motivo', "Vacaciones");
+    } else {
+      handleInputChange('motivo', "");
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -337,6 +341,7 @@ export function CreateRequestModal({ onRequestCreated, selectedGroupUsers = [], 
       requestData = {
         ...formData,
         asunto: formData.asunto || "Solicitud de Vacaciones",
+        motivo: "Vacaciones",
         diasSolicitados: vacationCalculation.diasSolicitados,
         diasEfectivos: vacationCalculation.diasEfectivos,
       };
