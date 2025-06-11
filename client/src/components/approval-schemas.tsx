@@ -112,6 +112,9 @@ export function ApprovalSchemas() {
   
   // Estado para el diálogo de confirmación de eliminación
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  
+  // Estado para navegación por pasos en la pestaña Saldos
+  const [currentSaldosStep, setCurrentSaldosStep] = useState(1);
 
   // Sensores para drag and drop
   const sensors = useSensors(
@@ -1005,170 +1008,246 @@ export function ApprovalSchemas() {
               {/* Pestaña Saldos - Solo para esquemas de Vacaciones */}
               {selectedSchema?.tipoSolicitud === 'Vacaciones' && (
                 <TabsContent value="saldos" className="space-y-4">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Configuración de Saldos</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                      {/* Tipo de liberación de días */}
-                      <div className="space-y-3">
-                        <Label className="text-base font-medium">Tipo de liberación de días</Label>
-                        <RadioGroup 
-                          value={saldosConfig.tipoLiberacion}
-                          onValueChange={(value) => setSaldosConfig(prev => ({ ...prev, tipoLiberacion: value }))}
-                          className="flex space-x-6"
-                        >
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="diaria" id="liberacion-diaria" />
-                            <Label htmlFor="liberacion-diaria" className="text-sm">Liberación diaria</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="anual" id="liberacion-anual" />
-                            <Label htmlFor="liberacion-anual" className="text-sm">Liberación anual</Label>
-                          </div>
-                        </RadioGroup>
+                  <div className="flex gap-6">
+                    {/* Sidebar con pasos */}
+                    <div className="w-48 space-y-1">
+                      <div 
+                        className={`p-3 rounded cursor-pointer flex items-center gap-3 ${
+                          currentSaldosStep === 1 ? 'bg-blue-50 border border-blue-200' : 'hover:bg-gray-50'
+                        }`}
+                        onClick={() => setCurrentSaldosStep(1)}
+                      >
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-sm font-medium ${
+                          currentSaldosStep === 1 ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-600'
+                        }`}>
+                          1
+                        </div>
+                        <span className="text-sm">Configuración</span>
                       </div>
+                      
+                      <div 
+                        className={`p-3 rounded cursor-pointer flex items-center gap-3 ${
+                          currentSaldosStep === 2 ? 'bg-blue-50 border border-blue-200' : 'hover:bg-gray-50'
+                        }`}
+                        onClick={() => setCurrentSaldosStep(2)}
+                      >
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-sm font-medium ${
+                          currentSaldosStep === 2 ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-600'
+                        }`}>
+                          2
+                        </div>
+                        <div className="text-sm">
+                          <div>Vacaciones</div>
+                          <div>base</div>
+                        </div>
+                      </div>
+                      
+                      <div 
+                        className={`p-3 rounded cursor-pointer flex items-center gap-3 ${
+                          currentSaldosStep === 3 ? 'bg-blue-50 border border-blue-200' : 'hover:bg-gray-50'
+                        }`}
+                        onClick={() => setCurrentSaldosStep(3)}
+                      >
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-sm font-medium ${
+                          currentSaldosStep === 3 ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-600'
+                        }`}>
+                          3
+                        </div>
+                        <div className="text-sm">
+                          <div>Vacaciones</div>
+                          <div>progresivas</div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Contenido principal */}
+                    <div className="flex-1">
+                      <Card>
+                        <CardContent className="p-6">
+                          {/* Paso 1: Configuración */}
+                          {currentSaldosStep === 1 && (
+                            <div className="space-y-6">
+                              {/* Tipo de liberación de días */}
+                              <div className="space-y-3">
+                                <Label className="text-base font-medium">Tipo de liberación de días</Label>
+                                <RadioGroup 
+                                  value={saldosConfig.tipoLiberacion}
+                                  onValueChange={(value) => setSaldosConfig(prev => ({ ...prev, tipoLiberacion: value }))}
+                                  className="flex space-x-6"
+                                >
+                                  <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="diaria" id="liberacion-diaria" />
+                                    <Label htmlFor="liberacion-diaria" className="text-sm">Liberación diaria</Label>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="anual" id="liberacion-anual" />
+                                    <Label htmlFor="liberacion-anual" className="text-sm">Liberación anual</Label>
+                                  </div>
+                                </RadioGroup>
+                              </div>
 
-                      {/* Fechas de liberación de períodos */}
-                      <div className="space-y-3">
-                        <Label className="text-base font-medium">Fechas de liberación de períodos</Label>
-                        <div className="space-y-3">
-                          <RadioGroup 
-                            value={saldosConfig.fechasLiberacion}
-                            onValueChange={(value) => setSaldosConfig(prev => ({ ...prev, fechasLiberacion: value }))}
-                          >
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="actual" id="periodo-actual" />
-                              <Label htmlFor="periodo-actual" className="text-sm">Actual</Label>
+                              {/* Fechas de liberación de períodos */}
+                              <div className="space-y-3">
+                                <Label className="text-base font-medium">
+                                  Fechas de liberación de períodos
+                                  <span className="ml-2 text-blue-500 cursor-pointer">ℹ</span>
+                                </Label>
+                                <div className="space-y-3">
+                                  <div className="grid grid-cols-3 gap-4 text-sm text-gray-600">
+                                    <div>Período actual</div>
+                                    <div>Período siguiente</div>
+                                    <div>Caducidad del período actual</div>
+                                  </div>
+                                  <div className="grid grid-cols-3 gap-4">
+                                    <Input
+                                      type="number"
+                                      value={saldosConfig.anoActual}
+                                      onChange={(e) => setSaldosConfig(prev => ({ ...prev, anoActual: e.target.value }))}
+                                      placeholder="2025"
+                                    />
+                                    <Input
+                                      type="number"
+                                      value={saldosConfig.anoSiguiente}
+                                      onChange={(e) => setSaldosConfig(prev => ({ ...prev, anoSiguiente: e.target.value }))}
+                                      placeholder="2025"
+                                    />
+                                    <div className="flex items-center space-x-1">
+                                      <span className="text-sm">del</span>
+                                      <Input
+                                        value={saldosConfig.caducidadPeriodoActual}
+                                        onChange={(e) => setSaldosConfig(prev => ({ ...prev, caducidadPeriodoActual: e.target.value }))}
+                                        className="w-16"
+                                      />
+                                      <Input
+                                        value={saldosConfig.anoActual}
+                                        readOnly
+                                        className="w-16"
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Excluir de la solicitud */}
+                              <div className="space-y-3">
+                                <Label className="text-base font-medium">
+                                  Excluir de la solicitud
+                                  <span className="ml-2 text-blue-500 cursor-pointer">ℹ</span>
+                                </Label>
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div className="flex items-center space-x-2">
+                                    <Checkbox 
+                                      id="excluir-sabado"
+                                      checked={saldosConfig.excluirSabado}
+                                      onCheckedChange={(checked) => 
+                                        setSaldosConfig(prev => ({ ...prev, excluirSabado: !!checked }))
+                                      }
+                                    />
+                                    <Label htmlFor="excluir-sabado" className="text-sm">Sábado</Label>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <Checkbox 
+                                      id="excluir-domingo"
+                                      checked={saldosConfig.excluirDomingo}
+                                      onCheckedChange={(checked) => 
+                                        setSaldosConfig(prev => ({ ...prev, excluirDomingo: !!checked }))
+                                      }
+                                    />
+                                    <Label htmlFor="excluir-domingo" className="text-sm">Domingo</Label>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <Checkbox 
+                                      id="excluir-feriado"
+                                      checked={saldosConfig.excluirFeriado}
+                                      onCheckedChange={(checked) => 
+                                        setSaldosConfig(prev => ({ ...prev, excluirFeriado: !!checked }))
+                                      }
+                                    />
+                                    <Label htmlFor="excluir-feriado" className="text-sm">Feriado</Label>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <Checkbox 
+                                      id="excluir-descanso"
+                                      checked={saldosConfig.excluirDescanso}
+                                      onCheckedChange={(checked) => 
+                                        setSaldosConfig(prev => ({ ...prev, excluirDescanso: !!checked }))
+                                      }
+                                    />
+                                    <Label htmlFor="excluir-descanso" className="text-sm">Descanso</Label>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Extender días no laborables */}
+                              <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <Label htmlFor="extender-dias" className="text-sm">
+                                    Extender días no laborables
+                                    <span className="ml-2 text-blue-500 cursor-pointer">ℹ</span>
+                                  </Label>
+                                  <Switch
+                                    id="extender-dias"
+                                    checked={saldosConfig.extenderDiasNoLaborables}
+                                    onCheckedChange={(checked) => 
+                                      setSaldosConfig(prev => ({ ...prev, extenderDiasNoLaborables: checked }))
+                                    }
+                                  />
+                                </div>
+                              </div>
+                              
+                              {/* Botón Siguiente */}
+                              <div className="flex justify-end pt-4">
+                                <Button 
+                                  onClick={() => setCurrentSaldosStep(2)}
+                                  className="bg-gray-500 hover:bg-gray-600 text-white"
+                                >
+                                  Siguiente
+                                </Button>
+                              </div>
                             </div>
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="siguiente" id="periodo-siguiente" />
-                              <Label htmlFor="periodo-siguiente" className="text-sm">Siguiente período</Label>
-                            </div>
-                          </RadioGroup>
+                          )}
                           
-                          <div className="grid grid-cols-2 gap-4 mt-3">
-                            <div>
-                              <Label className="text-sm text-gray-600">Año actual</Label>
-                              <Input
-                                type="number"
-                                value={saldosConfig.anoActual}
-                                onChange={(e) => setSaldosConfig(prev => ({ ...prev, anoActual: e.target.value }))}
-                                placeholder="2025"
-                              />
+                          {/* Paso 2: Vacaciones base */}
+                          {currentSaldosStep === 2 && (
+                            <div className="space-y-6">
+                              <div className="space-y-3">
+                                <Label className="text-base font-medium">Mínimo inicio de solicitud</Label>
+                                <div className="flex items-center space-x-2">
+                                  <Input
+                                    type="number"
+                                    value={saldosConfig.minimoInicioSolicitud}
+                                    onChange={(e) => setSaldosConfig(prev => ({ ...prev, minimoInicioSolicitud: e.target.value }))}
+                                    className="w-20"
+                                  />
+                                  <span className="text-sm">meses</span>
+                                </div>
+                              </div>
+                              
+                              {/* Botones de navegación */}
+                              <div className="flex justify-end pt-4">
+                                <Button 
+                                  onClick={() => setCurrentSaldosStep(3)}
+                                  className="bg-gray-500 hover:bg-gray-600 text-white"
+                                >
+                                  Siguiente
+                                </Button>
+                              </div>
                             </div>
-                            <div>
-                              <Label className="text-sm text-gray-600">Año siguiente</Label>
-                              <Input
-                                type="number"
-                                value={saldosConfig.anoSiguiente}
-                                onChange={(e) => setSaldosConfig(prev => ({ ...prev, anoSiguiente: e.target.value }))}
-                                placeholder="2026"
-                              />
+                          )}
+                          
+                          {/* Paso 3: Vacaciones progresivas */}
+                          {currentSaldosStep === 3 && (
+                            <div className="space-y-6">
+                              <div className="text-center text-gray-500 py-8">
+                                <p>Configuración de vacaciones progresivas</p>
+                                <p className="text-sm mt-2">Esta funcionalidad estará disponible próximamente</p>
+                              </div>
                             </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Caducidad del período actual */}
-                      <div className="space-y-3">
-                        <Label className="text-base font-medium">Caducidad del período actual</Label>
-                        <div className="flex items-center space-x-2">
-                          <Input
-                            value={saldosConfig.caducidadPeriodoActual}
-                            onChange={(e) => setSaldosConfig(prev => ({ ...prev, caducidadPeriodoActual: e.target.value }))}
-                            placeholder="del"
-                            className="w-20"
-                          />
-                          <span className="text-sm">del</span>
-                          <Input
-                            value={saldosConfig.anoActual}
-                            onChange={(e) => setSaldosConfig(prev => ({ ...prev, anoActual: e.target.value }))}
-                            className="w-20"
-                            readOnly
-                          />
-                        </div>
-                      </div>
-
-                      {/* Excluir de la solicitud */}
-                      <div className="space-y-3">
-                        <Label className="text-base font-medium">Excluir de la solicitud</Label>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="flex items-center space-x-2">
-                            <Checkbox 
-                              id="excluir-sabado"
-                              checked={saldosConfig.excluirSabado}
-                              onCheckedChange={(checked) => 
-                                setSaldosConfig(prev => ({ ...prev, excluirSabado: !!checked }))
-                              }
-                            />
-                            <Label htmlFor="excluir-sabado" className="text-sm">Sábado</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Checkbox 
-                              id="excluir-domingo"
-                              checked={saldosConfig.excluirDomingo}
-                              onCheckedChange={(checked) => 
-                                setSaldosConfig(prev => ({ ...prev, excluirDomingo: !!checked }))
-                              }
-                            />
-                            <Label htmlFor="excluir-domingo" className="text-sm">Domingo</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Checkbox 
-                              id="excluir-feriado"
-                              checked={saldosConfig.excluirFeriado}
-                              onCheckedChange={(checked) => 
-                                setSaldosConfig(prev => ({ ...prev, excluirFeriado: !!checked }))
-                              }
-                            />
-                            <Label htmlFor="excluir-feriado" className="text-sm">Feriado</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Checkbox 
-                              id="excluir-descanso"
-                              checked={saldosConfig.excluirDescanso}
-                              onCheckedChange={(checked) => 
-                                setSaldosConfig(prev => ({ ...prev, excluirDescanso: !!checked }))
-                              }
-                            />
-                            <Label htmlFor="excluir-descanso" className="text-sm">Descanso</Label>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Extender días no laborables */}
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor="extender-dias" className="text-sm">Extender días no laborables</Label>
-                          <Switch
-                            id="extender-dias"
-                            checked={saldosConfig.extenderDiasNoLaborables}
-                            onCheckedChange={(checked) => 
-                              setSaldosConfig(prev => ({ ...prev, extenderDiasNoLaborables: checked }))
-                            }
-                          />
-                        </div>
-                      </div>
-
-                      {/* Vacaciones base */}
-                      <div className="space-y-3">
-                        <Label className="text-base font-medium">Vacaciones base</Label>
-                        <div>
-                          <Label className="text-sm text-gray-600">Mínimo inicio de solicitud</Label>
-                          <div className="flex items-center space-x-2 mt-1">
-                            <Input
-                              type="number"
-                              value={saldosConfig.minimoInicioSolicitud}
-                              onChange={(e) => setSaldosConfig(prev => ({ ...prev, minimoInicioSolicitud: e.target.value }))}
-                              className="w-20"
-                            />
-                            <span className="text-sm">meses</span>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </div>
                 </TabsContent>
               )}
               
