@@ -837,51 +837,53 @@ export function ApprovalSchemas() {
                       </div>
                     </div>
 
-                    {/* Cantidad de días */}
-                    <div className="space-y-3">
-                      <Label className="text-base font-medium">Cantidad de días</Label>
-                      <div>
-                        <Label className="text-sm">Días calendario</Label>
-                        <div className="grid grid-cols-3 gap-4 mt-2">
-                          <div>
-                            <Label htmlFor="dias-min" className="text-xs text-gray-600">Mínimo</Label>
-                            <Input
-                              id="dias-min"
-                              type="number"
-                              placeholder="0"
-                              value={schemaConfig.diasMinimo}
-                              onChange={(e) => 
-                                setSchemaConfig(prev => ({ ...prev, diasMinimo: e.target.value }))
-                              }
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="dias-max" className="text-xs text-gray-600">Máximo</Label>
-                            <Input
-                              id="dias-max"
-                              type="number"
-                              placeholder="0"
-                              value={schemaConfig.diasMaximo}
-                              onChange={(e) => 
-                                setSchemaConfig(prev => ({ ...prev, diasMaximo: e.target.value }))
-                              }
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="dias-mult" className="text-xs text-gray-600">Múltiplo</Label>
-                            <Input
-                              id="dias-mult"
-                              type="number"
-                              placeholder="0"
-                              value={schemaConfig.diasMultiplo}
-                              onChange={(e) => 
-                                setSchemaConfig(prev => ({ ...prev, diasMultiplo: e.target.value }))
-                              }
-                            />
+                    {/* Cantidad de días - Solo para esquemas de Vacaciones */}
+                    {selectedSchema?.tipoSolicitud === 'Vacaciones' && (
+                      <div className="space-y-3">
+                        <Label className="text-base font-medium">Cantidad de días</Label>
+                        <div>
+                          <Label className="text-sm">Días calendario</Label>
+                          <div className="grid grid-cols-3 gap-4 mt-2">
+                            <div>
+                              <Label htmlFor="dias-min" className="text-xs text-gray-600">Mínimo</Label>
+                              <Input
+                                id="dias-min"
+                                type="number"
+                                placeholder="0"
+                                value={schemaConfig.diasMinimo}
+                                onChange={(e) => 
+                                  setSchemaConfig(prev => ({ ...prev, diasMinimo: e.target.value }))
+                                }
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="dias-max" className="text-xs text-gray-600">Máximo</Label>
+                              <Input
+                                id="dias-max"
+                                type="number"
+                                placeholder="0"
+                                value={schemaConfig.diasMaximo}
+                                onChange={(e) => 
+                                  setSchemaConfig(prev => ({ ...prev, diasMaximo: e.target.value }))
+                                }
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="dias-mult" className="text-xs text-gray-600">Múltiplo</Label>
+                              <Input
+                                id="dias-mult"
+                                type="number"
+                                placeholder="0"
+                                value={schemaConfig.diasMultiplo}
+                                onChange={(e) => 
+                                  setSchemaConfig(prev => ({ ...prev, diasMultiplo: e.target.value }))
+                                }
+                              />
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
+                    )}
 
 
                     
