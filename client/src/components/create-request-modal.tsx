@@ -98,6 +98,45 @@ export function CreateRequestModal({ onRequestCreated, selectedGroupUsers = [], 
   // Verificar si el usuario actual es admin o jefe de grupo
   const isAdminOrManager = selectedUser && ["#JefeGrupo#", "#adminCuenta#"].includes(selectedUser.UserProfile);
 
+  // Obtener el esquema activo para el tipo de solicitud y motivo seleccionados
+  const activeSchema = approvalSchemas.find(schema => {
+    if (formData.tipo === "Vacaciones") {
+      return schema.tipoSolicitud === "Vacaciones";
+    } else if (formData.tipo === "Permiso") {
+      return schema.tipoSolicitud === "Permiso" && 
+             (schema as any).motivos && 
+             (schema as any).motivos.includes(formData.motivo);
+    }
+    return false;
+  });
+
+  // Verificar si el usuario actual puede hacer solicitudes para terceros
+  const canRequestForOthers = () => {
+    // Si no hay esquema activo, permitir (comportamiento por defecto)
+    if (!activeSchema) return true;
+    
+    // Si permitir solicitud a terceros está desactivado en el esquema
+    if (!activeSchema.permitirSolicitudTerceros) {
+      return false;
+    }
+    
+    return true;
+  };
+
+  // Update form data when selected user changes
+  useEffect(() => {
+    if (selectedUser) {
+      // Si es usuario normal o si es admin/manager pero no puede solicitar para terceros
+      if (!isAdminOrManager || (isAdminOrManager && !canRequestForOthers())) {
+        setFormData(prev => ({
+          ...prev,
+          solicitadoPor: `${selectedUser.Name} ${selectedUser.LastName}`,
+          identificador: selectedUser.Identifier
+        }));
+      }
+    }
+  }, [selectedUser, activeSchema]);
+
   // Obtener todas las solicitudes existentes para verificar conflictos de fechas
   const { data: existingRequests = [] } = useQuery<Request[]>({
     queryKey: ["/api/requests"],
