@@ -80,7 +80,8 @@ export function ApprovalSchemas() {
     permitirSolicitudTerceros: false,
     diasMinimo: "",
     diasMaximo: "",
-    diasMultiplo: ""
+    diasMultiplo: "",
+    tipoDias: "calendario"
   });
 
   // Estados para configuración de saldos (vacaciones)
@@ -143,7 +144,8 @@ export function ApprovalSchemas() {
         permitirSolicitudTerceros: (selectedSchema as any).permitirSolicitudTerceros === "true",
         diasMinimo: (selectedSchema as any).diasMinimo?.toString() || "",
         diasMaximo: (selectedSchema as any).diasMaximo?.toString() || "",
-        diasMultiplo: (selectedSchema as any).diasMultiplo?.toString() || ""
+        diasMultiplo: (selectedSchema as any).diasMultiplo?.toString() || "",
+        tipoDias: (selectedSchema as any).tipoDias || "calendario"
       });
     } else {
       setVisibilityPermissions([]);
@@ -161,7 +163,8 @@ export function ApprovalSchemas() {
         permitirSolicitudTerceros: false,
         diasMinimo: "",
         diasMaximo: "",
-        diasMultiplo: ""
+        diasMultiplo: "",
+        tipoDias: "calendario"
       });
     }
   }, [selectedSchema]);
@@ -389,7 +392,8 @@ export function ApprovalSchemas() {
         permitirSolicitudTerceros: schemaConfig.permitirSolicitudTerceros ? "true" : "false",
         diasMinimo: schemaConfig.diasMinimo ? parseInt(schemaConfig.diasMinimo) : null,
         diasMaximo: schemaConfig.diasMaximo ? parseInt(schemaConfig.diasMaximo) : null,
-        diasMultiplo: schemaConfig.diasMultiplo ? parseInt(schemaConfig.diasMultiplo) : null
+        diasMultiplo: schemaConfig.diasMultiplo ? parseInt(schemaConfig.diasMultiplo) : null,
+        tipoDias: schemaConfig.tipoDias
       };
       
       console.log("Guardando cambios del esquema:", schemaUpdates);
@@ -842,7 +846,23 @@ export function ApprovalSchemas() {
                       <div className="space-y-3">
                         <Label className="text-base font-medium">Cantidad de días</Label>
                         <div>
-                          <Label className="text-sm">Días calendario</Label>
+                          <div className="mb-3">
+                            <Label className="text-sm mb-2 block">Tipo de días</Label>
+                            <Select 
+                              value={schemaConfig.tipoDias || "calendario"} 
+                              onValueChange={(value) => 
+                                setSchemaConfig(prev => ({ ...prev, tipoDias: value }))
+                              }
+                            >
+                              <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Seleccionar tipo de días" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="calendario">Días calendario</SelectItem>
+                                <SelectItem value="laborales">Días laborales</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
                           <div className="grid grid-cols-3 gap-4 mt-2">
                             <div>
                               <Label htmlFor="dias-min" className="text-xs text-gray-600">Mínimo</Label>
