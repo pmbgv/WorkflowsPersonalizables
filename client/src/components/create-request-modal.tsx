@@ -56,17 +56,6 @@ export function CreateRequestModal({ onRequestCreated, selectedGroupUsers = [], 
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Update form data when selected user changes
-  useEffect(() => {
-    if (selectedUser && !["#JefeGrupo#", "#adminCuenta#"].includes(selectedUser.UserProfile)) {
-      setFormData(prev => ({
-        ...prev,
-        solicitadoPor: `${selectedUser.Name} ${selectedUser.LastName}`,
-        identificador: selectedUser.Identifier
-      }));
-    }
-  }, [selectedUser]);
-
   // Obtener usuarios reales de la API
   const { data: allUsers = [] } = useQuery({
     queryKey: ["/api/users"],
@@ -106,17 +95,8 @@ export function CreateRequestModal({ onRequestCreated, selectedGroupUsers = [], 
     },
   });
 
-  // Obtener el esquema activo para el tipo de solicitud y motivo seleccionados
-  const activeSchema = approvalSchemas.find(schema => {
-    if (formData.tipo === "Vacaciones") {
-      return schema.tipoSolicitud === "Vacaciones";
-    } else if (formData.tipo === "Permiso") {
-      return schema.tipoSolicitud === "Permiso" && 
-             (schema as any).motivos && 
-             (schema as any).motivos.includes(formData.motivo);
-    }
-    return false;
-  });
+  // Verificar si el usuario actual es admin o jefe de grupo
+  const isAdminOrManager = selectedUser && ["#JefeGrupo#", "#adminCuenta#"].includes(selectedUser.UserProfile);
 
   // Obtener todas las solicitudes existentes para verificar conflictos de fechas
   const { data: existingRequests = [] } = useQuery<Request[]>({
@@ -409,38 +389,54 @@ export function CreateRequestModal({ onRequestCreated, selectedGroupUsers = [], 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label htmlFor="usuario" className="text-gray-700">Usuario</Label>
-              {selectedUser && !["#JefeGrupo#", "#adminCuenta#"].includes(selectedUser.UserProfile) ? (
+              {selectedUser && !isAdminOrManager ? (
                 <Input
                   value={`${selectedUser.Name} ${selectedUser.LastName} - ${selectedUser.Identifier}`}
                   disabled
                   className="bg-gray-100 text-gray-600 cursor-not-allowed"
                 />
               ) : (
-                <Select
-                  value={formData.identificador || ""}
-                  onValueChange={(value) => {
-                    const selectedUser = users.find((user: any) => user.employee_id === value);
-                    if (selectedUser) {
-                      handleInputChange('solicitadoPor', selectedUser.name);
-                      handleInputChange('identificador', selectedUser.employee_id);
-                    }
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar usuario" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {users
-                      .filter((user: any) => user.employee_id && user.employee_id.trim() !== "")
-                      .map((user: any) => (
-                        <SelectItem key={user.id} value={user.employee_id}>
-                          {user.name} - {user.employee_id}
-                          {user.group_name && <span className="text-gray-500 text-xs block">{user.group_name}</span>}
-                        </SelectItem>
-                      ))
-                    }
-                  </SelectContent>
-                </Select>
+                <>
+                  {isAdminOrManager && !canRequestForOthers() ? (
+                    <div className="space-y-2">
+                      <Input
+                        value={selectedUser ? `${selectedUser.Name} ${selectedUser.LastName} - ${selectedUser.Identifier}` : ""}
+                        disabled
+                        className="bg-gray-100 text-gray-600 cursor-not-allowed"
+                      />
+                      <div className="flex items-center gap-2 text-amber-600 text-sm">
+                        <Info className="h-4 w-4" />
+                        <span>Las solicitudes a terceros están desactivadas para este tipo de solicitud</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <Select
+                      value={formData.identificador || ""}
+                      onValueChange={(value) => {
+                        const selectedUser = users.find((user: any) => user.employee_id === value);
+                        if (selectedUser) {
+                          handleInputChange('solicitadoPor', selectedUser.name);
+                          handleInputChange('identificador', selectedUser.employee_id);
+                        }
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccionar usuario" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {users
+                          .filter((user: any) => user.employee_id && user.employee_id.trim() !== "")
+                          .map((user: any) => (
+                            <SelectItem key={user.id} value={user.employee_id}>
+                              {user.name} - {user.employee_id}
+                              {user.group_name && <span className="text-gray-500 text-xs block">{user.group_name}</span>}
+                            </SelectItem>
+                          ))
+                        }
+                      </SelectContent>
+                    </Select>
+                  )}
+                </>
               )}
             </div>
 

@@ -967,36 +967,7 @@ export function ApprovalSchemas() {
                           </div>
                         </div>
 
-                        {/* Permiso para aprobación */}
-                        <div className="space-y-3">
-                          <Label className="text-sm font-medium text-gray-700">Permiso para aprobación</Label>
-                          <div className="space-y-2">
-                            <div className="flex items-center space-x-2">
-                              <Checkbox 
-                                id="apr-rrhh"
-                                checked={approvalPermissions.includes("Recursos humanos")}
-                                onCheckedChange={() => handleApprovalPermissionToggle("Recursos humanos")}
-                              />
-                              <Label htmlFor="apr-rrhh" className="text-sm">Recursos humanos</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <Checkbox 
-                                id="apr-jefes"
-                                checked={approvalPermissions.includes("Jefes de grupo")}
-                                onCheckedChange={() => handleApprovalPermissionToggle("Jefes de grupo")}
-                              />
-                              <Label htmlFor="apr-jefes" className="text-sm">Jefes de grupo</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <Checkbox 
-                                id="apr-admin"
-                                checked={approvalPermissions.includes("Administradores")}
-                                onCheckedChange={() => handleApprovalPermissionToggle("Administradores")}
-                              />
-                              <Label htmlFor="apr-admin" className="text-sm">Administradores</Label>
-                            </div>
-                          </div>
-                        </div>
+                        
                       </div>
                     </div>
 
