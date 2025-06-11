@@ -149,6 +149,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
               );
 
               if (timeOffType) {
+                // Obtener información completa del usuario
+                const usersUrl = "https://customerapi.geovictoria.com/api/v1/User/ListComplete";
+                const usersResponse = await fetch(usersUrl, {
+                  method: 'POST',
+                  headers: {
+                    "Authorization": authHeader,
+                    "Content-Type": "application/json"
+                  }
+                });
+
+                let userName = "Usuario";
+                if (usersResponse.ok) {
+                  const users = await usersResponse.json();
+                  const user = users.find((u: any) => u.Identifier === updatedRequest.identificador);
+                  if (user) {
+                    userName = `${user.Name} ${user.LastName}`.trim();
+                  }
+                }
+
                 // Formatear fechas para GeoVictoria (YYYYMMDDHHMMSS)
                 const formatDateForGeoVictoria = (dateStr: string) => {
                   const date = new Date(dateStr);
@@ -173,7 +192,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   Ends: updatedRequest.fechaFin ? formatEndDateForGeoVictoria(updatedRequest.fechaFin) : formatEndDateForGeoVictoria(updatedRequest.fechaSolicitada),
                   TimeOffTypeDescription: timeOffType.TranslatedDescription,
                   Description: updatedRequest.descripcion || `Solicitud #${updatedRequest.id} aceptada`,
-                  UserIdentifier: updatedRequest.identificador,
+                  Identifier: "103285551",
+                  Name: userName,
                   isParcial: timeOffType.IsParcial || false
                 };
 
