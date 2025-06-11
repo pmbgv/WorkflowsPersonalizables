@@ -31,6 +31,10 @@ export function CreateRequestModal({ onRequestCreated, selectedGroupUsers = [], 
   const [showDateConflictAlert, setShowDateConflictAlert] = useState(false);
   const [showMinimumDaysAlert, setShowMinimumDaysAlert] = useState(false);
   const [minimumDaysError, setMinimumDaysError] = useState({ requested: 0, minimum: 0 });
+  const [showMaximumDaysAlert, setShowMaximumDaysAlert] = useState(false);
+  const [maximumDaysError, setMaximumDaysError] = useState({ requested: 0, maximum: 0 });
+  const [showMultipleDaysAlert, setShowMultipleDaysAlert] = useState(false);
+  const [multipleDaysError, setMultipleDaysError] = useState({ requested: 0, multiple: 0 });
   const [vacationCalculation, setVacationCalculation] = useState({
     diasDisponibles: 0,
     diasSolicitados: 0,
@@ -326,14 +330,37 @@ export function CreateRequestModal({ onRequestCreated, selectedGroupUsers = [], 
     let requestData;
     
     if (formData.tipo === "Vacaciones") {
+      const requestedDays = vacationCalculation.diasEfectivos || vacationCalculation.diasSolicitados;
+      
       // Validar días mínimos para vacaciones
       if (activeSchema && activeSchema.diasMinimo && parseInt(activeSchema.diasMinimo) > 0) {
         const minimumDays = parseInt(activeSchema.diasMinimo);
-        const requestedDays = vacationCalculation.diasEfectivos || vacationCalculation.diasSolicitados;
         
         if (requestedDays < minimumDays) {
           setMinimumDaysError({ requested: requestedDays, minimum: minimumDays });
           setShowMinimumDaysAlert(true);
+          return;
+        }
+      }
+      
+      // Validar días máximos para vacaciones
+      if (activeSchema && activeSchema.diasMaximo && parseInt(activeSchema.diasMaximo) > 0) {
+        const maximumDays = parseInt(activeSchema.diasMaximo);
+        
+        if (requestedDays > maximumDays) {
+          setMaximumDaysError({ requested: requestedDays, maximum: maximumDays });
+          setShowMaximumDaysAlert(true);
+          return;
+        }
+      }
+      
+      // Validar múltiplo de días para vacaciones
+      if (activeSchema && activeSchema.diasMultiplo && parseInt(activeSchema.diasMultiplo) > 0) {
+        const multipleDays = parseInt(activeSchema.diasMultiplo);
+        
+        if (requestedDays % multipleDays !== 0) {
+          setMultipleDaysError({ requested: requestedDays, multiple: multipleDays });
+          setShowMultipleDaysAlert(true);
           return;
         }
       }
@@ -792,6 +819,71 @@ export function CreateRequestModal({ onRequestCreated, selectedGroupUsers = [], 
           <AlertDialogFooter className="flex justify-center">
             <Button
               onClick={() => setShowMinimumDaysAlert(false)}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-2 rounded"
+            >
+              Cerrar
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Modal de alerta para días máximos */}
+      <AlertDialog open={showMaximumDaysAlert} onOpenChange={setShowMaximumDaysAlert}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader className="text-center">
+            <div className="flex justify-end">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowMaximumDaysAlert(false)}
+                className="h-6 w-6 p-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <AlertDialogTitle className="text-lg font-medium text-gray-900">
+              La cantidad de días excede el máximo configurado
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm text-gray-600 mt-2">
+              Has solicitado {maximumDaysError.requested} días, pero el máximo configurado en el esquema es de {maximumDaysError.maximum} días.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex justify-center">
+            <Button
+              onClick={() => setShowMaximumDaysAlert(false)}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-2 rounded"
+            >
+              Cerrar
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Modal de alerta para múltiplo de días */}
+      <AlertDialog open={showMultipleDaysAlert} onOpenChange={setShowMultipleDaysAlert}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader className="text-center">
+            <div className="flex justify-end">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowMultipleDaysAlert(false)}
+                className="h-6 w-6 p-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <AlertDialogTitle className="text-lg font-medium text-gray-900">
+              La cantidad de días no cumple con el múltiplo configurado
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm text-gray-600 mt-2">
+              Has solicitado {multipleDaysError.requested} días, pero debes solicitar en múltiplos de {multipleDaysError.multiple}. 
+              Puedes solicitar: {multipleDaysError.multiple}, {multipleDaysError.multiple * 2}, {multipleDaysError.multiple * 3}, etc.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex justify-center">
+            <Button
+              onClick={() => setShowMultipleDaysAlert(false)}
               className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-2 rounded"
             >
               Cerrar
