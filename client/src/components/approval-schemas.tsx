@@ -1369,15 +1369,6 @@ export function ApprovalSchemas() {
             {/* Action Buttons - Positioned at bottom right */}
             <div className="absolute bottom-0 right-0 flex space-x-2">
               <Button
-                variant="outline"
-                size="sm"
-                onClick={() => saveSchemaChangesMutation.mutate(selectedSchema.id)}
-                disabled={saveSchemaChangesMutation.isPending}
-              >
-                <Save className="h-4 w-4 mr-2" />
-                Guardar
-              </Button>
-              <Button
                 variant="destructive"
                 size="sm"
                 onClick={() => setShowDeleteConfirm(true)}

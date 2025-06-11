@@ -76,7 +76,7 @@ export function CreateRequestModal({ onRequestCreated, selectedGroupUsers = [], 
   })) : allUsers;
 
   // Obtener motivos desde GeoVictoria API
-  const { data: motivosGeoVictoria = [] } = useQuery<string[]>({
+  const { data: timeoffTypes } = useQuery({
     queryKey: ["/api/timeoff-types"],
     queryFn: async () => {
       const response = await fetch("/api/timeoff-types");
@@ -282,9 +282,17 @@ export function CreateRequestModal({ onRequestCreated, selectedGroupUsers = [], 
 
   // Define motivos based on tipo selection
   const getMotivosForTipo = (tipo: string) => {
+    if (!timeoffTypes) return [];
+    
     switch (tipo) {
       case "Permiso":
-        return motivosGeoVictoria;
+        // Combine all permission types into a single array
+        const allMotivos = [
+          ...(timeoffTypes.permisosCompletos || []),
+          ...(timeoffTypes.permisosParciales || []),
+          ...(timeoffTypes.permisosComunes || [])
+        ];
+        return [...new Set(allMotivos)]; // Remove duplicates
       default:
         return [];
     }
