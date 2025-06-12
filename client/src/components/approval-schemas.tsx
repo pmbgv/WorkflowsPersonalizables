@@ -641,6 +641,27 @@ export function ApprovalSchemas() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Motivos Configurados Section */}
+        {selectedSchema?.tipoSolicitud === "Permiso" && selectedSchema.motivos && selectedSchema.motivos.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Motivos Configurados</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                {selectedSchema.motivos.map((motivo, index) => (
+                  <div
+                    key={index}
+                    className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800 border border-blue-200"
+                  >
+                    {motivo}
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Center Panel - Schema Details */}
@@ -680,22 +701,7 @@ export function ApprovalSchemas() {
                       </Select>
                     </div>
 
-                    {/* Mostrar motivos configurados para esquemas de Permiso */}
-                    {selectedSchema.tipoSolicitud === "Permiso" && selectedSchema.motivos && selectedSchema.motivos.length > 0 && (
-                      <div>
-                        <Label>Motivos configurados</Label>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {selectedSchema.motivos.map((motivo, index) => (
-                            <div
-                              key={index}
-                              className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800 border border-blue-200"
-                            >
-                              {motivo}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+
 
                     
 
