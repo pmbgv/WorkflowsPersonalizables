@@ -559,7 +559,7 @@ export function CreateRequestModal({ onRequestCreated, selectedGroupUsers = [], 
                   </SelectContent>
                 </Select>
               )}
-              <p className="text-xs text-gray-500">Usuario que solicitará el permiso o vacaciones</p>
+              <p className="text-xs text-gray-500">Usuario a quien le aplica la solicitud (puede ser diferente al solicitante)</p>
             </div>
           </div>
 
