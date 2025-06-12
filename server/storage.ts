@@ -8,6 +8,7 @@ export interface IStorage {
     tipo?: string;
     fechaInicio?: string;
     fechaFin?: string;
+    tipoFecha?: string;
     busqueda?: string;
   }): Promise<Request[]>;
   getRequest(id: number): Promise<Request | undefined>;
@@ -51,6 +52,7 @@ export class DatabaseStorage implements IStorage {
     tipo?: string;
     fechaInicio?: string;
     fechaFin?: string;
+    tipoFecha?: string;
     busqueda?: string;
   }): Promise<Request[]> {
     const conditions = [];
@@ -62,6 +64,19 @@ export class DatabaseStorage implements IStorage {
       if (filters.tipo) {
         conditions.push(eq(requests.tipo, filters.tipo));
       }
+      
+      // Handle date filtering based on tipoFecha
+      if (filters.fechaInicio || filters.fechaFin) {
+        const dateField = filters.tipoFecha === "fechaSolicitada" ? requests.fechaSolicitada : requests.fechaCreacion;
+        
+        if (filters.fechaInicio) {
+          conditions.push(gte(dateField, filters.fechaInicio));
+        }
+        if (filters.fechaFin) {
+          conditions.push(lte(dateField, filters.fechaFin));
+        }
+      }
+      
       if (filters.busqueda) {
         conditions.push(
           or(

@@ -24,6 +24,7 @@ export default function Dashboard() {
   const [filters, setFilters] = useState({
     fechaInicio: "",
     fechaFin: "",
+    tipoFecha: "fechaCreacion",
     estado: "",
     tipo: "",
     busqueda: "",
