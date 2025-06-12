@@ -178,6 +178,7 @@ export function RequestTable({ requests, isLoading, onViewDetails, onDownload, t
                   </TableCell>
                   <TableCell className="text-sm">{request.tipo}</TableCell>
                   <TableCell>{renderStatusCell(request)}</TableCell>
+                  <TableCell className="text-sm">{request.usuarioSolicitado || request.solicitadoPor}</TableCell>
                   <TableCell className="text-sm">{request.solicitadoPor}</TableCell>
                   <TableCell className="text-sm text-gray-500">
                     {formatDate(request.fechaCreacion)}
@@ -225,6 +226,10 @@ export function RequestTable({ requests, isLoading, onViewDetails, onDownload, t
                 {renderStatusCell(request)}
               </div>
               <div className="space-y-2 text-sm text-gray-600">
+                <div className="flex justify-between">
+                  <span>Usuario:</span>
+                  <span>{request.usuarioSolicitado || request.solicitadoPor}</span>
+                </div>
                 <div className="flex justify-between">
                   <span>Solicitado por:</span>
                   <span>{request.solicitadoPor}</span>
