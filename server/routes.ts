@@ -651,11 +651,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .filter((item: any) => item.Status === "enabled" && item.TranslatedDescription && item.TranslatedDescription.trim() !== "");
       
       const permisosCompletos = enabledTypes
-        .filter((item: any) => !item.IsParcial)
+        .filter((item: any) => !item.IsParcial && item.TranslatedDescription !== "Vacaciones")
         .map((item: any) => item.TranslatedDescription);
       
       const permisosParciales = enabledTypes
-        .filter((item: any) => item.IsParcial)
+        .filter((item: any) => item.IsParcial && item.TranslatedDescription !== "Vacaciones")
         .map((item: any) => item.TranslatedDescription);
       
       res.json({
