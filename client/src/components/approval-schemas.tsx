@@ -124,42 +124,9 @@ export function ApprovalSchemas() {
 
   // Reset changes and load schema data when switching schemas
   useEffect(() => {
-    setStepChanges({});
-    setSelectedPermissions([]);
-    
-    if (selectedSchema) {
-      // Load existing permissions from schema
-      console.log("Cargando esquema:", selectedSchema);
-      console.log("Permisos de visualización:", selectedSchema.visibilityPermissions);
-      console.log("Permisos de aprobación:", selectedSchema.approvalPermissions);
-      setVisibilityPermissions(selectedSchema.visibilityPermissions || []);
-      setApprovalPermissions(selectedSchema.approvalPermissions || []);
-      
-      // Load existing motivos for editing
-      if (selectedSchema.motivos && selectedSchema.motivos.length > 0) {
-        setNewSchemaMotivos(selectedSchema.motivos);
-      } else {
-        setNewSchemaMotivos([]);
-      }
-      
-      // Load schema configuration
-      setSchemaConfig({
-        adjuntarDocumentos: (selectedSchema as any).adjuntarDocumentos === "true",
-        adjuntarDocumentosObligatorio: (selectedSchema as any).adjuntarDocumentosObligatorio === "true",
-        permitirModificarDocumentos: (selectedSchema as any).permitirModificarDocumentos === "true",
-        comentarioRequerido: (selectedSchema as any).comentarioRequerido === "true",
-        comentarioObligatorio: (selectedSchema as any).comentarioObligatorio === "true",
-        comentarioOpcional: (selectedSchema as any).comentarioOpcional !== "false",
-        enviarCorreoNotificacion: (selectedSchema as any).enviarCorreoNotificacion === "true",
-        solicitudCreada: (selectedSchema as any).solicitudCreada === "true",
-        solicitudAprobadaRechazada: (selectedSchema as any).solicitudAprobadaRechazada === "true",
-        permitirSolicitudTerceros: (selectedSchema as any).permitirSolicitudTerceros === "true",
-        diasMinimo: (selectedSchema as any).diasMinimo?.toString() || "",
-        diasMaximo: (selectedSchema as any).diasMaximo?.toString() || "",
-        diasMultiplo: (selectedSchema as any).diasMultiplo?.toString() || "",
-        tipoDias: (selectedSchema as any).tipoDias || "calendario"
-      });
-    } else {
+    if (!selectedSchema) {
+      setStepChanges({});
+      setSelectedPermissions([]);
       setVisibilityPermissions([]);
       setApprovalPermissions([]);
       setNewSchemaMotivos([]);
@@ -179,7 +146,39 @@ export function ApprovalSchemas() {
         diasMultiplo: "",
         tipoDias: "calendario"
       });
+      return;
     }
+
+    // Load existing permissions from schema
+    setStepChanges({});
+    setSelectedPermissions([]);
+    setVisibilityPermissions(selectedSchema.visibilityPermissions || []);
+    setApprovalPermissions(selectedSchema.approvalPermissions || []);
+    
+    // Load existing motivos for editing
+    if (selectedSchema.motivos && selectedSchema.motivos.length > 0) {
+      setNewSchemaMotivos(selectedSchema.motivos);
+    } else {
+      setNewSchemaMotivos([]);
+    }
+    
+    // Load schema configuration
+    setSchemaConfig({
+      adjuntarDocumentos: (selectedSchema as any).adjuntarDocumentos === "true",
+      adjuntarDocumentosObligatorio: (selectedSchema as any).adjuntarDocumentosObligatorio === "true",
+      permitirModificarDocumentos: (selectedSchema as any).permitirModificarDocumentos === "true",
+      comentarioRequerido: (selectedSchema as any).comentarioRequerido === "true",
+      comentarioObligatorio: (selectedSchema as any).comentarioObligatorio === "true",
+      comentarioOpcional: (selectedSchema as any).comentarioOpcional !== "false",
+      enviarCorreoNotificacion: (selectedSchema as any).enviarCorreoNotificacion === "true",
+      solicitudCreada: (selectedSchema as any).solicitudCreada === "true",
+      solicitudAprobadaRechazada: (selectedSchema as any).solicitudAprobadaRechazada === "true",
+      permitirSolicitudTerceros: (selectedSchema as any).permitirSolicitudTerceros === "true",
+      diasMinimo: (selectedSchema as any).diasMinimo?.toString() || "",
+      diasMaximo: (selectedSchema as any).diasMaximo?.toString() || "",
+      diasMultiplo: (selectedSchema as any).diasMultiplo?.toString() || "",
+      tipoDias: (selectedSchema as any).tipoDias || "calendario"
+    });
   }, [selectedSchema?.id]);
 
   // Fetch approval schemas
@@ -1034,38 +1033,36 @@ export function ApprovalSchemas() {
                         <div className="space-y-3">
                           <Label className="text-sm font-medium text-gray-700">Permiso para visualización</Label>
                           <div className="space-y-2">
-                            <div className="flex items-center space-x-2">
+                            {/* Todos los perfiles option */}
+                            <div className="flex items-center space-x-2 border-b pb-2">
                               <Checkbox 
-                                id="vis-usuarios"
-                                checked={visibilityPermissions.includes("Usuarios")}
-                                onCheckedChange={() => handleVisibilityPermissionToggle("Usuarios")}
+                                id="vis-todos-perfiles"
+                                checked={distinctProfiles.length > 0 && distinctProfiles.every(profile => visibilityPermissions.includes(profile))}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    setVisibilityPermissions(distinctProfiles);
+                                  } else {
+                                    setVisibilityPermissions([]);
+                                  }
+                                }}
                               />
-                              <Label htmlFor="vis-usuarios" className="text-sm">Usuarios</Label>
+                              <Label htmlFor="vis-todos-perfiles" className="text-sm font-semibold">
+                                Todos los perfiles
+                              </Label>
                             </div>
-                            <div className="flex items-center space-x-2">
-                              <Checkbox 
-                                id="vis-jefes"
-                                checked={visibilityPermissions.includes("Jefes de grupo")}
-                                onCheckedChange={() => handleVisibilityPermissionToggle("Jefes de grupo")}
-                              />
-                              <Label htmlFor="vis-jefes" className="text-sm">Jefes de grupo</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <Checkbox 
-                                id="vis-rrhh"
-                                checked={visibilityPermissions.includes("Recursos humanos")}
-                                onCheckedChange={() => handleVisibilityPermissionToggle("Recursos humanos")}
-                              />
-                              <Label htmlFor="vis-rrhh" className="text-sm">Recursos humanos</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <Checkbox 
-                                id="vis-admin"
-                                checked={visibilityPermissions.includes("Administradores")}
-                                onCheckedChange={() => handleVisibilityPermissionToggle("Administradores")}
-                              />
-                              <Label htmlFor="vis-admin" className="text-sm">Administradores</Label>
-                            </div>
+                            
+                            {distinctProfiles.map((profile: string, index: number) => (
+                              <div key={`vis-${profile}-${index}`} className="flex items-center space-x-2">
+                                <Checkbox 
+                                  id={`vis-${profile.toLowerCase().replace(/\s+/g, '-')}-${index}`}
+                                  checked={visibilityPermissions.includes(profile)}
+                                  onCheckedChange={() => handleVisibilityPermissionToggle(profile)}
+                                />
+                                <Label htmlFor={`vis-${profile.toLowerCase().replace(/\s+/g, '-')}-${index}`} className="text-sm">
+                                  {profile}
+                                </Label>
+                              </div>
+                            ))}
                           </div>
                         </div>
 
