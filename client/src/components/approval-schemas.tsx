@@ -1031,7 +1031,7 @@ export function ApprovalSchemas() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Permiso para visualización */}
                         <div className="space-y-3">
-                          <Label className="text-sm font-medium text-gray-700">Permiso para visualización</Label>
+                          <Label className="text-sm font-medium text-gray-700">Configuración de visibilidad del motivo en la solicitud de permiso</Label>
                           <div className="space-y-2">
                             {/* Todos los perfiles option */}
                             <div className="flex items-center space-x-2 border-b pb-2">
