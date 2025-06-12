@@ -463,7 +463,7 @@ export function CreateRequestModal({ onRequestCreated, selectedGroupUsers = [], 
     createRequestMutation.mutate(requestData as InsertRequest);
   };
 
-  const handleInputChange = (field: keyof InsertRequest, value: string) => {
+  const handleInputChange = (field: keyof InsertRequest, value: string | string[]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -659,23 +659,66 @@ export function CreateRequestModal({ onRequestCreated, selectedGroupUsers = [], 
                       <span className="text-red-500 ml-1">*</span>
                     )}
                   </Label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                    <p className="text-gray-600 mb-4">
-                      Arrastra tu archivo aquí o utiliza el siguiente botón
-                    </p>
-                    <Button 
-                      type="button"
-                      className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded"
-                    >
-                      Subir archivo
-                    </Button>
-                    <input
-                      type="file"
-                      multiple
-                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                      className="hidden"
-                    />
-                    {(activeSchema as any).adjuntarDocumentosObligatorio === "true" && (
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+                    <div className="space-y-4">
+                      <div>
+                        <p className="text-gray-600 mb-3">
+                          Arrastra tus archivos aquí o haz clic para seleccionar
+                        </p>
+                        <Button 
+                          type="button"
+                          onClick={() => document.getElementById('file-upload')?.click()}
+                          disabled={isUploading}
+                          className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded"
+                        >
+                          {isUploading ? "Subiendo..." : "Seleccionar archivos"}
+                        </Button>
+                        <input
+                          id="file-upload"
+                          type="file"
+                          multiple
+                          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                          onChange={handleFileUpload}
+                          className="hidden"
+                        />
+                      </div>
+                      
+                      {/* Lista de archivos subidos */}
+                      {uploadedFiles.length > 0 && (
+                        <div className="mt-4 space-y-2">
+                          <p className="text-sm font-medium text-gray-700">Archivos seleccionados:</p>
+                          {uploadedFiles.map((file, index) => (
+                            <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded border">
+                              <div className="flex items-center space-x-2">
+                                <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
+                                  <span className="text-blue-600 text-xs font-medium">
+                                    {file.name.split('.').pop()?.toUpperCase()}
+                                  </span>
+                                </div>
+                                <div>
+                                  <p className="text-sm font-medium text-gray-900">{file.name}</p>
+                                  <p className="text-xs text-gray-500">{(file.size / 1024).toFixed(1)} KB</p>
+                                </div>
+                              </div>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeFile(index)}
+                                className="text-red-500 hover:text-red-700"
+                              >
+                                ×
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      
+                      <p className="text-xs text-gray-500">
+                        Formatos soportados: PDF, DOC, DOCX, JPG, JPEG, PNG (Máx. 10MB por archivo)
+                      </p>
+                    </div>
+                    {(activeSchema as any).adjuntarDocumentosObligatorio === "true" && uploadedFiles.length === 0 && (
                       <p className="text-red-500 text-sm mt-2">
                         * Este campo es obligatorio
                       </p>
