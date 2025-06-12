@@ -680,6 +680,23 @@ export function ApprovalSchemas() {
                       </Select>
                     </div>
 
+                    {/* Mostrar motivos configurados para esquemas de Permiso */}
+                    {selectedSchema.tipoSolicitud === "Permiso" && selectedSchema.motivos && selectedSchema.motivos.length > 0 && (
+                      <div>
+                        <Label>Motivos configurados</Label>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {selectedSchema.motivos.map((motivo, index) => (
+                            <div
+                              key={index}
+                              className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800 border border-blue-200"
+                            >
+                              {motivo}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     
 
                     {/* Configuración */}
@@ -1372,14 +1389,15 @@ export function ApprovalSchemas() {
                     <div className="space-y-2">
                       <Label className="text-xs font-semibold text-gray-600">Permisos Completos</Label>
                       <div className="grid grid-cols-1 gap-2 pl-2">
-                        {motivosData.permisosCompletos.map((motivo: string, index: number) => {
-                          // Verificar si este motivo ya está configurado en otro esquema
+                        {motivosData.permisosCompletos.filter((motivo: string) => {
+                          // Filtrar motivos ya configurados para no mostrarlos en el modal de creación
                           const isConfiguredInOtherSchema = schemas.some(schema => 
                             schema.tipoSolicitud === "Permiso" && 
                             schema.motivos && 
                             schema.motivos.includes(motivo)
                           );
-                          
+                          return !isConfiguredInOtherSchema;
+                        }).map((motivo: string, index: number) => {
                           return (
                             <div key={`completo-${motivo}-${index}`} className="flex items-center space-x-2">
                               <Checkbox
@@ -1399,9 +1417,6 @@ export function ApprovalSchemas() {
                                 className="text-xs"
                               >
                                 {motivo}
-                                {isConfiguredInOtherSchema && (
-                                  <span className="ml-2 text-xs text-blue-600">(configurado)</span>
-                                )}
                               </Label>
                             </div>
                           );
@@ -1415,14 +1430,15 @@ export function ApprovalSchemas() {
                     <div className="space-y-2">
                       <Label className="text-xs font-semibold text-gray-600">Permisos Parciales</Label>
                       <div className="grid grid-cols-1 gap-2 pl-2">
-                        {motivosData.permisosParciales.map((motivo: string, index: number) => {
-                          // Verificar si este motivo ya está configurado en otro esquema
+                        {motivosData.permisosParciales.filter((motivo: string) => {
+                          // Filtrar motivos ya configurados para no mostrarlos en el modal de creación
                           const isConfiguredInOtherSchema = schemas.some(schema => 
                             schema.tipoSolicitud === "Permiso" && 
                             schema.motivos && 
                             schema.motivos.includes(motivo)
                           );
-                          
+                          return !isConfiguredInOtherSchema;
+                        }).map((motivo: string, index: number) => {
                           return (
                             <div key={`parcial-${motivo}-${index}`} className="flex items-center space-x-2">
                               <Checkbox
@@ -1442,9 +1458,6 @@ export function ApprovalSchemas() {
                                 className="text-xs"
                               >
                                 {motivo}
-                                {isConfiguredInOtherSchema && (
-                                  <span className="ml-2 text-xs text-blue-600">(configurado)</span>
-                                )}
                               </Label>
                             </div>
                           );
