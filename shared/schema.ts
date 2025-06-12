@@ -10,8 +10,10 @@ export const requests = pgTable("requests", {
   asunto: text("asunto").notNull(),
   descripcion: text("descripcion"),
   estado: varchar("estado", { length: 20 }).notNull().default("Pendiente"),
-  solicitadoPor: varchar("solicitado_por", { length: 100 }).notNull(),
+  solicitadoPor: varchar("solicitado_por", { length: 100 }).notNull(), // Who is making the request
+  usuarioSolicitado: varchar("usuario_solicitado", { length: 100 }), // User the request is for
   identificador: varchar("identificador", { length: 20 }),
+  identificadorUsuario: varchar("identificador_usuario", { length: 20 }), // ID of the user the request is for
   motivo: varchar("motivo", { length: 100 }),
   archivosAdjuntos: text("archivos_adjuntos").array(),
   diasSolicitados: integer("dias_solicitados"),

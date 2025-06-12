@@ -92,6 +92,7 @@ export class DatabaseStorage implements IStorage {
       if (filters.busqueda) {
         conditions.push(
           or(
+            like(requests.usuarioSolicitado, `%${filters.busqueda}%`),
             like(requests.solicitadoPor, `%${filters.busqueda}%`),
             like(requests.tipo, `%${filters.busqueda}%`),
             like(requests.asunto, `%${filters.busqueda}%`)

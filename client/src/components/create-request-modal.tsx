@@ -49,8 +49,10 @@ export function CreateRequestModal({ onRequestCreated, selectedGroupUsers = [], 
     fechaFin: "",
     asunto: "",
     descripcion: "",
-    solicitadoPor: selectedUser ? `${selectedUser.Name} ${selectedUser.LastName}` : "",
-    identificador: selectedUser ? selectedUser.Identifier : "",
+    solicitadoPor: selectedUser ? `${selectedUser.Name} ${selectedUser.LastName}` : "", // Group/user selection sets requester
+    identificador: selectedUser ? selectedUser.Identifier : "", // Requester ID
+    usuarioSolicitado: "", // User the request is for (to be selected in form)
+    identificadorUsuario: "", // ID of user the request is for
     motivo: "",
     archivosAdjuntos: [],
   });
@@ -506,66 +508,58 @@ export function CreateRequestModal({ onRequestCreated, selectedGroupUsers = [], 
           {/* Campos básicos iniciales */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="usuario" className="text-gray-700">Usuario</Label>
-              {selectedUser && !isAdminOrManager ? (
-                <Input
-                  value={`${selectedUser.Name} ${selectedUser.LastName} - ${selectedUser.Identifier}`}
-                  disabled
-                  className="bg-gray-100 text-gray-600 cursor-not-allowed"
-                />
-              ) : (
-                <>
-                  {isAdminOrManager && !canRequestForOthers() ? (
-                    <div className="space-y-2">
-                      <Input
-                        value={selectedUser ? `${selectedUser.Name} ${selectedUser.LastName} - ${selectedUser.Identifier}` : ""}
-                        disabled
-                        className="bg-gray-100 text-gray-600 cursor-not-allowed"
-                      />
-                      <div className="flex items-center gap-2 text-amber-600 text-sm">
-                        <Info className="h-4 w-4" />
-                        <span>Las solicitudes a terceros están desactivadas para este tipo de solicitud</span>
-                      </div>
-                    </div>
-                  ) : (
-                    <Select
-                      value={formData.identificador || ""}
-                      onValueChange={(value) => {
-                        const selectedUser = users.find((user: any) => user.employee_id === value);
-                        if (selectedUser) {
-                          handleInputChange('solicitadoPor', selectedUser.name);
-                          handleInputChange('identificador', selectedUser.employee_id);
-                        }
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar usuario" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {users
-                          .filter((user: any) => user.employee_id && user.employee_id.trim() !== "")
-                          .map((user: any) => (
-                            <SelectItem key={user.id} value={user.employee_id}>
-                              {user.name} - {user.employee_id}
-                              {user.group_name && <span className="text-gray-500 text-xs block">{user.group_name}</span>}
-                            </SelectItem>
-                          ))
-                        }
-                      </SelectContent>
-                    </Select>
-                  )}
-                </>
-              )}
+              <Label htmlFor="solicitante" className="text-gray-700">Solicitante</Label>
+              <Input
+                value={selectedUser ? `${selectedUser.Name} ${selectedUser.LastName} - ${selectedUser.Identifier}` : ""}
+                disabled
+                className="bg-gray-100 text-gray-600 cursor-not-allowed"
+              />
+              <p className="text-xs text-gray-500">Persona que está creando la solicitud</p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="identificador" className="text-gray-700">Identificador</Label>
-              <Input
-                id="identificador"
-                value={formData.identificador || ""}
-                className="bg-gray-100"
-                readOnly
-              />
+              <Label htmlFor="usuarioSolicitado" className="text-gray-700">Usuario (para quien es la solicitud)</Label>
+              {!isAdminOrManager && !canRequestForOthers() ? (
+                <div className="space-y-2">
+                  <Input
+                    value={selectedUser ? `${selectedUser.Name} ${selectedUser.LastName} - ${selectedUser.Identifier}` : ""}
+                    disabled
+                    className="bg-gray-100 text-gray-600 cursor-not-allowed"
+                  />
+                  <div className="flex items-center gap-2 text-amber-600 text-sm">
+                    <Info className="h-4 w-4" />
+                    <span>Las solicitudes a terceros están desactivadas para este tipo de solicitud</span>
+                  </div>
+                </div>
+              ) : (
+                <Select
+                  value={formData.identificadorUsuario || ""}
+                  onValueChange={(value) => {
+                    const targetUser = users.find((user: any) => user.employee_id === value);
+                    if (targetUser) {
+                      handleInputChange('usuarioSolicitado', targetUser.name);
+                      handleInputChange('identificadorUsuario', targetUser.employee_id);
+                    }
+                  }}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar usuario" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {users
+                      .filter((user: any) => user.employee_id && user.employee_id.trim() !== "")
+                      .map((user: any) => (
+                        <SelectItem key={user.id} value={user.employee_id}>
+                          {user.name} - {user.employee_id}
+                          {user.group_name && <span className="text-gray-500 text-xs block">{user.group_name}</span>}
+                        </SelectItem>
+                      ))
+                    }
+                  </SelectContent>
+                </Select>
+              )}
+              <p className="text-xs text-gray-500">Usuario que solicitará el permiso o vacaciones</p>
             </div>
           </div>
 

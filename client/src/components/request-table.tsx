@@ -139,6 +139,15 @@ export function RequestTable({ requests, isLoading, onViewDetails, onDownload, t
                 </TableHead>
                 <TableHead 
                   className="cursor-pointer hover:text-gray-700"
+                  onClick={() => handleSort('usuarioSolicitado')}
+                >
+                  <div className="flex items-center">
+                    Usuario
+                    <ArrowUpDown className="ml-1 h-4 w-4" />
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer hover:text-gray-700"
                   onClick={() => handleSort('solicitadoPor')}
                 >
                   <div className="flex items-center">
