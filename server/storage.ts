@@ -67,13 +67,25 @@ export class DatabaseStorage implements IStorage {
       
       // Handle date filtering based on tipoFecha
       if (filters.fechaInicio || filters.fechaFin) {
-        const dateField = filters.tipoFecha === "fechaSolicitada" ? requests.fechaSolicitada : requests.fechaCreacion;
-        
-        if (filters.fechaInicio) {
-          conditions.push(gte(dateField, filters.fechaInicio));
-        }
-        if (filters.fechaFin) {
-          conditions.push(lte(dateField, filters.fechaFin));
+        if (filters.tipoFecha === "fechaSolicitada") {
+          // Filter by requested date (stored as varchar)
+          if (filters.fechaInicio) {
+            conditions.push(gte(requests.fechaSolicitada, filters.fechaInicio));
+          }
+          if (filters.fechaFin) {
+            conditions.push(lte(requests.fechaSolicitada, filters.fechaFin));
+          }
+        } else {
+          // Filter by creation date (stored as timestamp)
+          if (filters.fechaInicio) {
+            conditions.push(gte(requests.fechaCreacion, new Date(filters.fechaInicio)));
+          }
+          if (filters.fechaFin) {
+            // Add one day to include the entire end date
+            const endDate = new Date(filters.fechaFin);
+            endDate.setDate(endDate.getDate() + 1);
+            conditions.push(lte(requests.fechaCreacion, endDate));
+          }
         }
       }
       

@@ -8,19 +8,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all requests with optional filters
   app.get("/api/requests", async (req, res) => {
     try {
-      const { estado, tipo, fechaInicio, fechaFin, busqueda } = req.query;
+      const { estado, tipo, fechaInicio, fechaFin, tipoFecha, busqueda } = req.query;
       
       const filters = {
         estado: estado as string,
         tipo: tipo as string,
         fechaInicio: fechaInicio as string,
         fechaFin: fechaFin as string,
+        tipoFecha: tipoFecha as string,
         busqueda: busqueda as string,
       };
 
       const requests = await storage.getRequests(filters);
       res.json(requests);
     } catch (error) {
+      console.error("Error fetching requests:", error);
       res.status(500).json({ message: "Error fetching requests" });
     }
   });
