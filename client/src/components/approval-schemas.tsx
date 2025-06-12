@@ -180,7 +180,7 @@ export function ApprovalSchemas() {
         tipoDias: "calendario"
       });
     }
-  }, [selectedSchema]);
+  }, [selectedSchema?.id]);
 
   // Fetch approval schemas
   const { data: schemas = [], isLoading: isLoadingSchemas } = useQuery<ApprovalSchema[]>({
@@ -593,7 +593,7 @@ export function ApprovalSchemas() {
     schema.nombre.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const filteredProfiles = PROFILES.filter(profile =>
+  const filteredProfiles = distinctProfiles.filter((profile: string) =>
     profile.toLowerCase().includes(profileSearch.toLowerCase())
   );
 
@@ -1715,13 +1715,15 @@ function ApprovalStepRow({
   onDelete, 
   isDeleting,
   onChange,
-  pendingChanges 
+  pendingChanges,
+  profiles 
 }: { 
   step: ApprovalStep; 
   onDelete: () => void; 
   isDeleting: boolean;
   onChange: (stepId: number, field: keyof ApprovalStep, value: string) => void;
   pendingChanges?: Partial<ApprovalStep>;
+  profiles: string[];
 }) {
   const currentPerfil = pendingChanges?.perfil ?? step.perfil;
   
@@ -1741,7 +1743,7 @@ function ApprovalStepRow({
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          {PROFILES.map((profile) => (
+          {profiles.map((profile: string) => (
             <SelectItem key={profile} value={profile}>
               {profile}
             </SelectItem>
