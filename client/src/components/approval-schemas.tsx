@@ -226,17 +226,19 @@ export function ApprovalSchemas() {
   const { data: steps = [], isLoading: isLoadingSteps } = useQuery<ApprovalStep[]>({
     queryKey: ["/api/approval-schemas", selectedSchema?.id, "steps"],
     queryFn: async () => {
-      if (!selectedSchema) return [];
+      if (!selectedSchema?.id) return [];
       const response = await fetch(`/api/approval-schemas/${selectedSchema.id}/steps`);
       if (!response.ok) throw new Error("Failed to fetch steps");
       return response.json();
     },
-    enabled: !!selectedSchema,
+    enabled: !!selectedSchema?.id,
   });
 
   // Sincronizar pasos locales con los datos de la base de datos
   useEffect(() => {
-    setLocalSteps(steps);
+    if (steps && steps.length >= 0) {
+      setLocalSteps(steps);
+    }
   }, [steps]);
 
   // Función para validar motivos duplicados
