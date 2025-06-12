@@ -30,6 +30,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, Trash2, Search, Save, GripVertical, HelpCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -115,6 +116,9 @@ export function ApprovalSchemas() {
   
   // Estado para navegación por pasos en la pestaña Saldos
   const [currentSaldosStep, setCurrentSaldosStep] = useState(1);
+  
+  // Estado para el modal de crear esquema
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   // Sensores para drag and drop
   const sensors = useSensors(
@@ -592,132 +596,15 @@ export function ApprovalSchemas() {
     }`}>
       {/* Left Panel - Schema List */}
       <div className="space-y-4">
-        {/* Create Schema */}
+        {/* Create Schema Button */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Plus className="h-5 w-5" />
-              Crear esquema
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Input
-              placeholder="Nombre del esquema"
-              value={newSchemaName}
-              onChange={(e) => setNewSchemaName(e.target.value)}
-            />
-            <Select value={newSchemaType} onValueChange={(value) => {
-              setNewSchemaType(value);
-              setNewSchemaMotivos([]); // Reset motivos when type changes
-            }}>
-              <SelectTrigger>
-                <SelectValue placeholder="Tipo de solicitud" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Permiso">Permiso</SelectItem>
-                <SelectItem value="Vacaciones">Vacaciones</SelectItem>
-              </SelectContent>
-            </Select>
-            
-            {/* Campo motivos - Solo para permisos */}
-            {newSchemaType === "Permiso" && (
-              <div className="space-y-3">
-                <Label className="text-sm font-medium">Motivos aplicables</Label>
-                <div className="max-h-48 overflow-y-auto space-y-4">
-                  {/* Permisos Completos */}
-                  {motivosData.permisosCompletos.length > 0 && (
-                    <div className="space-y-2">
-                      <Label className="text-xs font-semibold text-gray-600">Permisos Completos</Label>
-                      <div className="grid grid-cols-1 gap-2 pl-2">
-                        {motivosData.permisosCompletos.map((motivo: string, index: number) => {
-                          // Verificar si este motivo ya está configurado en otro esquema
-                          const isConfiguredInOtherSchema = schemas.some(schema => 
-                            schema.tipoSolicitud === "Permiso" && 
-                            schema.motivos && 
-                            schema.motivos.includes(motivo)
-                          );
-                          
-                          return (
-                            <div key={`completo-${motivo}-${index}`} className="flex items-center space-x-2">
-                              <Checkbox
-                                id={`motivo-completo-${index}`}
-                                checked={newSchemaMotivos.includes(motivo)}
-                                onCheckedChange={(checked) => {
-                                  if (checked) {
-                                    // Solo permitir un motivo a la vez
-                                    setNewSchemaMotivos([motivo]);
-                                  } else {
-                                    setNewSchemaMotivos([]);
-                                  }
-                                }}
-                              />
-                              <Label 
-                                htmlFor={`motivo-completo-${index}`} 
-                                className="text-xs"
-                              >
-                                {motivo}
-                                {isConfiguredInOtherSchema && (
-                                  <span className="ml-2 text-xs text-blue-600">(configurado)</span>
-                                )}
-                              </Label>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Permisos Parciales */}
-                  {motivosData.permisosParciales.length > 0 && (
-                    <div className="space-y-2">
-                      <Label className="text-xs font-semibold text-gray-600">Permisos Parciales</Label>
-                      <div className="grid grid-cols-1 gap-2 pl-2">
-                        {motivosData.permisosParciales.map((motivo: string, index: number) => {
-                          // Verificar si este motivo ya está configurado en otro esquema
-                          const isConfiguredInOtherSchema = schemas.some(schema => 
-                            schema.tipoSolicitud === "Permiso" && 
-                            schema.motivos && 
-                            schema.motivos.includes(motivo)
-                          );
-                          
-                          return (
-                            <div key={`parcial-${motivo}-${index}`} className="flex items-center space-x-2">
-                              <Checkbox
-                                id={`motivo-parcial-${index}`}
-                                checked={newSchemaMotivos.includes(motivo)}
-                                onCheckedChange={(checked) => {
-                                  if (checked) {
-                                    // Solo permitir un motivo a la vez
-                                    setNewSchemaMotivos([motivo]);
-                                  } else {
-                                    setNewSchemaMotivos([]);
-                                  }
-                                }}
-                              />
-                              <Label 
-                                htmlFor={`motivo-parcial-${index}`} 
-                                className="text-xs"
-                              >
-                                {motivo}
-                                {isConfiguredInOtherSchema && (
-                                  <span className="ml-2 text-xs text-blue-600">(configurado)</span>
-                                )}
-                              </Label>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+          <CardContent className="p-4">
             <Button 
-              onClick={handleCreateSchema}
-              disabled={createSchemaMutation.isPending}
-              className="w-full"
+              onClick={() => setShowCreateModal(true)}
+              className="w-full flex items-center gap-2"
             >
-              {createSchemaMutation.isPending ? "Creando..." : "Crear"}
+              <Plus className="h-4 w-4" />
+              Crear esquema
             </Button>
           </CardContent>
         </Card>
@@ -1442,6 +1329,153 @@ export function ApprovalSchemas() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Modal para crear esquema */}
+      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Crear esquema</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="nombre">Nombre</Label>
+              <Input
+                id="nombre"
+                placeholder="Turnos sede central"
+                value={newSchemaName}
+                onChange={(e) => setNewSchemaName(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="tipo">Tipo de solicitud</Label>
+              <Select value={newSchemaType} onValueChange={(value) => {
+                setNewSchemaType(value);
+                setNewSchemaMotivos([]); // Reset motivos when type changes
+              }}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Permiso">Permiso</SelectItem>
+                  <SelectItem value="Vacaciones">Vacaciones</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {/* Campo motivos - Solo para permisos */}
+            {newSchemaType === "Permiso" && (
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Motivos aplicables</Label>
+                <div className="max-h-48 overflow-y-auto space-y-4">
+                  {/* Permisos Completos */}
+                  {motivosData.permisosCompletos.length > 0 && (
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold text-gray-600">Permisos Completos</Label>
+                      <div className="grid grid-cols-1 gap-2 pl-2">
+                        {motivosData.permisosCompletos.map((motivo: string, index: number) => {
+                          // Verificar si este motivo ya está configurado en otro esquema
+                          const isConfiguredInOtherSchema = schemas.some(schema => 
+                            schema.tipoSolicitud === "Permiso" && 
+                            schema.motivos && 
+                            schema.motivos.includes(motivo)
+                          );
+                          
+                          return (
+                            <div key={`completo-${motivo}-${index}`} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`motivo-completo-${index}`}
+                                checked={newSchemaMotivos.includes(motivo)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    // Solo permitir un motivo a la vez
+                                    setNewSchemaMotivos([motivo]);
+                                  } else {
+                                    setNewSchemaMotivos([]);
+                                  }
+                                }}
+                              />
+                              <Label 
+                                htmlFor={`motivo-completo-${index}`} 
+                                className="text-xs"
+                              >
+                                {motivo}
+                                {isConfiguredInOtherSchema && (
+                                  <span className="ml-2 text-xs text-blue-600">(configurado)</span>
+                                )}
+                              </Label>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Permisos Parciales */}
+                  {motivosData.permisosParciales.length > 0 && (
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold text-gray-600">Permisos Parciales</Label>
+                      <div className="grid grid-cols-1 gap-2 pl-2">
+                        {motivosData.permisosParciales.map((motivo: string, index: number) => {
+                          // Verificar si este motivo ya está configurado en otro esquema
+                          const isConfiguredInOtherSchema = schemas.some(schema => 
+                            schema.tipoSolicitud === "Permiso" && 
+                            schema.motivos && 
+                            schema.motivos.includes(motivo)
+                          );
+                          
+                          return (
+                            <div key={`parcial-${motivo}-${index}`} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`motivo-parcial-${index}`}
+                                checked={newSchemaMotivos.includes(motivo)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    // Solo permitir un motivo a la vez
+                                    setNewSchemaMotivos([motivo]);
+                                  } else {
+                                    setNewSchemaMotivos([]);
+                                  }
+                                }}
+                              />
+                              <Label 
+                                htmlFor={`motivo-parcial-${index}`} 
+                                className="text-xs"
+                              >
+                                {motivo}
+                                {isConfiguredInOtherSchema && (
+                                  <span className="ml-2 text-xs text-blue-600">(configurado)</span>
+                                )}
+                              </Label>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowCreateModal(false)}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={() => {
+                handleCreateSchema();
+                setShowCreateModal(false);
+              }}
+              disabled={createSchemaMutation.isPending}
+            >
+              {createSchemaMutation.isPending ? "Creando..." : "Crear"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
     </div>
   );
