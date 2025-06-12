@@ -801,6 +801,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // API endpoint to get available motivos for a specific user profile
+  app.get("/api/available-motivos/:userProfile", async (req, res) => {
+    try {
+      const { userProfile } = req.params;
+      
+      // Get all approval schemas
+      const schemas = await storage.getApprovalSchemas();
+      
+      // Filter schemas that have the user's profile in visibility permissions
+      const visibleSchemas = schemas.filter(schema => {
+        const visibilityPermissions = schema.visibilityPermissions || [];
+        return visibilityPermissions.includes(userProfile);
+      });
+      
+      // Extract all motivos from visible schemas
+      const availableMotivos: string[] = [];
+      visibleSchemas.forEach(schema => {
+        if (schema.motivos && schema.motivos.length > 0) {
+          availableMotivos.push(...schema.motivos);
+        }
+      });
+      
+      // Remove duplicates and sort
+      const uniqueMotivos = availableMotivos.filter((motivo, index, array) => array.indexOf(motivo) === index).sort();
+      
+      res.json({
+        motivos: uniqueMotivos,
+        visibleSchemas: visibleSchemas.map(s => ({ id: s.id, nombre: s.nombre, motivos: s.motivos }))
+      });
+    } catch (error) {
+      console.error("Error fetching available motivos:", error);
+      res.status(500).json({ error: "Failed to fetch available motivos" });
+    }
+  });
+
   // Error handling middleware - must be after all routes
   app.use((err: any, req: any, res: any, next: any) => {
     console.error("API Error:", err);

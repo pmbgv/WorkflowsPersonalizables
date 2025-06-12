@@ -87,6 +87,18 @@ export function CreateRequestModal({ onRequestCreated, selectedGroupUsers = [], 
     },
   });
 
+  // Obtener motivos disponibles basados en el perfil del usuario
+  const { data: availableMotivos } = useQuery({
+    queryKey: ["/api/available-motivos", selectedUser?.UserProfile],
+    queryFn: async () => {
+      if (!selectedUser?.UserProfile) return { motivos: [], visibleSchemas: [] };
+      const response = await fetch(`/api/available-motivos/${encodeURIComponent(selectedUser.UserProfile)}`);
+      if (!response.ok) throw new Error("Failed to fetch available motivos");
+      return response.json();
+    },
+    enabled: !!selectedUser?.UserProfile,
+  });
+
   // Obtener esquemas de aprobación para aplicar configuración
   const { data: approvalSchemas = [] } = useQuery<ApprovalSchema[]>({
     queryKey: ["/api/approval-schemas"],
@@ -284,18 +296,23 @@ export function CreateRequestModal({ onRequestCreated, selectedGroupUsers = [], 
 
   // Define motivos based on tipo selection
   const getMotivosForTipo = (tipo: string) => {
-    if (!timeoffTypes) return [];
-    
     switch (tipo) {
       case "Permiso":
-        // Combine all permission types into a single array
+        // Use profile-filtered motivos if available, otherwise fall back to all timeoff types
+        if (availableMotivos?.motivos && availableMotivos.motivos.length > 0) {
+          return availableMotivos.motivos;
+        }
+        
+        // Fallback to all available motivos if profile filtering is not available
+        if (!timeoffTypes) return [];
         const allMotivos = [
           ...(timeoffTypes.permisosCompletos || []),
           ...(timeoffTypes.permisosParciales || []),
           ...(timeoffTypes.permisosComunes || [])
         ];
-        // Remove duplicates using filter
         return allMotivos.filter((motivo, index) => allMotivos.indexOf(motivo) === index);
+      case "Vacaciones":
+        return ["Vacaciones"];
       default:
         return [];
     }

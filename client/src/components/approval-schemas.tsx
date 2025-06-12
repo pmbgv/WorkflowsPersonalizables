@@ -124,61 +124,65 @@ export function ApprovalSchemas() {
 
   // Reset changes and load schema data when switching schemas
   useEffect(() => {
-    if (!selectedSchema) {
+    const loadSchemaData = () => {
+      if (!selectedSchema) {
+        setStepChanges({});
+        setSelectedPermissions([]);
+        setVisibilityPermissions([]);
+        setApprovalPermissions([]);
+        setNewSchemaMotivos([]);
+        setSchemaConfig({
+          adjuntarDocumentos: false,
+          adjuntarDocumentosObligatorio: false,
+          permitirModificarDocumentos: false,
+          comentarioRequerido: false,
+          comentarioObligatorio: false,
+          comentarioOpcional: true,
+          enviarCorreoNotificacion: false,
+          solicitudCreada: false,
+          solicitudAprobadaRechazada: false,
+          permitirSolicitudTerceros: false,
+          diasMinimo: "",
+          diasMaximo: "",
+          diasMultiplo: "",
+          tipoDias: "calendario"
+        });
+        return;
+      }
+
+      // Load existing permissions from schema
       setStepChanges({});
       setSelectedPermissions([]);
-      setVisibilityPermissions([]);
-      setApprovalPermissions([]);
-      setNewSchemaMotivos([]);
+      setVisibilityPermissions(selectedSchema.visibilityPermissions || []);
+      setApprovalPermissions(selectedSchema.approvalPermissions || []);
+      
+      // Load existing motivos for editing
+      if (selectedSchema.motivos && selectedSchema.motivos.length > 0) {
+        setNewSchemaMotivos(selectedSchema.motivos);
+      } else {
+        setNewSchemaMotivos([]);
+      }
+      
+      // Load schema configuration
       setSchemaConfig({
-        adjuntarDocumentos: false,
-        adjuntarDocumentosObligatorio: false,
-        permitirModificarDocumentos: false,
-        comentarioRequerido: false,
-        comentarioObligatorio: false,
-        comentarioOpcional: true,
-        enviarCorreoNotificacion: false,
-        solicitudCreada: false,
-        solicitudAprobadaRechazada: false,
-        permitirSolicitudTerceros: false,
-        diasMinimo: "",
-        diasMaximo: "",
-        diasMultiplo: "",
-        tipoDias: "calendario"
+        adjuntarDocumentos: (selectedSchema as any).adjuntarDocumentos === "true",
+        adjuntarDocumentosObligatorio: (selectedSchema as any).adjuntarDocumentosObligatorio === "true",
+        permitirModificarDocumentos: (selectedSchema as any).permitirModificarDocumentos === "true",
+        comentarioRequerido: (selectedSchema as any).comentarioRequerido === "true",
+        comentarioObligatorio: (selectedSchema as any).comentarioObligatorio === "true",
+        comentarioOpcional: (selectedSchema as any).comentarioOpcional !== "false",
+        enviarCorreoNotificacion: (selectedSchema as any).enviarCorreoNotificacion === "true",
+        solicitudCreada: (selectedSchema as any).solicitudCreada === "true",
+        solicitudAprobadaRechazada: (selectedSchema as any).solicitudAprobadaRechazada === "true",
+        permitirSolicitudTerceros: (selectedSchema as any).permitirSolicitudTerceros === "true",
+        diasMinimo: (selectedSchema as any).diasMinimo?.toString() || "",
+        diasMaximo: (selectedSchema as any).diasMaximo?.toString() || "",
+        diasMultiplo: (selectedSchema as any).diasMultiplo?.toString() || "",
+        tipoDias: (selectedSchema as any).tipoDias || "calendario"
       });
-      return;
-    }
+    };
 
-    // Load existing permissions from schema
-    setStepChanges({});
-    setSelectedPermissions([]);
-    setVisibilityPermissions(selectedSchema.visibilityPermissions || []);
-    setApprovalPermissions(selectedSchema.approvalPermissions || []);
-    
-    // Load existing motivos for editing
-    if (selectedSchema.motivos && selectedSchema.motivos.length > 0) {
-      setNewSchemaMotivos(selectedSchema.motivos);
-    } else {
-      setNewSchemaMotivos([]);
-    }
-    
-    // Load schema configuration
-    setSchemaConfig({
-      adjuntarDocumentos: (selectedSchema as any).adjuntarDocumentos === "true",
-      adjuntarDocumentosObligatorio: (selectedSchema as any).adjuntarDocumentosObligatorio === "true",
-      permitirModificarDocumentos: (selectedSchema as any).permitirModificarDocumentos === "true",
-      comentarioRequerido: (selectedSchema as any).comentarioRequerido === "true",
-      comentarioObligatorio: (selectedSchema as any).comentarioObligatorio === "true",
-      comentarioOpcional: (selectedSchema as any).comentarioOpcional !== "false",
-      enviarCorreoNotificacion: (selectedSchema as any).enviarCorreoNotificacion === "true",
-      solicitudCreada: (selectedSchema as any).solicitudCreada === "true",
-      solicitudAprobadaRechazada: (selectedSchema as any).solicitudAprobadaRechazada === "true",
-      permitirSolicitudTerceros: (selectedSchema as any).permitirSolicitudTerceros === "true",
-      diasMinimo: (selectedSchema as any).diasMinimo?.toString() || "",
-      diasMaximo: (selectedSchema as any).diasMaximo?.toString() || "",
-      diasMultiplo: (selectedSchema as any).diasMultiplo?.toString() || "",
-      tipoDias: (selectedSchema as any).tipoDias || "calendario"
-    });
+    loadSchemaData();
   }, [selectedSchema?.id]);
 
   // Fetch approval schemas
