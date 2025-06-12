@@ -1369,6 +1369,7 @@ export function ApprovalSchemas() {
                               isDeleting={deleteStepMutation.isPending}
                               onChange={handleStepChange}
                               pendingChanges={stepChanges[step.id]}
+                              profiles={distinctProfiles}
                             />
                           ))}
                         </SortableContext>
@@ -1611,13 +1612,15 @@ function SortableApprovalStepRow({
   onDelete, 
   isDeleting, 
   onChange, 
-  pendingChanges 
+  pendingChanges,
+  profiles 
 }: {
   step: ApprovalStep;
   onDelete: () => void;
   isDeleting: boolean;
   onChange: (id: number, field: keyof ApprovalStep, value: string) => void;
   pendingChanges?: Partial<ApprovalStep>;
+  profiles: string[];
 }) {
   const {
     attributes,
@@ -1673,9 +1676,11 @@ function SortableApprovalStepRow({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Recursos humanos">Recursos humanos</SelectItem>
-              <SelectItem value="Jefes de grupo">Jefes de grupo</SelectItem>
-              <SelectItem value="Administradores">Administradores</SelectItem>
+              {profiles.map((profile: string) => (
+                <SelectItem key={profile} value={profile}>
+                  {profile}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
