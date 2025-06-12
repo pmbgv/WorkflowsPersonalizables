@@ -35,6 +35,8 @@ export function CreateRequestModal({ onRequestCreated, selectedGroupUsers = [], 
   const [maximumDaysError, setMaximumDaysError] = useState({ requested: 0, maximum: 0 });
   const [showMultipleDaysAlert, setShowMultipleDaysAlert] = useState(false);
   const [multipleDaysError, setMultipleDaysError] = useState({ requested: 0, multiple: 0 });
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
   const [vacationCalculation, setVacationCalculation] = useState({
     diasDisponibles: 0,
     diasSolicitados: 0,
@@ -292,7 +294,8 @@ export function CreateRequestModal({ onRequestCreated, selectedGroupUsers = [], 
           ...(timeoffTypes.permisosParciales || []),
           ...(timeoffTypes.permisosComunes || [])
         ];
-        return [...new Set(allMotivos)]; // Remove duplicates
+        // Remove duplicates using filter
+        return allMotivos.filter((motivo, index) => allMotivos.indexOf(motivo) === index);
       default:
         return [];
     }
@@ -306,6 +309,57 @@ export function CreateRequestModal({ onRequestCreated, selectedGroupUsers = [], 
     } else {
       handleInputChange('motivo', "");
     }
+  };
+
+  // Handle file upload
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+    try {
+      const newFiles = Array.from(files);
+      setUploadedFiles(prev => [...prev, ...newFiles]);
+      
+      // Generate file URLs for display/storage
+      const fileUrls = newFiles.map(file => {
+        return URL.createObjectURL(file);
+      });
+      
+      // Update form data with file names/links
+      const currentFiles = formData.archivosAdjuntos || [];
+      const newFileNames = newFiles.map(file => file.name);
+      setFormData(prev => ({
+        ...prev,
+        archivosAdjuntos: [...currentFiles, ...newFileNames]
+      }));
+      
+      toast({
+        title: "Archivos subidos",
+        description: `Se han subido ${newFiles.length} archivo(s) exitosamente.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Ocurrió un error al subir los archivos.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // Remove uploaded file
+  const removeFile = (index: number) => {
+    const newFiles = uploadedFiles.filter((_, i) => i !== index);
+    setUploadedFiles(newFiles);
+    
+    const currentFiles = formData.archivosAdjuntos || [];
+    const newFileNames = currentFiles.filter((_, i) => i !== index);
+    setFormData(prev => ({
+      ...prev,
+      archivosAdjuntos: newFileNames
+    }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
