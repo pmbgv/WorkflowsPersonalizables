@@ -1411,10 +1411,11 @@ export function ApprovalSchemas() {
                                 checked={newSchemaMotivos.includes(motivo)}
                                 onCheckedChange={(checked) => {
                                   if (checked) {
-                                    // Solo permitir un motivo a la vez
-                                    setNewSchemaMotivos([motivo]);
+                                    // Permitir múltiples motivos
+                                    setNewSchemaMotivos(prev => [...prev, motivo]);
                                   } else {
-                                    setNewSchemaMotivos([]);
+                                    // Remover motivo de la lista
+                                    setNewSchemaMotivos(prev => prev.filter(m => m !== motivo));
                                   }
                                 }}
                               />
@@ -1452,10 +1453,11 @@ export function ApprovalSchemas() {
                                 checked={newSchemaMotivos.includes(motivo)}
                                 onCheckedChange={(checked) => {
                                   if (checked) {
-                                    // Solo permitir un motivo a la vez
-                                    setNewSchemaMotivos([motivo]);
+                                    // Permitir múltiples motivos
+                                    setNewSchemaMotivos(prev => [...prev, motivo]);
                                   } else {
-                                    setNewSchemaMotivos([]);
+                                    // Remover motivo de la lista
+                                    setNewSchemaMotivos(prev => prev.filter(m => m !== motivo));
                                   }
                                 }}
                               />
