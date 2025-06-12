@@ -45,13 +45,7 @@ const PERMISSION_TYPES = [
   "Permiso otro"
 ];
 
-const PROFILES = [
-  "Administrador",
-  "Jefe de Grupo", 
-  "Perfil Personalizado 1",
-  "Perfil Personalizado 2",
-  "Supervisor"
-].sort();
+// PROFILES will be fetched dynamically from the API
 
 
 
@@ -207,6 +201,23 @@ export function ApprovalSchemas() {
       return response.json();
     },
   });
+
+  // Fetch complete user data to get distinct UserProfile values
+  const { data: usersCompleteData = [] } = useQuery<any[]>({
+    queryKey: ["/api/users-complete"],
+    queryFn: async () => {
+      const response = await fetch("/api/users-complete");
+      if (!response.ok) throw new Error("Failed to fetch complete user data");
+      return response.json();
+    },
+  });
+
+  // Extract distinct UserProfile values
+  const distinctProfiles = usersCompleteData
+    .filter(user => user.Enabled === "1" && user.UserProfile && user.UserProfile.trim() !== "")
+    .map(user => user.UserProfile)
+    .filter((profile, index, array) => array.indexOf(profile) === index)
+    .sort();
 
   // Fetch steps for selected schema
   const { data: steps = [], isLoading: isLoadingSteps } = useQuery<ApprovalStep[]>({
