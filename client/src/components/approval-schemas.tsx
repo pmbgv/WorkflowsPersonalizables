@@ -444,8 +444,9 @@ export function ApprovalSchemas() {
         updateStepMutation.mutateAsync({ stepId: parseInt(stepId), updates: changes })
       );
       
-      // Save schema configuration changes (includes all config and permissions)
+      // Save schema configuration changes (includes all config, permissions, and motivos)
       const schemaUpdates = {
+        motivos: selectedSchema?.motivos || null,
         visibilityPermissions: visibilityPermissions,
         approvalPermissions: approvalPermissions,
         adjuntarDocumentos: schemaConfig.adjuntarDocumentos ? "true" : "false",
@@ -642,23 +643,114 @@ export function ApprovalSchemas() {
           </CardContent>
         </Card>
 
-        {/* Motivos Configurados Section */}
-        {selectedSchema?.tipoSolicitud === "Permiso" && selectedSchema.motivos && selectedSchema.motivos.length > 0 && (
+        {/* Motivos Section */}
+        {selectedSchema?.tipoSolicitud === "Permiso" && (
           <Card>
-            <CardHeader>
-              <CardTitle>Motivos Configurados</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {selectedSchema.motivos.map((motivo, index) => (
-                  <div
-                    key={index}
-                    className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800 border border-blue-200"
-                  >
-                    {motivo}
+            <CardContent className="p-4">
+              {/* Motivos asociados al esquema */}
+              {selectedSchema.motivos && selectedSchema.motivos.length > 0 && (
+                <div className="space-y-3 mb-6">
+                  <Label className="text-sm font-medium text-gray-700">Motivos asociados</Label>
+                  <div className="space-y-2">
+                    {selectedSchema.motivos.map((motivo, index) => (
+                      <div key={index} className="flex items-center space-x-2">
+                        <Checkbox 
+                          id={`associated-motivo-${index}`}
+                          checked={true}
+                          onCheckedChange={(checked) => {
+                            if (!checked) {
+                              // Remover motivo del esquema
+                              const newMotivos = selectedSchema.motivos?.filter(m => m !== motivo) || [];
+                              setSelectedSchema(prev => prev ? { ...prev, motivos: newMotivos } : null);
+                            }
+                          }}
+                        />
+                        <Label htmlFor={`associated-motivo-${index}`} className="text-sm">
+                          {motivo}
+                        </Label>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
+
+              {/* Motivos sin esquema */}
+              {motivosData && (
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium text-gray-700">Motivos sin esquema</Label>
+                  <div className="space-y-4">
+                    {/* Permisos Completos */}
+                    {motivosData.permisosCompletos && motivosData.permisosCompletos.length > 0 && (
+                      <div className="space-y-2">
+                        <Label className="text-xs font-semibold text-gray-600">Permisos Completos</Label>
+                        <div className="grid grid-cols-1 gap-2 pl-2">
+                          {motivosData.permisosCompletos.filter((motivo: string) => {
+                            // Filtrar motivos ya configurados en cualquier esquema
+                            const isConfigured = schemas.some(schema => 
+                              schema.tipoSolicitud === "Permiso" && 
+                              schema.motivos && 
+                              schema.motivos.includes(motivo)
+                            );
+                            return !isConfigured;
+                          }).map((motivo: string, index: number) => (
+                            <div key={`available-completo-${index}`} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`available-completo-${index}`}
+                                checked={false}
+                                onCheckedChange={(checked) => {
+                                  if (checked && selectedSchema) {
+                                    // Agregar motivo al esquema actual
+                                    const newMotivos = [...(selectedSchema.motivos || []), motivo];
+                                    setSelectedSchema(prev => prev ? { ...prev, motivos: newMotivos } : null);
+                                  }
+                                }}
+                              />
+                              <Label htmlFor={`available-completo-${index}`} className="text-xs">
+                                {motivo}
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Permisos Parciales */}
+                    {motivosData.permisosParciales && motivosData.permisosParciales.length > 0 && (
+                      <div className="space-y-2">
+                        <Label className="text-xs font-semibold text-gray-600">Permisos Parciales</Label>
+                        <div className="grid grid-cols-1 gap-2 pl-2">
+                          {motivosData.permisosParciales.filter((motivo: string) => {
+                            // Filtrar motivos ya configurados en cualquier esquema
+                            const isConfigured = schemas.some(schema => 
+                              schema.tipoSolicitud === "Permiso" && 
+                              schema.motivos && 
+                              schema.motivos.includes(motivo)
+                            );
+                            return !isConfigured;
+                          }).map((motivo: string, index: number) => (
+                            <div key={`available-parcial-${index}`} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`available-parcial-${index}`}
+                                checked={false}
+                                onCheckedChange={(checked) => {
+                                  if (checked && selectedSchema) {
+                                    // Agregar motivo al esquema actual
+                                    const newMotivos = [...(selectedSchema.motivos || []), motivo];
+                                    setSelectedSchema(prev => prev ? { ...prev, motivos: newMotivos } : null);
+                                  }
+                                }}
+                              />
+                              <Label htmlFor={`available-parcial-${index}`} className="text-xs">
+                                {motivo}
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
