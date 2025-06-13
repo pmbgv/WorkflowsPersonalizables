@@ -4,7 +4,7 @@ import { ChevronRight, Globe, User, Star, FileText, Users, Calendar, Settings } 
 import { apiRequest } from "@/lib/queryClient";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RequestTable } from "@/components/request-table";
-// Import will be added after component is fully created
+import { PendingRequestsTable } from "@/components/pending-requests-table";
 import { CreateRequestModal } from "@/components/create-request-modal";
 import { RequestDetailsModal } from "@/components/request-details-modal";
 import { FiltersSection } from "@/components/filters-section";
@@ -301,16 +301,12 @@ export default function Dashboard() {
           {selectedUser?.UserProfile && ["#JefeGrupo#", "#adminCuenta#"].includes(selectedUser.UserProfile) && (
             <TabsContent value="pendientes" className="space-y-6">
               {/* Pending Requests Table with Checkboxes */}
-              <RequestTable
+              <PendingRequestsTable
                 requests={allRequests.filter(req => req.estado === "Pendiente")}
                 isLoading={isLoadingAll}
                 onViewDetails={handleViewDetails}
                 onDownload={handleDownload}
-                title="Solicitudes pendientes"
-                allowStatusChange={true}
-                onStatusChange={handleStatusChange}
-                showCreateButton={true}
-                onRequestCreated={handleRequestCreated}
+                onBulkStatusChange={handleBulkStatusChange}
                 selectedGroupUsers={selectedGroupUsers}
                 selectedUser={selectedUser}
               />

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Eye, Download, ArrowUpDown, Plus, Search } from "lucide-react";
+import { Eye, Download, ArrowUpDown, Plus, CheckCircle, XCircle } from "lucide-react";
 import { formatDate, getStatusBadgeVariant } from "@/lib/utils";
 import { CreateRequestModal } from "@/components/create-request-modal";
 import type { Request } from "@shared/schema";
@@ -138,6 +138,7 @@ export function PendingRequestsTable({
             variant="outline"
             className="border-red-500 text-red-500 hover:bg-red-50"
           >
+            <XCircle className="w-4 h-4 mr-2" />
             Rechazar
           </Button>
           <Button 
@@ -145,6 +146,7 @@ export function PendingRequestsTable({
             disabled={selectedRequests.length === 0}
             className="bg-green-600 hover:bg-green-700"
           >
+            <CheckCircle className="w-4 h-4 mr-2" />
             Aprobar
           </Button>
         </div>
@@ -285,6 +287,68 @@ export function PendingRequestsTable({
             ))}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="lg:hidden space-y-4 p-4">
+        {currentRequests.map((request) => (
+          <div key={request.id} className="bg-white border rounded-lg p-4">
+            <div className="flex justify-between items-start mb-3">
+              <div className="flex items-center space-x-3">
+                <Checkbox
+                  checked={selectedRequests.includes(request.id)}
+                  onCheckedChange={() => toggleRequestSelection(request.id)}
+                />
+                <div>
+                  <h4 className="font-medium text-gray-900">{request.tipo}</h4>
+                  <p className="text-sm text-gray-500">
+                    {request.fechaFin ? 
+                      `${formatDate(request.fechaSolicitada)} - ${formatDate(request.fechaFin)}` : 
+                      formatDate(request.fechaSolicitada)
+                    }
+                  </p>
+                </div>
+              </div>
+              <Badge variant={getStatusBadgeVariant(request.estado)} className="text-xs">
+                {request.estado}
+              </Badge>
+            </div>
+            <div className="space-y-2 text-sm text-gray-600">
+              <div className="flex justify-between">
+                <span>Usuario:</span>
+                <span>{request.usuarioSolicitado || request.solicitadoPor}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Identificador:</span>
+                <span>{request.identificadorUsuario || request.identificador}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Fecha de creación:</span>
+                <span>{formatDate(request.fechaCreacion)}</span>
+              </div>
+            </div>
+            <div className="flex justify-end space-x-4 mt-3 pt-3 border-t border-gray-100">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onViewDetails(request)}
+                className="text-blue-600 hover:text-blue-700"
+              >
+                <Eye className="w-4 h-4 mr-1" />
+                Ver detalles
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onDownload(request.id)}
+                className="text-blue-600 hover:text-blue-700"
+              >
+                <Download className="w-4 h-4 mr-1" />
+                Descargar
+              </Button>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Pagination */}
