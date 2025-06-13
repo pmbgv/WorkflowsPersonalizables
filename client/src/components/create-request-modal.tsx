@@ -19,13 +19,17 @@ import type { InsertRequest, Request, UserVacationBalance, ApprovalSchema } from
 import type { DateRange } from "react-day-picker";
 
 interface CreateRequestModalProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   onRequestCreated?: () => void;
   selectedGroupUsers?: any[];
   selectedUser?: any;
 }
 
-export function CreateRequestModal({ onRequestCreated, selectedGroupUsers = [], selectedUser }: CreateRequestModalProps) {
-  const [open, setOpen] = useState(false);
+export function CreateRequestModal({ open: externalOpen, onOpenChange, onRequestCreated, selectedGroupUsers = [], selectedUser }: CreateRequestModalProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = externalOpen !== undefined ? externalOpen : internalOpen;
+  const setOpen = onOpenChange || setInternalOpen;
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [showDateConflictAlert, setShowDateConflictAlert] = useState(false);

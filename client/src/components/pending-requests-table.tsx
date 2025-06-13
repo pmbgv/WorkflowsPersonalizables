@@ -85,6 +85,11 @@ export function PendingRequestsTable({
     let aValue = a[sortBy as keyof Request];
     let bValue = b[sortBy as keyof Request];
     
+    // Handle null/undefined values
+    if (aValue == null && bValue == null) return 0;
+    if (aValue == null) return sortOrder === "asc" ? -1 : 1;
+    if (bValue == null) return sortOrder === "asc" ? 1 : -1;
+    
     if (typeof aValue === "string") aValue = aValue.toLowerCase();
     if (typeof bValue === "string") bValue = bValue.toLowerCase();
     
