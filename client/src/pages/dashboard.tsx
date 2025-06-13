@@ -4,6 +4,7 @@ import { ChevronRight, Globe, User, Star, FileText, Users, Calendar, Settings } 
 import { apiRequest } from "@/lib/queryClient";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RequestTable } from "@/components/request-table";
+import { PendingRequestsTable } from "@/components/pending-requests-table";
 import { CreateRequestModal } from "@/components/create-request-modal";
 import { RequestDetailsModal } from "@/components/request-details-modal";
 import { FiltersSection } from "@/components/filters-section";
@@ -151,6 +152,16 @@ export default function Dashboard() {
     updateStatusMutation.mutate({ requestId, newStatus });
   };
 
+  const handleBulkStatusChange = (requestIds: number[], newStatus: string) => {
+    requestIds.forEach(requestId => {
+      updateStatusMutation.mutate({ requestId, newStatus });
+    });
+    toast({
+      title: "Estado actualizado",
+      description: `${requestIds.length} solicitud${requestIds.length !== 1 ? 'es' : ''} ${newStatus.toLowerCase()}${requestIds.length !== 1 ? 's' : ''}`,
+    });
+  };
+
   const handleDownload = (requestId: number) => {
     toast({
       title: "Descarga iniciada",
@@ -256,11 +267,14 @@ export default function Dashboard() {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className={`grid w-full mb-6 ${
             selectedUser?.UserProfile === "#usuario#" ? "grid-cols-1" :
-            selectedUser?.UserProfile === "#JefeGrupo#" ? "grid-cols-2" :
-            selectedUser?.UserProfile === "#adminCuenta#" ? "grid-cols-3" :
-            "grid-cols-3"
+            selectedUser?.UserProfile === "#JefeGrupo#" ? "grid-cols-3" :
+            selectedUser?.UserProfile === "#adminCuenta#" ? "grid-cols-4" :
+            "grid-cols-4"
           }`}>
             <TabsTrigger value="lista">Mis Solicitudes</TabsTrigger>
+            {selectedUser?.UserProfile && ["#JefeGrupo#", "#adminCuenta#"].includes(selectedUser.UserProfile) && (
+              <TabsTrigger value="pendientes">Solicitudes pendientes</TabsTrigger>
+            )}
             {selectedUser?.UserProfile && ["#JefeGrupo#", "#adminCuenta#"].includes(selectedUser.UserProfile) && (
               <TabsTrigger value="todas">Todas las Solicitudes</TabsTrigger>
             )}
@@ -283,6 +297,21 @@ export default function Dashboard() {
               selectedUser={selectedUser}
             />
           </TabsContent>
+
+          {selectedUser?.UserProfile && ["#JefeGrupo#", "#adminCuenta#"].includes(selectedUser.UserProfile) && (
+            <TabsContent value="pendientes" className="space-y-6">
+              {/* Pending Requests Table with Checkboxes */}
+              <PendingRequestsTable
+                requests={allRequests.filter(req => req.estado === "Pendiente")}
+                isLoading={isLoadingAll}
+                onViewDetails={handleViewDetails}
+                onDownload={handleDownload}
+                onBulkStatusChange={handleBulkStatusChange}
+                selectedGroupUsers={selectedGroupUsers}
+                selectedUser={selectedUser}
+              />
+            </TabsContent>
+          )}
           
           {selectedUser?.UserProfile && ["#JefeGrupo#", "#adminCuenta#"].includes(selectedUser.UserProfile) && (
             <TabsContent value="todas" className="space-y-6">

@@ -290,7 +290,7 @@ export function FiltersSection({ filters, onFiltersChange, onApplyFilters }: Fil
               <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <Input
                 id="busqueda"
-                placeholder="Buscar por solicitante o tipo..."
+                placeholder="Buscar por usuario..."
                 value={filters.busqueda}
                 onChange={(e) => handleFilterChange('busqueda', e.target.value)}
                 className="pl-10"
