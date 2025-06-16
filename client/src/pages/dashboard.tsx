@@ -344,6 +344,7 @@ export default function Dashboard() {
             onDownload={handleDownload}
             onStatusChange={handleStatusChange}
             isAllRequestsTab={activeTab === "todas"}
+            currentUser={selectedUser}
           />
 
           {/* Groups Modal */}
