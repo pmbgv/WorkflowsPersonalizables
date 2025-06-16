@@ -141,9 +141,9 @@ export class DatabaseStorage implements IStorage {
     const conditions = [];
     
     if (filters) {
-      // Filter by identificador (the person who CREATED the request) for "Mis solicitudes"
+      // Filter by identificadorUsuario (the person the request is FOR) for "Mis solicitudes"
       if (filters.userId) {
-        conditions.push(eq(requests.identificador, filters.userId));
+        conditions.push(eq(requests.identificadorUsuario, filters.userId));
       }
       
       if (filters.estado) {

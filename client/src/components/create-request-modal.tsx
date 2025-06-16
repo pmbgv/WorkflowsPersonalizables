@@ -587,6 +587,16 @@ export function CreateRequestModal({ open: externalOpen, onOpenChange, onRequest
       };
     }
 
+    // Asegurar que identificador e identificadorUsuario estén configurados
+    if (!requestData.identificador && selectedUser?.Identifier) {
+      requestData.identificador = selectedUser.Identifier;
+    }
+    
+    if (!requestData.identificadorUsuario && selectedUser?.Identifier) {
+      requestData.identificadorUsuario = selectedUser.Identifier;
+    }
+
+    console.log("Request body:", requestData);
     createRequestMutation.mutate(requestData as InsertRequest);
   };
 
