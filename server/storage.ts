@@ -28,6 +28,7 @@ export interface IStorage {
     tipoFecha?: string;
     busqueda?: string;
     userId?: string;
+    userProfile?: string;
   }): Promise<Request[]>;
   getRequest(id: number): Promise<Request | undefined>;
   createRequest(request: InsertRequest): Promise<Request>;
@@ -140,14 +141,9 @@ export class DatabaseStorage implements IStorage {
     const conditions = [];
     
     if (filters) {
-      // Filter by user - prioritize identificadorUsuario for new requests, fall back to identificador
+      // Filter by identificadorUsuario only (the person taking the leave) - profile-based filtering
       if (filters.userId) {
-        conditions.push(
-          or(
-            eq(requests.identificadorUsuario, filters.userId),
-            eq(requests.identificador, filters.userId)
-          )
-        );
+        conditions.push(eq(requests.identificadorUsuario, filters.userId));
       }
       
       if (filters.estado) {
@@ -206,8 +202,8 @@ export class DatabaseStorage implements IStorage {
     tipoFecha?: string;
     busqueda?: string;
     userId?: string;
+    userProfile?: string;
   }): Promise<Request[]> {
-    // For now, implement basic filtering - will need to enhance with approval workflow logic
     const conditions = [];
     
     if (filters) {
@@ -253,12 +249,49 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(requests.estado, "Pendiente"));
     }
     
+    // Get all pending requests first
+    let pendingRequests: Request[] = [];
     if (conditions.length > 0) {
       const result = await db.select().from(requests).where(and(...conditions)).orderBy(requests.fechaCreacion);
-      return result.reverse(); // Newest first
-    } else {
-      return [];
+      pendingRequests = result.reverse(); // Newest first
     }
+
+    // If userProfile is provided, filter by approval permissions in schemas
+    if (filters?.userProfile && pendingRequests.length > 0) {
+      const filteredRequests: Request[] = [];
+      
+      for (const request of pendingRequests) {
+        // Get the approval schema for this request
+        let schema;
+        if (request.tipo === "Vacaciones") {
+          // Find vacation schema
+          const schemas = await db.select().from(approvalSchemas).where(eq(approvalSchemas.tipoSolicitud, "Vacaciones"));
+          schema = schemas[0];
+        } else if (request.tipo === "Permiso") {
+          // Find schema that matches the motivo
+          const schemas = await db.select().from(approvalSchemas).where(eq(approvalSchemas.tipoSolicitud, "Permiso"));
+          schema = schemas.find(s => s.motivos && s.motivos.includes(request.motivo || ""));
+        }
+        
+        if (schema) {
+          // Get approval steps for this schema
+          const steps = await db.select().from(approvalSteps).where(eq(approvalSteps.schemaId, schema.id)).orderBy(approvalSteps.orden);
+          
+          // Check if userProfile matches any step perfil
+          const hasApprovalPermission = steps.some(step => {
+            return step.perfil === filters.userProfile;
+          });
+          
+          if (hasApprovalPermission) {
+            filteredRequests.push(request);
+          }
+        }
+      }
+      
+      return filteredRequests;
+    }
+    
+    return pendingRequests;
   }
 
   async getRequest(id: number): Promise<Request | undefined> {
