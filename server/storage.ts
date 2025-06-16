@@ -140,16 +140,12 @@ export class DatabaseStorage implements IStorage {
     const conditions = [];
     
     if (filters) {
-      // Filter by user - check both usuarioSolicitado and identificadorUsuario (for new requests)
-      // and fall back to identificador (for old requests)
+      // Filter by user - prioritize identificadorUsuario for new requests, fall back to identificador
       if (filters.userId) {
         conditions.push(
           or(
             eq(requests.identificadorUsuario, filters.userId),
-            and(
-              eq(requests.identificador, filters.userId),
-              isNull(requests.usuarioSolicitado)
-            )
+            eq(requests.identificador, filters.userId)
           )
         );
       }

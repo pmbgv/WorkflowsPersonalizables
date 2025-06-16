@@ -119,7 +119,29 @@ export default function Dashboard() {
     enabled: !!selectedUser?.Identifier,
   });
 
-  // Query for all requests with filters applied (Todas las Solicitudes)
+  // Query for pending approval requests (Solicitudes pendientes)
+  const { 
+    data: pendingRequests = [], 
+    isLoading: isLoadingPending,
+    error: errorPending,
+    refetch: refetchPending
+  } = useQuery<Request[]>({
+    queryKey: ["/api/requests/pending-approval", selectedUser?.Identifier, queryString],
+    queryFn: async () => {
+      if (!selectedUser?.Identifier) return [];
+      const url = queryString ? 
+        `/api/requests/pending-approval/${selectedUser.Identifier}?${queryString}` : 
+        `/api/requests/pending-approval/${selectedUser.Identifier}`;
+      const response = await fetch(url, { credentials: "include" });
+      if (!response.ok) {
+        throw new Error("Failed to fetch pending requests");
+      }
+      return response.json();
+    },
+    enabled: !!selectedUser?.Identifier && selectedUser?.UserProfile && ["#JefeGrupo#", "#adminCuenta#"].includes(selectedUser.UserProfile),
+  });
+
+  // Query for all requests (Todas las Solicitudes) - kept for admin view
   const { 
     data: allRequests = [], 
     isLoading: isLoadingAll, 
@@ -135,17 +157,18 @@ export default function Dashboard() {
       }
       return response.json();
     },
+    enabled: selectedUser?.UserProfile && ["#JefeGrupo#", "#adminCuenta#"].includes(selectedUser.UserProfile),
   });
 
   useEffect(() => {
-    if (error || errorAll) {
+    if (error || errorAll || errorPending) {
       toast({
         title: "Error",
         description: "No se pudieron cargar las solicitudes.",
         variant: "destructive",
       });
     }
-  }, [error, errorAll, toast]);
+  }, [error, errorAll, errorPending, toast]);
 
   const handleViewDetails = (request: Request) => {
     setSelectedRequest(request);
@@ -179,6 +202,7 @@ export default function Dashboard() {
 
   const handleRequestCreated = () => {
     refetch();
+    refetchPending();
     refetchAll();
   };
 
@@ -306,8 +330,8 @@ export default function Dashboard() {
             <TabsContent value="pendientes" className="space-y-6">
               {/* Pending Requests Table with Checkboxes */}
               <PendingRequestsTable
-                requests={allRequests.filter(req => req.estado === "Pendiente")}
-                isLoading={isLoadingAll}
+                requests={pendingRequests}
+                isLoading={isLoadingPending}
                 onViewDetails={handleViewDetails}
                 onDownload={handleDownload}
                 onBulkStatusChange={handleBulkStatusChange}
