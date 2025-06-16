@@ -97,22 +97,26 @@ export default function Dashboard() {
     Object.entries(appliedFilters).filter(([_, value]) => value !== "" && value !== "all")
   ).toString();
 
-  // Query for filtered requests (Lista de Solicitudes)
+  // Query for user's own requests (Mis solicitudes)
   const { 
     data: requests = [], 
     isLoading, 
     error,
     refetch 
   } = useQuery<Request[]>({
-    queryKey: ["/api/requests", queryString],
+    queryKey: ["/api/requests/my-requests", selectedUser?.Identifier, queryString],
     queryFn: async () => {
-      const url = queryString ? `/api/requests?${queryString}` : "/api/requests";
+      if (!selectedUser?.Identifier) return [];
+      const url = queryString ? 
+        `/api/requests/my-requests/${selectedUser.Identifier}?${queryString}` : 
+        `/api/requests/my-requests/${selectedUser.Identifier}`;
       const response = await fetch(url, { credentials: "include" });
       if (!response.ok) {
-        throw new Error("Failed to fetch requests");
+        throw new Error("Failed to fetch user requests");
       }
       return response.json();
     },
+    enabled: !!selectedUser?.Identifier,
   });
 
   // Query for all requests with filters applied (Todas las Solicitudes)

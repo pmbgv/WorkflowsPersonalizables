@@ -27,6 +27,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user's own requests (Mis solicitudes)
+  app.get("/api/requests/my-requests/:userId", async (req, res) => {
+    try {
+      const userId = req.params.userId;
+      const { estado, tipo, fechaInicio, fechaFin, tipoFecha, busqueda } = req.query;
+      
+      const filters = {
+        estado: estado as string,
+        tipo: tipo as string,
+        fechaInicio: fechaInicio as string,
+        fechaFin: fechaFin as string,
+        tipoFecha: tipoFecha as string,
+        busqueda: busqueda as string,
+        userId: userId,
+      };
+
+      const requests = await storage.getUserRequests(filters);
+      res.json(requests);
+    } catch (error) {
+      console.error("Error fetching user requests:", error);
+      res.status(500).json({ message: "Error fetching user requests" });
+    }
+  });
+
+  // Get requests pending approval by user (Solicitudes pendientes)
+  app.get("/api/requests/pending-approval/:userId", async (req, res) => {
+    try {
+      const userId = req.params.userId;
+      const { estado, tipo, fechaInicio, fechaFin, tipoFecha, busqueda } = req.query;
+      
+      const filters = {
+        estado: estado as string,
+        tipo: tipo as string,
+        fechaInicio: fechaInicio as string,
+        fechaFin: fechaFin as string,
+        tipoFecha: tipoFecha as string,
+        busqueda: busqueda as string,
+        userId: userId,
+      };
+
+      const requests = await storage.getPendingApprovalRequests(filters);
+      res.json(requests);
+    } catch (error) {
+      console.error("Error fetching pending approval requests:", error);
+      res.status(500).json({ message: "Error fetching pending approval requests" });
+    }
+  });
+
   // Get a specific request
   app.get("/api/requests/:id", async (req, res) => {
     try {

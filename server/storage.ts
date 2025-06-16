@@ -1,6 +1,6 @@
 import { requests, approvalSchemas, approvalSteps, requestHistory, userVacationBalance, motivosPermisos, type Request, type InsertRequest, type ApprovalSchema, type InsertApprovalSchema, type ApprovalStep, type InsertApprovalStep, type RequestHistory, type InsertRequestHistory, type UserVacationBalance, type InsertUserVacationBalance, type MotivoPermiso, type InsertMotivoPermiso } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, like, gte, lte, or } from "drizzle-orm";
+import { eq, and, like, gte, lte, or, isNull } from "drizzle-orm";
 
 export interface IStorage {
   getRequests(filters?: {
@@ -10,6 +10,24 @@ export interface IStorage {
     fechaFin?: string;
     tipoFecha?: string;
     busqueda?: string;
+  }): Promise<Request[]>;
+  getUserRequests(filters?: {
+    estado?: string;
+    tipo?: string;
+    fechaInicio?: string;
+    fechaFin?: string;
+    tipoFecha?: string;
+    busqueda?: string;
+    userId?: string;
+  }): Promise<Request[]>;
+  getPendingApprovalRequests(filters?: {
+    estado?: string;
+    tipo?: string;
+    fechaInicio?: string;
+    fechaFin?: string;
+    tipoFecha?: string;
+    busqueda?: string;
+    userId?: string;
   }): Promise<Request[]>;
   getRequest(id: number): Promise<Request | undefined>;
   createRequest(request: InsertRequest): Promise<Request>;
@@ -107,6 +125,143 @@ export class DatabaseStorage implements IStorage {
     } else {
       const result = await db.select().from(requests).orderBy(requests.fechaCreacion);
       return result.reverse(); // Newest first
+    }
+  }
+
+  async getUserRequests(filters?: {
+    estado?: string;
+    tipo?: string;
+    fechaInicio?: string;
+    fechaFin?: string;
+    tipoFecha?: string;
+    busqueda?: string;
+    userId?: string;
+  }): Promise<Request[]> {
+    const conditions = [];
+    
+    if (filters) {
+      // Filter by user - check both usuarioSolicitado and identificadorUsuario (for new requests)
+      // and fall back to identificador (for old requests)
+      if (filters.userId) {
+        conditions.push(
+          or(
+            eq(requests.identificadorUsuario, filters.userId),
+            and(
+              eq(requests.identificador, filters.userId),
+              isNull(requests.usuarioSolicitado)
+            )
+          )
+        );
+      }
+      
+      if (filters.estado) {
+        conditions.push(eq(requests.estado, filters.estado));
+      }
+      if (filters.tipo) {
+        conditions.push(eq(requests.tipo, filters.tipo));
+      }
+      
+      // Handle date filtering based on tipoFecha
+      if (filters.fechaInicio || filters.fechaFin) {
+        if (filters.tipoFecha === "fechaSolicitada") {
+          if (filters.fechaInicio) {
+            conditions.push(gte(requests.fechaSolicitada, filters.fechaInicio));
+          }
+          if (filters.fechaFin) {
+            conditions.push(lte(requests.fechaSolicitada, filters.fechaFin));
+          }
+        } else {
+          if (filters.fechaInicio) {
+            conditions.push(gte(requests.fechaCreacion, new Date(filters.fechaInicio)));
+          }
+          if (filters.fechaFin) {
+            const endDate = new Date(filters.fechaFin);
+            endDate.setDate(endDate.getDate() + 1);
+            conditions.push(lte(requests.fechaCreacion, endDate));
+          }
+        }
+      }
+      
+      if (filters.busqueda) {
+        conditions.push(
+          or(
+            like(requests.usuarioSolicitado, `%${filters.busqueda}%`),
+            like(requests.solicitadoPor, `%${filters.busqueda}%`),
+            like(requests.tipo, `%${filters.busqueda}%`),
+            like(requests.asunto, `%${filters.busqueda}%`)
+          )
+        );
+      }
+    }
+    
+    if (conditions.length > 0) {
+      const result = await db.select().from(requests).where(and(...conditions)).orderBy(requests.fechaCreacion);
+      return result.reverse(); // Newest first
+    } else {
+      return []; // Return empty if no userId provided
+    }
+  }
+
+  async getPendingApprovalRequests(filters?: {
+    estado?: string;
+    tipo?: string;
+    fechaInicio?: string;
+    fechaFin?: string;
+    tipoFecha?: string;
+    busqueda?: string;
+    userId?: string;
+  }): Promise<Request[]> {
+    // For now, implement basic filtering - will need to enhance with approval workflow logic
+    const conditions = [];
+    
+    if (filters) {
+      // Only show pending requests
+      conditions.push(eq(requests.estado, "Pendiente"));
+      
+      if (filters.tipo) {
+        conditions.push(eq(requests.tipo, filters.tipo));
+      }
+      
+      // Handle date filtering based on tipoFecha
+      if (filters.fechaInicio || filters.fechaFin) {
+        if (filters.tipoFecha === "fechaSolicitada") {
+          if (filters.fechaInicio) {
+            conditions.push(gte(requests.fechaSolicitada, filters.fechaInicio));
+          }
+          if (filters.fechaFin) {
+            conditions.push(lte(requests.fechaSolicitada, filters.fechaFin));
+          }
+        } else {
+          if (filters.fechaInicio) {
+            conditions.push(gte(requests.fechaCreacion, new Date(filters.fechaInicio)));
+          }
+          if (filters.fechaFin) {
+            const endDate = new Date(filters.fechaFin);
+            endDate.setDate(endDate.getDate() + 1);
+            conditions.push(lte(requests.fechaCreacion, endDate));
+          }
+        }
+      }
+      
+      if (filters.busqueda) {
+        conditions.push(
+          or(
+            like(requests.usuarioSolicitado, `%${filters.busqueda}%`),
+            like(requests.solicitadoPor, `%${filters.busqueda}%`),
+            like(requests.tipo, `%${filters.busqueda}%`),
+            like(requests.asunto, `%${filters.busqueda}%`)
+          )
+        );
+      }
+    } else {
+      conditions.push(eq(requests.estado, "Pendiente"));
+    }
+    
+    if (conditions.length > 0) {
+      const result = await db.select().from(requests).where(and(...conditions)).orderBy(requests.fechaCreacion);
+      return result.reverse(); // Newest first
+    } else {
+      return [];
     }
   }
 
