@@ -196,14 +196,14 @@ export function CreateRequestModal({ open: externalOpen, onOpenChange, onRequest
   // Update form data when selected user changes
   useEffect(() => {
     if (selectedUser) {
-      // Si es usuario normal o si es admin/manager pero no puede solicitar para terceros
-      if (!isAdminOrManager || (isAdminOrManager && !canRequestForOthers())) {
-        setFormData(prev => ({
-          ...prev,
-          solicitadoPor: `${selectedUser.Name} ${selectedUser.LastName}`,
-          identificador: selectedUser.Identifier
-        }));
-      }
+      setFormData(prev => ({
+        ...prev,
+        solicitadoPor: `${selectedUser.Name} ${selectedUser.LastName}`,
+        identificador: selectedUser.Identifier,
+        // Si no puede solicitar para terceros, auto-seleccionar a sí mismo como usuario objetivo
+        usuarioSolicitado: !canRequestForOthers() ? `${selectedUser.Name} ${selectedUser.LastName}` : prev.usuarioSolicitado,
+        identificadorUsuario: !canRequestForOthers() ? selectedUser.Identifier : prev.identificadorUsuario
+      }));
     }
   }, [selectedUser, activeSchema]);
 
@@ -589,7 +589,7 @@ export function CreateRequestModal({ open: externalOpen, onOpenChange, onRequest
                 <Select
                   value={formData.identificadorUsuario || ""}
                   onValueChange={(value) => {
-                    const targetUser = users.find((user: any) => user.employee_id === value);
+                    const targetUser = getFilteredUsers().find((user: any) => user.employee_id === value);
                     if (targetUser) {
                       handleInputChange('usuarioSolicitado', targetUser.name);
                       handleInputChange('identificadorUsuario', targetUser.employee_id);
@@ -601,7 +601,7 @@ export function CreateRequestModal({ open: externalOpen, onOpenChange, onRequest
                     <SelectValue placeholder="Seleccionar usuario" />
                   </SelectTrigger>
                   <SelectContent>
-                    {users
+                    {getFilteredUsers()
                       .filter((user: any) => user.employee_id && user.employee_id.trim() !== "")
                       .map((user: any) => (
                         <SelectItem key={user.id} value={user.employee_id}>
