@@ -75,13 +75,17 @@ export function CreateRequestModal({ open: externalOpen, onOpenChange, onRequest
   });
 
   // Usar usuarios del grupo seleccionado si están disponibles, sino todos los usuarios
-  const users = selectedGroupUsers.length > 0 ? selectedGroupUsers.map(user => ({
+  const allAvailableUsers = selectedGroupUsers.length > 0 ? selectedGroupUsers.map((user: any) => ({
     id: user.Id,
     employee_id: user.Identifier,
     name: `${user.Name} ${user.LastName}`.trim(),
     group_name: user.GroupDescription,
-    position_name: user.PositionDescription
-  })) : allUsers;
+    position_name: user.PositionDescription,
+    userProfile: user.UserProfile
+  })) : allUsers.map((user: any) => ({
+    ...user,
+    userProfile: user.userProfile || "#usuario#" // Default profile if not specified
+  }));
 
   // Obtener motivos desde GeoVictoria API
   const { data: timeoffTypes } = useQuery({
@@ -132,16 +136,62 @@ export function CreateRequestModal({ open: externalOpen, onOpenChange, onRequest
 
   // Verificar si el usuario actual puede hacer solicitudes para terceros
   const canRequestForOthers = () => {
-    // Si no hay esquema activo, permitir (comportamiento por defecto)
-    if (!activeSchema) return true;
+    // Si no hay esquema activo, solo admin y jefe de grupo pueden solicitar para terceros
+    if (!activeSchema) {
+      return isAdminOrManager;
+    }
     
     // Si permitir solicitud a terceros está desactivado en el esquema
-    if (!activeSchema.permitirSolicitudTerceros) {
+    if (activeSchema.permitirSolicitudTerceros === "false" || !activeSchema.permitirSolicitudTerceros) {
       return false;
     }
     
-    return true;
+    // Si está activado, verificar permisos según jerarquía
+    if (activeSchema.permitirSolicitudTerceros === "true") {
+      // Admin puede solicitar para jefe de grupo y empleados
+      if (selectedUser?.UserProfile === "#adminCuenta#") {
+        return true;
+      }
+      // Jefe de grupo puede solicitar para empleados
+      if (selectedUser?.UserProfile === "#JefeGrupo#") {
+        return true;
+      }
+      // Empleados normales no pueden solicitar para terceros
+      return false;
+    }
+    
+    return false;
   };
+
+  // Filtrar usuarios disponibles para solicitudes según permisos y jerarquía
+  const getFilteredUsers = () => {
+    if (!canRequestForOthers()) {
+      // Si no puede solicitar para terceros, solo puede seleccionarse a sí mismo
+      return allAvailableUsers.filter((user: any) => user.employee_id === selectedUser?.Identifier);
+    }
+
+    // Si puede solicitar para terceros, filtrar según jerarquía
+    if (selectedUser?.UserProfile === "#adminCuenta#") {
+      // Admin puede solicitar para jefe de grupo y empleados
+      return allAvailableUsers.filter((user: any) => 
+        user.userProfile === "#JefeGrupo#" || 
+        user.userProfile === "#usuario#" || 
+        user.userProfile === "#empleado#" ||
+        user.employee_id === selectedUser?.Identifier
+      );
+    } else if (selectedUser?.UserProfile === "#JefeGrupo#") {
+      // Jefe de grupo puede solicitar para empleados
+      return allAvailableUsers.filter((user: any) => 
+        user.userProfile === "#usuario#" || 
+        user.userProfile === "#empleado#" ||
+        user.employee_id === selectedUser?.Identifier
+      );
+    }
+
+    return allAvailableUsers;
+  };
+
+  const users = getFilteredUsers();
 
   // Update form data when selected user changes
   useEffect(() => {
