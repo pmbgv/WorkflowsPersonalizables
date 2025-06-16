@@ -109,6 +109,40 @@ export function CreateRequestModal({ open: externalOpen, onOpenChange, onRequest
     enabled: !!selectedUser?.UserProfile,
   });
 
+  // Filtrar motivos según permisos de visibilidad por esquema específico
+  const getVisibleMotivos = () => {
+    if (!selectedUser?.UserProfile || !timeoffTypes) return [];
+    
+    // Combinar todos los motivos disponibles
+    const allMotivos = [...(timeoffTypes.permisosCompletos || []), ...(timeoffTypes.permisosParciales || [])];
+    
+    // Filtrar motivos según visibilidad por esquema
+    const visibleMotivos = allMotivos.filter(motivo => {
+      // Buscar el esquema que contiene este motivo específico
+      const motivoSchema = approvalSchemas.find(schema => 
+        schema.tipoSolicitud === "Permiso" && 
+        (schema as any).motivos && 
+        (schema as any).motivos.includes(motivo)
+      );
+      
+      if (!motivoSchema) {
+        // Si no hay esquema configurado para este motivo, ocultarlo por seguridad
+        return false;
+      }
+      
+      // Verificar permisos de visibilidad del esquema específico
+      if (!motivoSchema.visibilityPermissions || motivoSchema.visibilityPermissions.length === 0) {
+        // Si no hay permisos configurados, permitir a todos (comportamiento por defecto)
+        return true;
+      }
+      
+      // Verificar si el perfil del usuario está en los permisos de visibilidad
+      return motivoSchema.visibilityPermissions.includes(selectedUser.UserProfile);
+    });
+    
+    return visibleMotivos;
+  };
+
   // Obtener esquemas de aprobación para aplicar configuración
   const { data: approvalSchemas = [] } = useQuery<ApprovalSchema[]>({
     queryKey: ["/api/approval-schemas"],
@@ -385,19 +419,8 @@ export function CreateRequestModal({ open: externalOpen, onOpenChange, onRequest
   const getMotivosForTipo = (tipo: string) => {
     switch (tipo) {
       case "Permiso":
-        // Use profile-filtered motivos if available, otherwise fall back to all timeoff types
-        if (availableMotivos?.motivos && availableMotivos.motivos.length > 0) {
-          return availableMotivos.motivos;
-        }
-        
-        // Fallback to all available motivos if profile filtering is not available
-        if (!timeoffTypes) return [];
-        const allMotivos = [
-          ...(timeoffTypes.permisosCompletos || []),
-          ...(timeoffTypes.permisosParciales || []),
-          ...(timeoffTypes.permisosComunes || [])
-        ];
-        return allMotivos.filter((motivo, index) => allMotivos.indexOf(motivo) === index);
+        // Usar la nueva lógica de visibilidad por esquema específico
+        return getVisibleMotivos();
       case "Vacaciones":
         return ["Vacaciones"];
       default:
