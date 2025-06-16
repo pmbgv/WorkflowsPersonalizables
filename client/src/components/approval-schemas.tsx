@@ -49,7 +49,11 @@ const PERMISSION_TYPES = [
 
 
 
-export function ApprovalSchemas() {
+interface ApprovalSchemasProps {
+  selectedUser?: any;
+}
+
+export function ApprovalSchemas({ selectedUser }: ApprovalSchemasProps) {
   const [selectedSchema, setSelectedSchema] = useState<ApprovalSchema | null>(null);
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
   const [stepChanges, setStepChanges] = useState<Record<number, Partial<ApprovalStep>>>({});
@@ -674,10 +678,10 @@ export function ApprovalSchemas() {
                           id={`associated-motivo-${index}`}
                           checked={true}
                           onCheckedChange={(checked) => {
-                            if (!checked) {
-                              // Remover motivo del esquema
-                              const newMotivos = selectedSchema.motivos?.filter(m => m !== motivo) || [];
-                              setSelectedSchema(prev => prev ? { ...prev, motivos: newMotivos } : null);
+                            if (!checked && selectedSchema) {
+                              // Remover motivo del esquema - usar el estado local de motivos
+                              const newMotivos = newSchemaMotivos.filter(m => m !== motivo);
+                              setNewSchemaMotivos(newMotivos);
                             }
                           }}
                         />
@@ -715,9 +719,9 @@ export function ApprovalSchemas() {
                                 checked={false}
                                 onCheckedChange={(checked) => {
                                   if (checked && selectedSchema) {
-                                    // Agregar motivo al esquema actual
-                                    const newMotivos = [...(selectedSchema.motivos || []), motivo];
-                                    setSelectedSchema(prev => prev ? { ...prev, motivos: newMotivos } : null);
+                                    // Agregar motivo al esquema actual - usar el estado local de motivos
+                                    const newMotivos = [...newSchemaMotivos, motivo];
+                                    setNewSchemaMotivos(newMotivos);
                                   }
                                 }}
                               />
@@ -750,9 +754,9 @@ export function ApprovalSchemas() {
                                 checked={false}
                                 onCheckedChange={(checked) => {
                                   if (checked && selectedSchema) {
-                                    // Agregar motivo al esquema actual
-                                    const newMotivos = [...(selectedSchema.motivos || []), motivo];
-                                    setSelectedSchema(prev => prev ? { ...prev, motivos: newMotivos } : null);
+                                    // Agregar motivo al esquema actual - usar el estado local de motivos
+                                    const newMotivos = [...newSchemaMotivos, motivo];
+                                    setNewSchemaMotivos(newMotivos);
                                   }
                                 }}
                               />

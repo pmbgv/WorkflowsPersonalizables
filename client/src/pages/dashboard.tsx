@@ -362,7 +362,7 @@ export default function Dashboard() {
           {selectedUser?.UserProfile === "#adminCuenta#" && (
             <TabsContent value="esquemas" className="space-y-6">
               {/* Approval Schemas Configuration */}
-              <ApprovalSchemas />
+              <ApprovalSchemas selectedUser={selectedUser} />
             </TabsContent>
           )}
         </Tabs>
