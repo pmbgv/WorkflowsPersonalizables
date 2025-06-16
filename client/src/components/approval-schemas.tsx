@@ -128,65 +128,61 @@ export function ApprovalSchemas({ selectedUser }: ApprovalSchemasProps) {
 
   // Reset changes and load schema data when switching schemas
   useEffect(() => {
-    const loadSchemaData = () => {
-      if (!selectedSchema) {
-        setStepChanges({});
-        setSelectedPermissions([]);
-        setVisibilityPermissions([]);
-        setApprovalPermissions([]);
-        setNewSchemaMotivos([]);
-        setSchemaConfig({
-          adjuntarDocumentos: false,
-          adjuntarDocumentosObligatorio: false,
-          permitirModificarDocumentos: false,
-          comentarioRequerido: false,
-          comentarioObligatorio: false,
-          comentarioOpcional: true,
-          enviarCorreoNotificacion: false,
-          solicitudCreada: false,
-          solicitudAprobadaRechazada: false,
-          permitirSolicitudTerceros: false,
-          diasMinimo: "",
-          diasMaximo: "",
-          diasMultiplo: "",
-          tipoDias: "calendario"
-        });
-        return;
-      }
-
-      // Load existing permissions from schema
+    if (!selectedSchema) {
       setStepChanges({});
       setSelectedPermissions([]);
-      setVisibilityPermissions(selectedSchema.visibilityPermissions || []);
-      setApprovalPermissions(selectedSchema.approvalPermissions || []);
-      
-      // Load existing motivos for editing
-      if (selectedSchema.motivos && selectedSchema.motivos.length > 0) {
-        setNewSchemaMotivos(selectedSchema.motivos);
-      } else {
-        setNewSchemaMotivos([]);
-      }
-      
-      // Load schema configuration
+      setVisibilityPermissions([]);
+      setApprovalPermissions([]);
+      setNewSchemaMotivos([]);
       setSchemaConfig({
-        adjuntarDocumentos: (selectedSchema as any).adjuntarDocumentos === "true",
-        adjuntarDocumentosObligatorio: (selectedSchema as any).adjuntarDocumentosObligatorio === "true",
-        permitirModificarDocumentos: (selectedSchema as any).permitirModificarDocumentos === "true",
-        comentarioRequerido: (selectedSchema as any).comentarioRequerido === "true",
-        comentarioObligatorio: (selectedSchema as any).comentarioObligatorio === "true",
-        comentarioOpcional: (selectedSchema as any).comentarioOpcional !== "false",
-        enviarCorreoNotificacion: (selectedSchema as any).enviarCorreoNotificacion === "true",
-        solicitudCreada: (selectedSchema as any).solicitudCreada === "true",
-        solicitudAprobadaRechazada: (selectedSchema as any).solicitudAprobadaRechazada === "true",
-        permitirSolicitudTerceros: (selectedSchema as any).permitirSolicitudTerceros === "true",
-        diasMinimo: (selectedSchema as any).diasMinimo?.toString() || "",
-        diasMaximo: (selectedSchema as any).diasMaximo?.toString() || "",
-        diasMultiplo: (selectedSchema as any).diasMultiplo?.toString() || "",
-        tipoDias: (selectedSchema as any).tipoDias || "calendario"
+        adjuntarDocumentos: false,
+        adjuntarDocumentosObligatorio: false,
+        permitirModificarDocumentos: false,
+        comentarioRequerido: false,
+        comentarioObligatorio: false,
+        comentarioOpcional: true,
+        enviarCorreoNotificacion: false,
+        solicitudCreada: false,
+        solicitudAprobadaRechazada: false,
+        permitirSolicitudTerceros: false,
+        diasMinimo: "",
+        diasMaximo: "",
+        diasMultiplo: "",
+        tipoDias: "calendario"
       });
-    };
+      return;
+    }
 
-    loadSchemaData();
+    // Load existing permissions from schema
+    setStepChanges({});
+    setSelectedPermissions([]);
+    setVisibilityPermissions(selectedSchema.visibilityPermissions || []);
+    setApprovalPermissions(selectedSchema.approvalPermissions || []);
+    
+    // Load existing motivos for editing
+    if (selectedSchema.motivos && selectedSchema.motivos.length > 0) {
+      setNewSchemaMotivos([...selectedSchema.motivos]);
+    } else {
+      setNewSchemaMotivos([]);
+    }
+    
+    // Load schema configuration
+    setSchemaConfig({
+      adjuntarDocumentos: (selectedSchema as any).adjuntarDocumentos === "true",
+      adjuntarDocumentosObligatorio: (selectedSchema as any).adjuntarDocumentosObligatorio === "true",
+      permitirModificarDocumentos: (selectedSchema as any).permitirModificarDocumentos === "true",
+      comentarioRequerido: (selectedSchema as any).comentarioRequerido === "true",
+      comentarioObligatorio: (selectedSchema as any).comentarioObligatorio === "true",
+      comentarioOpcional: (selectedSchema as any).comentarioOpcional !== "false",
+      enviarCorreoNotificacion: (selectedSchema as any).enviarCorreoNotificacion === "true",
+      solicitudCreada: (selectedSchema as any).solicitudCreada === "true",
+      solicitudAprobadaRechazada: (selectedSchema as any).solicitudAprobadaRechazada === "true",
+      permitirSolicitudTerceros: (selectedSchema as any).permitirSolicitudTerceros === "true",
+      diasMinimo: (selectedSchema as any).diasMinimo?.toString() || "",
+      diasMaximo: (selectedSchema as any).diasMaximo?.toString() || "",
+      diasMultiplo: (selectedSchema as any).diasMultiplo?.toString() || "",
+      tipoDias: (selectedSchema as any).tipoDias || "calendario"
+    });
   }, [selectedSchema?.id]);
 
   // Fetch approval schemas
@@ -598,9 +594,20 @@ export function ApprovalSchemas({ selectedUser }: ApprovalSchemasProps) {
     );
   };
 
-  const filteredSchemas = schemas.filter(schema =>
-    schema.nombre.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredSchemas = schemas.filter(schema => {
+    // Filter by search term
+    const matchesSearch = schema.nombre.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Filter by visibility permissions - show schemas that include the selected user's profile
+    if (selectedUser?.UserProfile) {
+      const hasVisibility = !schema.visibilityPermissions || 
+        schema.visibilityPermissions.length === 0 || 
+        schema.visibilityPermissions.includes(selectedUser.UserProfile);
+      return matchesSearch && hasVisibility;
+    }
+    
+    return matchesSearch;
+  });
 
   const filteredProfiles = distinctProfiles.filter((profile: string) =>
     profile.toLowerCase().includes(profileSearch.toLowerCase())
@@ -668,11 +675,11 @@ export function ApprovalSchemas({ selectedUser }: ApprovalSchemasProps) {
           <Card>
             <CardContent className="p-4">
               {/* Motivos asociados al esquema */}
-              {selectedSchema.motivos && selectedSchema.motivos.length > 0 && (
+              {newSchemaMotivos && newSchemaMotivos.length > 0 && (
                 <div className="space-y-3 mb-6">
                   <Label className="text-sm font-medium text-gray-700">Motivos asociados</Label>
                   <div className="space-y-2">
-                    {selectedSchema.motivos.map((motivo, index) => (
+                    {newSchemaMotivos.map((motivo, index) => (
                       <div key={index} className="flex items-center space-x-2">
                         <Checkbox 
                           id={`associated-motivo-${index}`}
