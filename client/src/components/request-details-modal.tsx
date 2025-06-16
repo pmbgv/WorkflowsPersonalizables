@@ -13,10 +13,34 @@ interface RequestDetailsModalProps {
   onDownload: (requestId: number) => void;
   onStatusChange?: (requestId: number, newStatus: string) => void;
   isAllRequestsTab?: boolean;
+  currentUser?: any;
 }
 
-export function RequestDetailsModal({ request, open, onOpenChange, onDownload, onStatusChange, isAllRequestsTab = false }: RequestDetailsModalProps) {
+export function RequestDetailsModal({ request, open, onOpenChange, onDownload, onStatusChange, isAllRequestsTab = false, currentUser }: RequestDetailsModalProps) {
   if (!request) return null;
+
+  // Determine if current user can cancel/anular the request
+  const canCancelRequest = () => {
+    if (!currentUser || request.estado !== "Pendiente") return false;
+    
+    // If current user created the request for themselves, they can "cancelar"
+    const isOwnRequest = request.identificador === currentUser.Identifier;
+    
+    // If current user is admin/manager and created the request for someone else, they can "anular"
+    const isThirdPartyRequest = !isOwnRequest && 
+      ["#adminCuenta#", "#JefeGrupo#"].includes(currentUser.UserProfile);
+    
+    return isOwnRequest || isThirdPartyRequest;
+  };
+
+  const getCancelButtonText = () => {
+    if (!currentUser) return "";
+    
+    // If current user created the request for themselves
+    const isOwnRequest = request.identificador === currentUser.Identifier;
+    
+    return isOwnRequest ? "Cancelar" : "Anular";
+  };
 
   // Get request history
   const { data: history = [], isLoading: isLoadingHistory } = useQuery<RequestHistory[]>({
@@ -212,29 +236,17 @@ export function RequestDetailsModal({ request, open, onOpenChange, onDownload, o
             </div>
           )}
 
-          {/* Acciones de usuario - solo visible en pestaña "Mis solicitudes" */}
-          {!isAllRequestsTab && onStatusChange && (
+          {/* Acciones de cancelar/anular - basado en quien creó la solicitud */}
+          {canCancelRequest() && onStatusChange && (
             <div className="flex justify-center gap-4 pt-4 border-t border-gray-200">
-              {request.estado === "Pendiente" && (
-                <Button
-                  onClick={() => onStatusChange(request.id, "Cancelada")}
-                  variant="outline"
-                  className="border-red-600 text-red-600 hover:bg-red-50"
-                >
-                  <X className="w-4 h-4 mr-2" />
-                  Cancelar solicitud
-                </Button>
-              )}
-              {request.estado === "Aprobado" && (
-                <Button
-                  onClick={() => onStatusChange(request.id, "Anulada")}
-                  variant="outline"
-                  className="border-red-600 text-red-600 hover:bg-red-50"
-                >
-                  <X className="w-4 h-4 mr-2" />
-                  Anular solicitud
-                </Button>
-              )}
+              <Button
+                onClick={() => onStatusChange(request.id, "Cancelada")}
+                variant="outline"
+                className="border-red-600 text-red-600 hover:bg-red-50"
+              >
+                <X className="w-4 h-4 mr-2" />
+                {getCancelButtonText()} solicitud
+              </Button>
             </div>
           )}
         </div>
