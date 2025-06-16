@@ -141,9 +141,9 @@ export class DatabaseStorage implements IStorage {
     const conditions = [];
     
     if (filters) {
-      // Filter by identificadorUsuario only (the person taking the leave) - profile-based filtering
+      // Filter by identificador (the person who CREATED the request) for "Mis solicitudes"
       if (filters.userId) {
-        conditions.push(eq(requests.identificadorUsuario, filters.userId));
+        conditions.push(eq(requests.identificador, filters.userId));
       }
       
       if (filters.estado) {
