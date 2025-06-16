@@ -213,12 +213,14 @@ export function ApprovalSchemas({ selectedUser }: ApprovalSchemasProps) {
     },
   });
 
-  // Extract distinct UserProfile values
-  const distinctProfiles = usersCompleteData
-    .filter(user => user.Enabled === "1" && user.UserProfile && user.UserProfile.trim() !== "")
-    .map(user => user.UserProfile)
-    .filter((profile, index, array) => array.indexOf(profile) === index)
-    .sort();
+  // Extract distinct UserProfile values - memoize to prevent re-renders
+  const distinctProfiles = useMemo(() => {
+    return usersCompleteData
+      .filter(user => user.Enabled === "1" && user.UserProfile && user.UserProfile.trim() !== "")
+      .map(user => user.UserProfile)
+      .filter((profile, index, array) => array.indexOf(profile) === index)
+      .sort();
+  }, [usersCompleteData]);
 
   // Fetch steps for selected schema
   const { data: steps = [], isLoading: isLoadingSteps } = useQuery<ApprovalStep[]>({
@@ -234,10 +236,10 @@ export function ApprovalSchemas({ selectedUser }: ApprovalSchemasProps) {
 
   // Sincronizar pasos locales con los datos de la base de datos
   useEffect(() => {
-    if (steps) {
+    if (steps && steps.length >= 0) {
       setLocalSteps([...steps]);
     }
-  }, [steps]);
+  }, [steps.length, selectedSchema?.id]);
 
   // Función para validar motivos duplicados
   const validateDuplicateMotivos = (selectedMotivos: string[]): string[] => {
