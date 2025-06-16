@@ -125,6 +125,8 @@ This is a full-stack web application for managing employee requests and approval
 - **CDN Ready**: Static assets can be served from CDN in production
 
 ## Changelog
+- June 16, 2025: Fixed "Mis solicitudes" tab filtering issue by implementing fallback identifier system for users without Identifier field
+- June 16, 2025: Added robust user identification using Identifier field with Id fallback when Identifier is missing from GeoVictoria API
 - June 16, 2025: Fixed approval schemas list filtering - admin users now see all schemas for configuration regardless of visibility permissions
 - June 16, 2025: Implemented motivo-specific visibility filtering in Create Request Modal based on schema visibility permissions
 - June 16, 2025: Implemented complete "Permitir solicitud a terceros" functionality with schema-specific validation

@@ -253,10 +253,11 @@ export function CreateRequestModal({ open: externalOpen, onOpenChange, onRequest
   // Update form data when selected user changes
   useEffect(() => {
     if (selectedUser) {
+      const userIdToUse = selectedUser.Identifier || selectedUser.Id || "";
       setFormData(prev => ({
         ...prev,
         solicitadoPor: `${selectedUser.Name} ${selectedUser.LastName}`,
-        identificador: selectedUser.Identifier,
+        identificador: userIdToUse,
       }));
     }
   }, [selectedUser]);
@@ -264,10 +265,11 @@ export function CreateRequestModal({ open: externalOpen, onOpenChange, onRequest
   // Reset user selection when tipo/motivo changes and third-party requests become unavailable
   useEffect(() => {
     if (selectedUser && !canRequestForOthers()) {
+      const userIdToUse = selectedUser.Identifier || selectedUser.Id || "";
       setFormData(prev => ({
         ...prev,
         usuarioSolicitado: `${selectedUser.Name} ${selectedUser.LastName}`,
-        identificadorUsuario: selectedUser.Identifier
+        identificadorUsuario: userIdToUse
       }));
     }
   }, [formData.tipo, formData.motivo, selectedUser]);
@@ -588,12 +590,15 @@ export function CreateRequestModal({ open: externalOpen, onOpenChange, onRequest
     }
 
     // Asegurar que identificador e identificadorUsuario estén configurados
-    if (!requestData.identificador && selectedUser?.Identifier) {
-      requestData.identificador = selectedUser.Identifier;
+    // Usar Identifier si existe, sino usar Id como fallback
+    const userIdToUse = selectedUser?.Identifier || selectedUser?.Id || "";
+    
+    if (!requestData.identificador && userIdToUse) {
+      requestData.identificador = userIdToUse;
     }
     
-    if (!requestData.identificadorUsuario && selectedUser?.Identifier) {
-      requestData.identificadorUsuario = selectedUser.Identifier;
+    if (!requestData.identificadorUsuario && userIdToUse) {
+      requestData.identificadorUsuario = userIdToUse;
     }
 
     console.log("Request body:", requestData);
