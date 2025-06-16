@@ -595,17 +595,8 @@ export function ApprovalSchemas({ selectedUser }: ApprovalSchemasProps) {
   };
 
   const filteredSchemas = schemas.filter(schema => {
-    // Filter by search term
+    // Filter by search term only - admin users should see all schemas for configuration
     const matchesSearch = schema.nombre.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    // Filter by visibility permissions - show schemas that include the selected user's profile
-    if (selectedUser?.UserProfile) {
-      const hasVisibility = !schema.visibilityPermissions || 
-        schema.visibilityPermissions.length === 0 || 
-        schema.visibilityPermissions.includes(selectedUser.UserProfile);
-      return matchesSearch && hasVisibility;
-    }
-    
     return matchesSearch;
   });
 

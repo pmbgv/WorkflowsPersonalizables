@@ -125,6 +125,8 @@ This is a full-stack web application for managing employee requests and approval
 - **CDN Ready**: Static assets can be served from CDN in production
 
 ## Changelog
+- June 16, 2025: Fixed approval schemas list filtering - admin users now see all schemas for configuration regardless of visibility permissions
+- June 16, 2025: Implemented motivo-specific visibility filtering in Create Request Modal based on schema visibility permissions
 - June 16, 2025: Implemented complete "Permitir solicitud a terceros" functionality with schema-specific validation
 - June 16, 2025: Enhanced third-party request logic to check specific motivo schemas for Permiso requests
 - June 16, 2025: Added dynamic user filtering based on approval schema configuration and user hierarchy
