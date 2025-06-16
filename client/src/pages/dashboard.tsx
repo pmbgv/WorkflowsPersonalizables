@@ -129,19 +129,26 @@ export default function Dashboard() {
     error: errorPending,
     refetch: refetchPending
   } = useQuery<Request[]>({
-    queryKey: ["/api/requests/pending-approval", selectedUser?.Identifier, queryString],
+    queryKey: ["/api/requests/pending-approval", selectedUser?.Identifier, selectedUser?.UserProfile, queryString],
     queryFn: async () => {
-      if (!selectedUser?.Identifier) return [];
-      const url = queryString ? 
-        `/api/requests/pending-approval/${selectedUser.Identifier}?${queryString}` : 
-        `/api/requests/pending-approval/${selectedUser.Identifier}`;
+      if (!selectedUser?.Identifier || !selectedUser?.UserProfile) return [];
+      
+      // Build query parameters including userProfile
+      const params = new URLSearchParams();
+      if (queryString) {
+        const existingParams = new URLSearchParams(queryString);
+        existingParams.forEach((value, key) => params.append(key, value));
+      }
+      params.append('userProfile', selectedUser.UserProfile);
+      
+      const url = `/api/requests/pending-approval/${selectedUser.Identifier}?${params.toString()}`;
       const response = await fetch(url, { credentials: "include" });
       if (!response.ok) {
         throw new Error("Failed to fetch pending requests");
       }
       return response.json();
     },
-    enabled: !!selectedUser?.Identifier && selectedUser?.UserProfile && ["#JefeGrupo#", "#adminCuenta#"].includes(selectedUser.UserProfile),
+    enabled: !!selectedUser?.Identifier && !!selectedUser?.UserProfile,
   });
 
   // Query for all requests (Todas las Solicitudes) - kept for admin view
