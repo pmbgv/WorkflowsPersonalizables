@@ -71,7 +71,10 @@ export default function Dashboard() {
       return updatedRequest;
     },
     onSuccess: (updatedRequest, { newStatus }) => {
+      // Invalidate all user-centric queries
       queryClient.invalidateQueries({ queryKey: ["/api/requests"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/requests/my-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/requests/pending-approval"] });
       
       let description = "El estado de la solicitud ha sido actualizado exitosamente.";
       if (newStatus === "Aprobado" && updatedRequest.tipo === "Permiso") {
