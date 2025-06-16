@@ -125,6 +125,9 @@ This is a full-stack web application for managing employee requests and approval
 - **CDN Ready**: Static assets can be served from CDN in production
 
 ## Changelog
+- June 16, 2025: Implemented complete "Permitir solicitud a terceros" functionality with schema-specific validation
+- June 16, 2025: Enhanced third-party request logic to check specific motivo schemas for Permiso requests
+- June 16, 2025: Added dynamic user filtering based on approval schema configuration and user hierarchy
 - June 16, 2025: Implemented profile-based filtering system for request tabs
 - June 16, 2025: Fixed "Licencia Médica Estándar" visibility by updating schema permissions to include "Empleado" profile
 - June 16, 2025: Resolved infinite re-render issue in ApprovalSchemas component with proper state management

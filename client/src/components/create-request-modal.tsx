@@ -136,28 +136,51 @@ export function CreateRequestModal({ open: externalOpen, onOpenChange, onRequest
 
   // Verificar si el usuario actual puede hacer solicitudes para terceros
   const canRequestForOthers = () => {
-    // Si no hay esquema activo, solo admin y jefe de grupo pueden solicitar para terceros
-    if (!activeSchema) {
-      return isAdminOrManager;
-    }
-    
-    // Si permitir solicitud a terceros está desactivado en el esquema
-    if (activeSchema.permitirSolicitudTerceros === "false" || !activeSchema.permitirSolicitudTerceros) {
+    // Si el tipo no está seleccionado, no se puede determinar
+    if (!formData.tipo) {
       return false;
     }
-    
-    // Si está activado, verificar permisos según jerarquía
-    if (activeSchema.permitirSolicitudTerceros === "true") {
-      // Admin puede solicitar para jefe de grupo y empleados
-      if (selectedUser?.UserProfile === "#adminCuenta#") {
-        return true;
+
+    // Para Vacaciones, verificar el esquema de vacaciones
+    if (formData.tipo === "Vacaciones") {
+      const vacationSchema = approvalSchemas.find(schema => schema.tipoSolicitud === "Vacaciones");
+      if (!vacationSchema) return false;
+      
+      // Si permitir solicitud a terceros está desactivado
+      if (vacationSchema.permitirSolicitudTerceros === "false" || !vacationSchema.permitirSolicitudTerceros) {
+        return false;
       }
-      // Jefe de grupo puede solicitar para empleados
-      if (selectedUser?.UserProfile === "#JefeGrupo#") {
-        return true;
+      
+      // Si está activado, verificar permisos según jerarquía
+      if (vacationSchema.permitirSolicitudTerceros === "true") {
+        return selectedUser?.UserProfile === "#adminCuenta#" || selectedUser?.UserProfile === "#JefeGrupo#";
       }
-      // Empleados normales no pueden solicitar para terceros
-      return false;
+    }
+
+    // Para Permisos, verificar el esquema específico del motivo seleccionado
+    if (formData.tipo === "Permiso") {
+      // Si no hay motivo seleccionado, no se puede determinar
+      if (!formData.motivo) {
+        return false;
+      }
+      
+      const motivoSchema = approvalSchemas.find(schema => 
+        schema.tipoSolicitud === "Permiso" && 
+        (schema as any).motivos && 
+        (schema as any).motivos.includes(formData.motivo)
+      );
+      
+      if (!motivoSchema) return false;
+      
+      // Si permitir solicitud a terceros está desactivado para este motivo específico
+      if (motivoSchema.permitirSolicitudTerceros === "false" || !motivoSchema.permitirSolicitudTerceros) {
+        return false;
+      }
+      
+      // Si está activado, verificar permisos según jerarquía
+      if (motivoSchema.permitirSolicitudTerceros === "true") {
+        return selectedUser?.UserProfile === "#adminCuenta#" || selectedUser?.UserProfile === "#JefeGrupo#";
+      }
     }
     
     return false;
@@ -200,12 +223,20 @@ export function CreateRequestModal({ open: externalOpen, onOpenChange, onRequest
         ...prev,
         solicitadoPor: `${selectedUser.Name} ${selectedUser.LastName}`,
         identificador: selectedUser.Identifier,
-        // Si no puede solicitar para terceros, auto-seleccionar a sí mismo como usuario objetivo
-        usuarioSolicitado: !canRequestForOthers() ? `${selectedUser.Name} ${selectedUser.LastName}` : prev.usuarioSolicitado,
-        identificadorUsuario: !canRequestForOthers() ? selectedUser.Identifier : prev.identificadorUsuario
       }));
     }
-  }, [selectedUser, activeSchema]);
+  }, [selectedUser]);
+
+  // Reset user selection when tipo/motivo changes and third-party requests become unavailable
+  useEffect(() => {
+    if (selectedUser && !canRequestForOthers()) {
+      setFormData(prev => ({
+        ...prev,
+        usuarioSolicitado: `${selectedUser.Name} ${selectedUser.LastName}`,
+        identificadorUsuario: selectedUser.Identifier
+      }));
+    }
+  }, [formData.tipo, formData.motivo, selectedUser]);
 
   // Obtener todas las solicitudes existentes para verificar conflictos de fechas
   const { data: existingRequests = [] } = useQuery<Request[]>({
@@ -573,7 +604,7 @@ export function CreateRequestModal({ open: externalOpen, onOpenChange, onRequest
 
             <div className="space-y-2">
               <Label htmlFor="usuarioSolicitado" className="text-gray-700">Usuario (para quien es la solicitud)</Label>
-              {!isAdminOrManager && !canRequestForOthers() ? (
+              {!canRequestForOthers() ? (
                 <div className="space-y-2">
                   <Input
                     value={selectedUser ? `${selectedUser.Name} ${selectedUser.LastName} - ${selectedUser.Identifier}` : ""}
@@ -582,7 +613,13 @@ export function CreateRequestModal({ open: externalOpen, onOpenChange, onRequest
                   />
                   <div className="flex items-center gap-2 text-amber-600 text-sm">
                     <Info className="h-4 w-4" />
-                    <span>Las solicitudes a terceros están desactivadas para este tipo de solicitud</span>
+                    <span>
+                      {formData.tipo === "Permiso" && formData.motivo 
+                        ? `Las solicitudes a terceros están desactivadas para "${formData.motivo}"`
+                        : formData.tipo === "Vacaciones"
+                        ? "Las solicitudes a terceros están desactivadas para Vacaciones"
+                        : "Selecciona un tipo de solicitud y motivo para verificar permisos"}
+                    </span>
                   </div>
                 </div>
               ) : (
