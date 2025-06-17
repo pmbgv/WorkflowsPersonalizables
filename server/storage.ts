@@ -1,6 +1,6 @@
-import { requests, approvalSchemas, approvalSteps, requestHistory, userVacationBalance, motivosPermisos, type Request, type InsertRequest, type ApprovalSchema, type InsertApprovalSchema, type ApprovalStep, type InsertApprovalStep, type RequestHistory, type InsertRequestHistory, type UserVacationBalance, type InsertUserVacationBalance, type MotivoPermiso, type InsertMotivoPermiso } from "@shared/schema";
+import { requests, approvalSchemas, approvalSteps, requestHistory, requestApprovalSteps, userVacationBalance, motivosPermisos, type Request, type InsertRequest, type ApprovalSchema, type InsertApprovalSchema, type ApprovalStep, type InsertApprovalStep, type RequestHistory, type InsertRequestHistory, type RequestApprovalStep, type InsertRequestApprovalStep, type UserVacationBalance, type InsertUserVacationBalance, type MotivoPermiso, type InsertMotivoPermiso } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, like, gte, lte, or, isNull } from "drizzle-orm";
+import { eq, and, like, gte, lte, or, isNull, asc } from "drizzle-orm";
 
 export interface IStorage {
   getRequests(filters?: {
@@ -51,6 +51,12 @@ export interface IStorage {
   // Request History
   getRequestHistory(requestId: number): Promise<RequestHistory[]>;
   addRequestHistory(history: InsertRequestHistory): Promise<RequestHistory>;
+  
+  // Request Approval Steps
+  getRequestApprovalSteps(requestId: number): Promise<RequestApprovalStep[]>;
+  createRequestApprovalStep(step: InsertRequestApprovalStep): Promise<RequestApprovalStep>;
+  updateRequestApprovalStep(id: number, updates: Partial<RequestApprovalStep>): Promise<RequestApprovalStep | undefined>;
+  getNextPendingApprovalStep(requestId: number): Promise<RequestApprovalStep | undefined>;
   
   // User Vacation Balance
   getUserVacationBalance(identificador: string): Promise<UserVacationBalance | undefined>;

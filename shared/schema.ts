@@ -82,6 +82,18 @@ export const requestHistory = pgTable("request_history", {
   fechaCreacion: timestamp("fecha_creacion").defaultNow().notNull(),
 });
 
+// Tabla para rastrear el estado de cada paso de aprobación de las solicitudes
+export const requestApprovalSteps = pgTable("request_approval_steps", {
+  id: serial("id").primaryKey(),
+  requestId: integer("request_id").references(() => requests.id, { onDelete: 'cascade' }).notNull(),
+  approvalStepId: integer("approval_step_id").references(() => approvalSteps.id).notNull(),
+  estado: varchar("estado", { length: 20 }).notNull().default("Pendiente"), // Pendiente, Aprobado, Rechazado
+  aprobadoPor: varchar("aprobado_por", { length: 100 }),
+  comentario: text("comentario"),
+  fechaAprobacion: timestamp("fecha_aprobacion"),
+  fechaCreacion: timestamp("fecha_creacion").defaultNow().notNull(),
+});
+
 export const insertRequestSchema = createInsertSchema(requests).omit({
   id: true,
   fechaCreacion: true,
@@ -100,6 +112,11 @@ export const insertApprovalStepSchema = createInsertSchema(approvalSteps).omit({
 });
 
 export const insertRequestHistorySchema = createInsertSchema(requestHistory).omit({
+  id: true,
+  fechaCreacion: true,
+});
+
+export const insertRequestApprovalStepSchema = createInsertSchema(requestApprovalSteps).omit({
   id: true,
   fechaCreacion: true,
 });
@@ -134,6 +151,8 @@ export type ApprovalStep = typeof approvalSteps.$inferSelect;
 export type InsertApprovalStep = z.infer<typeof insertApprovalStepSchema>;
 export type RequestHistory = typeof requestHistory.$inferSelect;
 export type InsertRequestHistory = z.infer<typeof insertRequestHistorySchema>;
+export type RequestApprovalStep = typeof requestApprovalSteps.$inferSelect;
+export type InsertRequestApprovalStep = z.infer<typeof insertRequestApprovalStepSchema>;
 export type UserVacationBalance = typeof userVacationBalance.$inferSelect;
 export type InsertUserVacationBalance = z.infer<typeof insertUserVacationBalanceSchema>;
 export type MotivoPermiso = typeof motivosPermisos.$inferSelect;
