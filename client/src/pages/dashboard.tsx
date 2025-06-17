@@ -107,19 +107,20 @@ export default function Dashboard() {
     error,
     refetch 
   } = useQuery<Request[]>({
-    queryKey: ["/api/requests/my-requests", selectedUser?.Identifier, queryString],
+    queryKey: ["/api/requests/my-requests", selectedUser?.Identifier || selectedUser?.Id, queryString],
     queryFn: async () => {
-      if (!selectedUser?.Identifier) return [];
+      const userId = selectedUser?.Identifier || selectedUser?.Id;
+      if (!userId) return [];
       const url = queryString ? 
-        `/api/requests/my-requests/${selectedUser.Identifier}?${queryString}` : 
-        `/api/requests/my-requests/${selectedUser.Identifier}`;
+        `/api/requests/my-requests/${userId}?${queryString}` : 
+        `/api/requests/my-requests/${userId}`;
       const response = await fetch(url, { credentials: "include" });
       if (!response.ok) {
         throw new Error("Failed to fetch user requests");
       }
       return response.json();
     },
-    enabled: !!selectedUser?.Identifier,
+    enabled: !!(selectedUser?.Identifier || selectedUser?.Id),
   });
 
   // Query for pending approval requests (Solicitudes pendientes)

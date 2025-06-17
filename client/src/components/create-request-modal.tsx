@@ -593,12 +593,22 @@ export function CreateRequestModal({ open: externalOpen, onOpenChange, onRequest
     // Usar Identifier si existe, sino usar Id como fallback
     const userIdToUse = selectedUser?.Identifier || selectedUser?.Id || "";
     
-    if (!requestData.identificador && userIdToUse) {
+    // Para solicitudes propias (cuando no se puede solicitar para terceros)
+    if (!canRequestForOthers()) {
       requestData.identificador = userIdToUse;
-    }
-    
-    if (!requestData.identificadorUsuario && userIdToUse) {
       requestData.identificadorUsuario = userIdToUse;
+      requestData.usuarioSolicitado = `${selectedUser?.Name} ${selectedUser?.LastName}`;
+    } else {
+      // Para solicitudes a terceros, asegurar que el solicitante está identificado
+      if (!requestData.identificador && userIdToUse) {
+        requestData.identificador = userIdToUse;
+      }
+      
+      // Si no se especificó usuario destinatario, usar el solicitante
+      if (!requestData.identificadorUsuario && userIdToUse) {
+        requestData.identificadorUsuario = userIdToUse;
+        requestData.usuarioSolicitado = `${selectedUser?.Name} ${selectedUser?.LastName}`;
+      }
     }
 
     console.log("Request body:", requestData);

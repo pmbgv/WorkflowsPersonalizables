@@ -142,8 +142,14 @@ export class DatabaseStorage implements IStorage {
     
     if (filters) {
       // Filter by identificadorUsuario (the person the request is FOR) for "Mis solicitudes"
+      // Handle both Identifier and Id fallback
       if (filters.userId) {
-        conditions.push(eq(requests.identificadorUsuario, filters.userId));
+        conditions.push(
+          or(
+            eq(requests.identificadorUsuario, filters.userId),
+            eq(requests.identificador, filters.userId)
+          )
+        );
       }
       
       if (filters.estado) {
