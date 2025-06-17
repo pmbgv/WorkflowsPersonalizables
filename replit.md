@@ -125,6 +125,9 @@ This is a full-stack web application for managing employee requests and approval
 - **CDN Ready**: Static assets can be served from CDN in production
 
 ## Changelog
+- June 17, 2025: Implemented "Solicitudes pendientes" functionality for administrator users with organizational hierarchy support
+- June 17, 2025: Created comprehensive test suites for pending requests logic and tab visibility authorization
+- June 17, 2025: Enhanced getPendingApprovalRequests with real-time GeoVictoria API integration for organizational hierarchy validation
 - June 17, 2025: Fixed critical bug where user-created requests weren't appearing in "Mis solicitudes" tab - improved user identification logic and database schema validation
 - June 17, 2025: Enhanced database schema to support longer identifier fields (50 chars) to accommodate GeoVictoria API user IDs
 - June 17, 2025: Implemented comprehensive request creation flow with proper user identification fallback (Identifier -> Id)
