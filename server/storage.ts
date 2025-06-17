@@ -57,6 +57,9 @@ export interface IStorage {
   createRequestApprovalStep(step: InsertRequestApprovalStep): Promise<RequestApprovalStep>;
   updateRequestApprovalStep(id: number, updates: Partial<RequestApprovalStep>): Promise<RequestApprovalStep | undefined>;
   getNextPendingApprovalStep(requestId: number): Promise<RequestApprovalStep | undefined>;
+  ensureRequestApprovalSteps(request: Request): Promise<void>;
+  checkUserCanApprove(requestId: number, userProfile: string): Promise<boolean>;
+  createApprovalStepsForRequest(request: Request): Promise<void>;
   
   // User Vacation Balance
   getUserVacationBalance(identificador: string): Promise<UserVacationBalance | undefined>;
@@ -281,10 +284,10 @@ export class DatabaseStorage implements IStorage {
       
       for (const request of pendingRequests) {
         // Ensure request has approval steps (migrate if needed)
-        await this.ensureRequestHasApprovalSteps(request);
+        await this.ensureRequestApprovalSteps(request);
         
         // Check if user can approve this request based on next pending approval step
-        const canApprove = await this.canUserApproveRequest(request.id, filters.userProfile);
+        const canApprove = await this.checkUserCanApprove(request.id, filters.userProfile);
         
         if (canApprove) {
           filteredRequests.push(request);
@@ -303,11 +306,128 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createRequest(request: InsertRequest): Promise<Request> {
-    const [newRequest] = await db
-      .insert(requests)
-      .values(request)
-      .returning();
-    return newRequest;
+    try {
+      const [newRequest] = await db.insert(requests).values(request).returning();
+      
+      // Add to history
+      await this.addRequestHistory({
+        requestId: newRequest.id,
+        newState: "Pendiente",
+        changedBy: request.solicitadoPor || "Sistema",
+        changeReason: "Solicitud creada"
+      });
+      
+      // Create approval steps based on the schema
+      await this.createApprovalStepsForRequest(newRequest);
+      
+      return newRequest;
+    } catch (error) {
+      console.error("Error creating request:", error);
+      throw error;
+    }
+  }
+
+  // Helper method to create approval steps for a new request
+  async createApprovalStepsForRequest(request: Request): Promise<void> {
+    try {
+      // Find the appropriate approval schema based on request type and motivo
+      let schema;
+      
+      if (request.motivo) {
+        // Find schema that matches both type and motivo
+        const schemas = await db
+          .select()
+          .from(approvalSchemas)
+          .where(eq(approvalSchemas.tipoSolicitud, request.tipo));
+        
+        // Filter by motivo in the array
+        schema = schemas.find(s => s.motivos && s.motivos.includes(request.motivo!));
+      }
+      
+      if (!schema) {
+        // Fallback: find schema by type only
+        const [defaultSchema] = await db
+          .select()
+          .from(approvalSchemas)
+          .where(eq(approvalSchemas.tipoSolicitud, request.tipo))
+          .limit(1);
+        schema = defaultSchema;
+      }
+      
+      if (!schema) return;
+      
+      // Get approval steps for this schema
+      const steps = await db
+        .select()
+        .from(approvalSteps)
+        .where(eq(approvalSteps.schemaId, schema.id))
+        .orderBy(asc(approvalSteps.orden));
+      
+      // Create request approval steps
+      for (const step of steps) {
+        await this.createRequestApprovalStep({
+          requestId: request.id,
+          approvalStepId: step.id,
+          estado: "Pendiente"
+        });
+      }
+    } catch (error) {
+      console.error("Error creating approval steps for request:", error);
+    }
+  }
+
+  // Helper method to ensure request has approval steps (for migration)
+  async ensureRequestApprovalSteps(request: Request): Promise<void> {
+    try {
+      // Check if request already has approval steps
+      const existingSteps = await db
+        .select()
+        .from(requestApprovalSteps)
+        .where(eq(requestApprovalSteps.requestId, request.id))
+        .limit(1);
+      
+      if (existingSteps.length === 0) {
+        // Create approval steps for this request
+        await this.createApprovalStepsForRequest(request);
+      }
+    } catch (error) {
+      console.error("Error ensuring request has approval steps:", error);
+    }
+  }
+
+  // Helper method to check if user can approve based on next pending step
+  async checkUserCanApprove(requestId: number, userProfile: string): Promise<boolean> {
+    try {
+      // Get the next pending approval step for this request
+      const result = await db
+        .select({
+          requestApprovalStep: requestApprovalSteps,
+          approvalStep: approvalSteps
+        })
+        .from(requestApprovalSteps)
+        .innerJoin(approvalSteps, eq(requestApprovalSteps.approvalStepId, approvalSteps.id))
+        .where(
+          and(
+            eq(requestApprovalSteps.requestId, requestId),
+            eq(requestApprovalSteps.estado, "Pendiente")
+          )
+        )
+        .orderBy(asc(approvalSteps.orden))
+        .limit(1);
+      
+      if (result.length === 0) {
+        return false; // No pending steps
+      }
+      
+      const nextStep = result[0].approvalStep;
+      
+      // Check if user's profile matches the required profile for this step
+      return nextStep.perfil === userProfile;
+      
+    } catch (error) {
+      console.error("Error checking if user can approve request:", error);
+      return false;
+    }
   }
 
   async updateRequest(id: number, updates: Partial<Request>): Promise<Request | undefined> {
