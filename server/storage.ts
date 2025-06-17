@@ -215,6 +215,7 @@ export class DatabaseStorage implements IStorage {
     busqueda?: string;
     userId?: string;
     userProfile?: string;
+    userGroupDescription?: string;
   }): Promise<Request[]> {
     const conditions = [];
     
@@ -268,35 +269,70 @@ export class DatabaseStorage implements IStorage {
       pendingRequests = result.reverse(); // Newest first
     }
 
-    // If userProfile is provided, filter by approval permissions in schemas
+    // If userProfile is provided, filter by approval permissions and organizational hierarchy
     if (filters?.userProfile && pendingRequests.length > 0) {
       const filteredRequests: Request[] = [];
       
+      // Fetch user data from GeoVictoria API to check organizational hierarchy
+      let userData: any[] = [];
+      try {
+        const authHeader = process.env.AUTHORIZATION_HEADER;
+        if (authHeader) {
+          const response = await fetch("https://customerapi.geovictoria.com/api/v1/User/ListComplete", {
+            method: 'POST',
+            headers: {
+              "Authorization": authHeader,
+              "Content-Type": "application/json"
+            }
+          });
+          if (response.ok) {
+            userData = await response.json();
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user data for organizational hierarchy:", error);
+      }
+      
       for (const request of pendingRequests) {
-        // Get the approval schema for this request
+        let hasApprovalPermission = false;
+        
+        // Check schema-based approval permissions
         let schema;
         if (request.tipo === "Vacaciones") {
-          // Find vacation schema
           const schemas = await db.select().from(approvalSchemas).where(eq(approvalSchemas.tipoSolicitud, "Vacaciones"));
           schema = schemas[0];
         } else if (request.tipo === "Permiso") {
-          // Find schema that matches the motivo
           const schemas = await db.select().from(approvalSchemas).where(eq(approvalSchemas.tipoSolicitud, "Permiso"));
           schema = schemas.find(s => s.motivos && s.motivos.includes(request.motivo || ""));
         }
         
         if (schema) {
-          // Get approval steps for this schema
           const steps = await db.select().from(approvalSteps).where(eq(approvalSteps.schemaId, schema.id)).orderBy(approvalSteps.orden);
-          
-          // Check if userProfile matches any step perfil
-          const hasApprovalPermission = steps.some(step => {
-            return step.perfil === filters.userProfile;
-          });
-          
-          if (hasApprovalPermission) {
-            filteredRequests.push(request);
+          hasApprovalPermission = steps.some(step => step.perfil === filters.userProfile);
+        }
+        
+        // Enhanced organizational hierarchy check using real user data
+        if (filters.userProfile === "#adminCuenta#") {
+          // Admin can approve all pending requests
+          hasApprovalPermission = true;
+        } else if (filters.userProfile === "#JefeGrupo#" && filters.userGroupDescription && userData.length > 0) {
+          // Group leader can approve requests from their group members
+          const requestUser = userData.find(user => 
+            user.Identifier === request.identificadorUsuario || user.Id === request.identificadorUsuario
+          );
+          if (requestUser && requestUser.GroupDescription === filters.userGroupDescription) {
+            hasApprovalPermission = true;
           }
+        }
+        
+        // Additional check: if the user profile has schema-based approval permissions, allow approval
+        if (!hasApprovalPermission && schema) {
+          const steps = await db.select().from(approvalSteps).where(eq(approvalSteps.schemaId, schema.id)).orderBy(approvalSteps.orden);
+          hasApprovalPermission = steps.some(step => step.perfil === filters.userProfile);
+        }
+        
+        if (hasApprovalPermission) {
+          filteredRequests.push(request);
         }
       }
       

@@ -55,7 +55,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/requests/pending-approval/:userId", async (req, res) => {
     try {
       const userId = req.params.userId;
-      const { estado, tipo, fechaInicio, fechaFin, tipoFecha, busqueda, userProfile } = req.query;
+      const { estado, tipo, fechaInicio, fechaFin, tipoFecha, busqueda, userProfile, userGroupDescription } = req.query;
       
       const filters = {
         estado: estado as string,
@@ -66,6 +66,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         busqueda: busqueda as string,
         userId: userId,
         userProfile: userProfile as string,
+        userGroupDescription: userGroupDescription as string,
       };
 
       const requests = await storage.getPendingApprovalRequests(filters);

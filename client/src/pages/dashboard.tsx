@@ -130,17 +130,20 @@ export default function Dashboard() {
     error: errorPending,
     refetch: refetchPending
   } = useQuery<Request[]>({
-    queryKey: ["/api/requests/pending-approval", selectedUser?.Identifier, selectedUser?.UserProfile, queryString],
+    queryKey: ["/api/requests/pending-approval", selectedUser?.Identifier, selectedUser?.UserProfile, selectedUser?.GroupDescription, queryString],
     queryFn: async () => {
       if (!selectedUser?.Identifier || !selectedUser?.UserProfile) return [];
       
-      // Build query parameters including userProfile
+      // Build query parameters including userProfile and group information
       const params = new URLSearchParams();
       if (queryString) {
         const existingParams = new URLSearchParams(queryString);
         existingParams.forEach((value, key) => params.append(key, value));
       }
       params.append('userProfile', selectedUser.UserProfile);
+      if (selectedUser.GroupDescription) {
+        params.append('userGroupDescription', selectedUser.GroupDescription);
+      }
       
       const url = `/api/requests/pending-approval/${selectedUser.Identifier}?${params.toString()}`;
       const response = await fetch(url, { credentials: "include" });
