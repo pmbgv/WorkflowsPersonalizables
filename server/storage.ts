@@ -275,69 +275,18 @@ export class DatabaseStorage implements IStorage {
       pendingRequests = result.reverse(); // Newest first
     }
 
-    // If userProfile is provided, filter by approval permissions and organizational hierarchy
+    // If userProfile is provided, filter by approval schema steps
     if (filters?.userProfile && pendingRequests.length > 0) {
       const filteredRequests: Request[] = [];
       
-      // Fetch user data from GeoVictoria API to check organizational hierarchy
-      let userData: any[] = [];
-      try {
-        const authHeader = process.env.AUTHORIZATION_HEADER;
-        if (authHeader) {
-          const response = await fetch("https://customerapi.geovictoria.com/api/v1/User/ListComplete", {
-            method: 'POST',
-            headers: {
-              "Authorization": authHeader,
-              "Content-Type": "application/json"
-            }
-          });
-          if (response.ok) {
-            userData = await response.json();
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching user data for organizational hierarchy:", error);
-      }
-      
       for (const request of pendingRequests) {
-        let hasApprovalPermission = false;
+        // Ensure request has approval steps (migrate if needed)
+        await this.ensureRequestHasApprovalSteps(request);
         
-        // Check schema-based approval permissions
-        let schema;
-        if (request.tipo === "Vacaciones") {
-          const schemas = await db.select().from(approvalSchemas).where(eq(approvalSchemas.tipoSolicitud, "Vacaciones"));
-          schema = schemas[0];
-        } else if (request.tipo === "Permiso") {
-          const schemas = await db.select().from(approvalSchemas).where(eq(approvalSchemas.tipoSolicitud, "Permiso"));
-          schema = schemas.find(s => s.motivos && s.motivos.includes(request.motivo || ""));
-        }
+        // Check if user can approve this request based on next pending approval step
+        const canApprove = await this.canUserApproveRequest(request.id, filters.userProfile);
         
-        if (schema) {
-          const steps = await db.select().from(approvalSteps).where(eq(approvalSteps.schemaId, schema.id)).orderBy(approvalSteps.orden);
-          hasApprovalPermission = steps.some(step => step.perfil === filters.userProfile);
-        }
-        
-        // Enhanced organizational hierarchy check using real user data
-        if (filters.userProfile === "#adminCuenta#") {
-          // Admin can approve all pending requests
-          hasApprovalPermission = true;
-        } else if (filters.userProfile === "#JefeGrupo#" && filters.userGroupDescription && userData.length > 0) {
-          // Group leader can approve requests from their group members
-          const requestUser = userData.find(user => 
-            user.Identifier === request.identificadorUsuario || user.Id === request.identificadorUsuario
-          );
-          if (requestUser && requestUser.GroupDescription === filters.userGroupDescription) {
-            hasApprovalPermission = true;
-          }
-        }
-        
-        // Additional check: if the user profile has schema-based approval permissions, allow approval
-        if (!hasApprovalPermission && schema) {
-          const steps = await db.select().from(approvalSteps).where(eq(approvalSteps.schemaId, schema.id)).orderBy(approvalSteps.orden);
-          hasApprovalPermission = steps.some(step => step.perfil === filters.userProfile);
-        }
-        
-        if (hasApprovalPermission) {
+        if (canApprove) {
           filteredRequests.push(request);
         }
       }
@@ -546,6 +495,72 @@ export class DatabaseStorage implements IStorage {
       .where(eq(motivosPermisos.id, id))
       .returning();
     return !!updated;
+  }
+
+  // Request Approval Steps implementation
+  async getRequestApprovalSteps(requestId: number): Promise<RequestApprovalStep[]> {
+    try {
+      return await db
+        .select()
+        .from(requestApprovalSteps)
+        .where(eq(requestApprovalSteps.requestId, requestId))
+        .orderBy(asc(requestApprovalSteps.fechaCreacion));
+    } catch (error) {
+      console.error("Error fetching request approval steps:", error);
+      return [];
+    }
+  }
+
+  async createRequestApprovalStep(step: InsertRequestApprovalStep): Promise<RequestApprovalStep> {
+    try {
+      const [result] = await db.insert(requestApprovalSteps).values(step).returning();
+      return result;
+    } catch (error) {
+      console.error("Error creating request approval step:", error);
+      throw error;
+    }
+  }
+
+  async updateRequestApprovalStep(id: number, updates: Partial<RequestApprovalStep>): Promise<RequestApprovalStep | undefined> {
+    try {
+      const [result] = await db
+        .update(requestApprovalSteps)
+        .set({
+          ...updates,
+          fechaAprobacion: updates.estado === "Aprobado" || updates.estado === "Rechazado" ? new Date() : undefined
+        })
+        .where(eq(requestApprovalSteps.id, id))
+        .returning();
+      return result;
+    } catch (error) {
+      console.error("Error updating request approval step:", error);
+      return undefined;
+    }
+  }
+
+  async getNextPendingApprovalStep(requestId: number): Promise<RequestApprovalStep | undefined> {
+    try {
+      const result = await db
+        .select({
+          requestApprovalStep: requestApprovalSteps,
+          approvalStep: approvalSteps
+        })
+        .from(requestApprovalSteps)
+        .innerJoin(approvalSteps, eq(requestApprovalSteps.approvalStepId, approvalSteps.id))
+        .where(
+          and(
+            eq(requestApprovalSteps.requestId, requestId),
+            eq(requestApprovalSteps.estado, "Pendiente")
+          )
+        )
+        .orderBy(asc(approvalSteps.orden))
+        .limit(1);
+      
+      return result[0]?.requestApprovalStep;
+    } catch (error) {
+      console.error("Error getting next pending approval step:", error);
+      return undefined;
+    }
   }
 }
 
