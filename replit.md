@@ -125,6 +125,9 @@ This is a full-stack web application for managing employee requests and approval
 - **CDN Ready**: Static assets can be served from CDN in production
 
 ## Changelog
+- June 17, 2025: Implemented complete approval schema logic where pending requests only appear for users whose profile matches the next pending approval step
+- June 17, 2025: Created request_approval_steps table to track individual approval step states for each request
+- June 17, 2025: Enhanced request creation to automatically generate approval steps based on configured schemas and motivos
 - June 17, 2025: Implemented "Solicitudes pendientes" functionality for administrator users with organizational hierarchy support
 - June 17, 2025: Created comprehensive test suites for pending requests logic and tab visibility authorization
 - June 17, 2025: Enhanced getPendingApprovalRequests with real-time GeoVictoria API integration for organizational hierarchy validation
