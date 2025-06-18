@@ -213,11 +213,18 @@ export function ApprovalSchemas({ selectedUser }: ApprovalSchemasProps) {
     },
   });
 
-  // Extract distinct UserProfile values - memoize to prevent re-renders
+  // Extract distinct UserProfile values and add system profiles - memoize to prevent re-renders
   const distinctProfiles = useMemo(() => {
-    return usersCompleteData
+    const userProfiles = usersCompleteData
       .filter(user => user.Enabled === "1" && user.UserProfile && user.UserProfile.trim() !== "")
-      .map(user => user.UserProfile)
+      .map(user => user.UserProfile);
+    
+    // Add system-specific profiles that may not have users but are valid for approval workflows
+    const systemProfiles = ["Seleccionar", "Revisor", "Aprobador", "Supervisor"];
+    
+    // Combine and deduplicate
+    const allProfiles = [...userProfiles, ...systemProfiles];
+    return allProfiles
       .filter((profile, index, array) => array.indexOf(profile) === index)
       .sort();
   }, [usersCompleteData]);
