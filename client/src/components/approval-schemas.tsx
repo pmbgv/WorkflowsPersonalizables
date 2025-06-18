@@ -1685,7 +1685,7 @@ function SortableApprovalStepRow({
             onValueChange={(value) => onChange(step.id, "perfil", value)}
           >
             <SelectTrigger className="text-sm">
-              <SelectValue />
+              <SelectValue placeholder="Seleccionar perfil" />
             </SelectTrigger>
             <SelectContent>
               {profiles.map((profile: string) => (
@@ -1757,7 +1757,7 @@ function ApprovalStepRow({
         onValueChange={(value) => onChange(step.id, 'perfil', value)}
       >
         <SelectTrigger className="h-8">
-          <SelectValue />
+          <SelectValue placeholder="Seleccionar perfil" />
         </SelectTrigger>
         <SelectContent>
           {profiles.map((profile: string) => (
