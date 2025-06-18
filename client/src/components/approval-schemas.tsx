@@ -588,7 +588,8 @@ export function ApprovalSchemas({ selectedUser }: ApprovalSchemasProps) {
     );
   };
 
-  const handleStepChange = (stepId: number, field: string, value: any) => {
+  const handleStepChange = (stepId: number, field: keyof ApprovalStep, value: string) => {
+    // Actualizar el estado local inmediatamente
     setStepChanges(prev => ({
       ...prev,
       [stepId]: {
@@ -596,6 +597,17 @@ export function ApprovalSchemas({ selectedUser }: ApprovalSchemasProps) {
         [field]: value
       }
     }));
+
+    // También actualizar localSteps para reflejar el cambio inmediatamente en la UI
+    setLocalSteps(prev => prev.map(step => 
+      step.id === stepId ? { ...step, [field]: value } : step
+    ));
+
+    // Guardar automáticamente el cambio en la base de datos
+    updateStepMutation.mutate({ 
+      stepId, 
+      updates: { [field]: value } 
+    });
   };
 
   const handleVisibilityPermissionToggle = (permission: string) => {
