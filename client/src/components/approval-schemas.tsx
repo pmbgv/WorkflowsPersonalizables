@@ -245,6 +245,8 @@ export function ApprovalSchemas({ selectedUser }: ApprovalSchemasProps) {
   useEffect(() => {
     if (steps && steps.length >= 0) {
       setLocalSteps([...steps]);
+      // Limpiar cambios pendientes cuando cambiamos de esquema
+      setStepChanges({});
     }
   }, [steps.length, selectedSchema?.id]);
 
@@ -390,19 +392,30 @@ export function ApprovalSchemas({ selectedUser }: ApprovalSchemasProps) {
     },
   });
 
-  // Update step mutation
+  // Update step mutation con feedback visual
   const updateStepMutation = useMutation({
     mutationFn: async ({ stepId, updates }: { stepId: number; updates: Partial<ApprovalStep> }) => {
+      console.log(`Guardando cambios para paso ${stepId}:`, updates);
       const response = await apiRequest("PATCH", `/api/approval-steps/${stepId}`, updates);
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
+      console.log(`Paso ${variables.stepId} actualizado exitosamente`);
+      // Invalidar queries para refrescar datos
       queryClient.invalidateQueries({ queryKey: ["/api/approval-schemas", selectedSchema?.id, "steps"] });
+      
+      // Limpiar cambios pendientes para este paso
+      setStepChanges(prev => {
+        const newChanges = { ...prev };
+        delete newChanges[variables.stepId];
+        return newChanges;
+      });
     },
-    onError: () => {
+    onError: (error, variables) => {
+      console.error(`Error al actualizar paso ${variables.stepId}:`, error);
       toast({
-        title: "Error",
-        description: "Ocurrió un error al actualizar el paso.",
+        title: "Error al guardar",
+        description: "No se pudo guardar el cambio en el perfil.",
         variant: "destructive",
       });
     },
