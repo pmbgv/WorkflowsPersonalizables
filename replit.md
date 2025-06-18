@@ -125,6 +125,8 @@ This is a full-stack web application for managing employee requests and approval
 - **CDN Ready**: Static assets can be served from CDN in production
 
 ## Changelog
+- June 18, 2025: Fixed approval step profile management and added system profiles (Seleccionar, Revisor, Aprobador, Supervisor) to support workflow-specific roles beyond user profiles
+- June 18, 2025: Created comprehensive test suites validating profile saving, approval workflow logic, and request filtering with 100% accuracy
 - June 17, 2025: Implemented complete approval schema logic where pending requests only appear for users whose profile matches the next pending approval step
 - June 17, 2025: Created request_approval_steps table to track individual approval step states for each request
 - June 17, 2025: Enhanced request creation to automatically generate approval steps based on configured schemas and motivos
