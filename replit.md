@@ -124,7 +124,8 @@ This is a full-stack web application for managing employee requests and approval
 - **Stateless Design**: Application designed for horizontal scaling
 - **CDN Ready**: Static assets can be served from CDN in production
 
-## Changelog
+## Changelog  
+- June 19, 2025: Fixed automatic approval logic implementation - properly modified createRequest method to detect schemas without approval steps and auto-approve requests immediately, including test2 schema with "Permiso con Goce" motivo
 - June 19, 2025: Implemented automatic approval logic for schemas without approval steps - requests created from schemas with no approval steps are automatically approved and appear in appropriate tabs based on self vs third-party creation
 - June 19, 2025: Implemented dynamic tab visibility based on approval step configuration - "Solicitudes pendientes" tab now appears when user profile matches any approval step configuration, enabling users to approve requests they're configured to handle
 - June 19, 2025: Fixed visibility configuration in schema settings - removed system profiles ("Revisor", "Seleccionar", "Aprobador", "Supervisor") and now only shows real API profiles, with "Todos los perfiles" checkbox checked by default

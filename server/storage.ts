@@ -307,18 +307,85 @@ export class DatabaseStorage implements IStorage {
 
   async createRequest(request: InsertRequest): Promise<Request> {
     try {
-      const [newRequest] = await db.insert(requests).values(request).returning();
+      // First, check if this request has an approval schema with steps
+      let hasApprovalSteps = false;
+      let schema;
       
-      // Add to history
+      console.log(`Creating request with tipo: ${request.tipo}, motivo: ${request.motivo}`);
+      
+      if (request.motivo) {
+        // Find schema that matches both type and motivo
+        const schemas = await db
+          .select()
+          .from(approvalSchemas)
+          .where(eq(approvalSchemas.tipoSolicitud, request.tipo));
+        
+        console.log(`Found ${schemas.length} schemas for tipo: ${request.tipo}`);
+        
+        // Filter by motivo in the array
+        schema = schemas.find(s => s.motivos && Array.isArray(s.motivos) && s.motivos.includes(request.motivo!));
+        
+        if (schema) {
+          console.log(`Matched schema: ${schema.nombre} (ID: ${schema.id}) with motivos:`, schema.motivos);
+        } else {
+          console.log(`No schema found with motivo: ${request.motivo}`);
+        }
+      }
+      
+      if (!schema) {
+        // Fallback: find schema by type only
+        const [defaultSchema] = await db
+          .select()
+          .from(approvalSchemas)
+          .where(eq(approvalSchemas.tipoSolicitud, request.tipo))
+          .limit(1);
+        schema = defaultSchema;
+        
+        if (schema) {
+          console.log(`Using fallback schema: ${schema.nombre} (ID: ${schema.id})`);
+        }
+      }
+      
+      if (schema) {
+        // Check if schema has approval steps
+        const steps = await db
+          .select()
+          .from(approvalSteps)
+          .where(eq(approvalSteps.schemaId, schema.id));
+        
+        hasApprovalSteps = steps.length > 0;
+        console.log(`Schema ${schema.nombre} has ${steps.length} approval steps`);
+      } else {
+        console.log(`No schema found for request, defaulting to pending`);
+      }
+      
+      // Determine initial status based on approval steps existence
+      const initialStatus = hasApprovalSteps ? "Pendiente" : "Aprobado";
+      console.log(`Request will be created with status: ${initialStatus}`);
+      
+      const [newRequest] = await db
+        .insert(requests)
+        .values({
+          ...request,
+          estado: initialStatus
+        })
+        .returning();
+      
+      // Add to history with appropriate reason
       await this.addRequestHistory({
         requestId: newRequest.id,
-        newState: "Pendiente",
+        newState: initialStatus,
         changedBy: request.solicitadoPor || "Sistema",
-        changeReason: "Solicitud creada"
+        changeReason: initialStatus === "Aprobado" ? "Solicitud creada - Aprobación automática (sin pasos de aprobación)" : "Solicitud creada"
       });
       
-      // Create approval steps based on the schema
-      await this.createApprovalStepsForRequest(newRequest);
+      // Only create approval steps if schema has steps configured
+      if (hasApprovalSteps && schema) {
+        console.log(`Creating approval steps for request ${newRequest.id}`);
+        await this.createApprovalStepsForRequest(newRequest);
+      } else {
+        console.log(`Skipping approval steps creation - auto-approved request`);
+      }
       
       return newRequest;
     } catch (error) {
