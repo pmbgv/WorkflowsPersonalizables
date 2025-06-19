@@ -125,6 +125,7 @@ This is a full-stack web application for managing employee requests and approval
 - **CDN Ready**: Static assets can be served from CDN in production
 
 ## Changelog
+- June 19, 2025: Fixed visibility configuration in schema settings - removed system profiles ("Revisor", "Seleccionar", "Aprobador", "Supervisor") and now only shows real API profiles, with "Todos los perfiles" checkbox checked by default
 - June 19, 2025: Fixed schema editing functionality with comprehensive validation - now properly saves changes and validates duplicate motivos during edits while excluding the current schema
 - June 19, 2025: Fixed schema creation validation to exclude currently selected schema from duplicate motivo detection - resolves issue where editing a schema interfered with creating new schemas
 - June 18, 2025: Implemented automatic profile saving in approval step forms - changes now save immediately when user selects different profiles
