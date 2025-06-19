@@ -131,7 +131,8 @@ export function ApprovalSchemas({ selectedUser }: ApprovalSchemasProps) {
     if (!selectedSchema) {
       setStepChanges({});
       setSelectedPermissions([]);
-      setVisibilityPermissions([]);
+      // Default to all profiles when no schema is selected
+      setVisibilityPermissions([...distinctProfiles]);
       setApprovalPermissions([]);
       setNewSchemaMotivos([]);
       setSchemaConfig({
@@ -160,7 +161,8 @@ export function ApprovalSchemas({ selectedUser }: ApprovalSchemasProps) {
     
     setStepChanges({});
     setSelectedPermissions([]);
-    setVisibilityPermissions(currentVisibilityPermissions);
+    // If no existing permissions, default to all profiles (todos los perfiles)
+    setVisibilityPermissions(currentVisibilityPermissions.length > 0 ? currentVisibilityPermissions : [...distinctProfiles]);
     setApprovalPermissions(currentApprovalPermissions);
     setNewSchemaMotivos(currentMotivos);
     
@@ -213,18 +215,14 @@ export function ApprovalSchemas({ selectedUser }: ApprovalSchemasProps) {
     },
   });
 
-  // Extract distinct UserProfile values and add system profiles - memoize to prevent re-renders
+  // Extract distinct UserProfile values from API only - memoize to prevent re-renders
   const distinctProfiles = useMemo(() => {
     const userProfiles = usersCompleteData
       .filter(user => user.Enabled === "1" && user.UserProfile && user.UserProfile.trim() !== "")
       .map(user => user.UserProfile);
     
-    // Add system-specific profiles that may not have users but are valid for approval workflows
-    const systemProfiles = ["Seleccionar", "Revisor", "Aprobador", "Supervisor"];
-    
-    // Combine and deduplicate
-    const allProfiles = [...userProfiles, ...systemProfiles];
-    return allProfiles
+    // Only use real profiles from the API, no system profiles
+    return userProfiles
       .filter((profile, index, array) => array.indexOf(profile) === index)
       .sort();
   }, [usersCompleteData]);
