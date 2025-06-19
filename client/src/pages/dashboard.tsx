@@ -155,6 +155,51 @@ export default function Dashboard() {
     enabled: !!selectedUser?.Identifier && !!selectedUser?.UserProfile,
   });
 
+  // Query to check if user can approve requests
+  const { data: canApproveData } = useQuery<{ canApprove: boolean }>({
+    queryKey: ["/api/users", selectedUser?.UserProfile, "can-approve"],
+    queryFn: async () => {
+      if (!selectedUser?.UserProfile) {
+        return { canApprove: false };
+      }
+      
+      const response = await fetch(`/api/users/${encodeURIComponent(selectedUser.UserProfile)}/can-approve`);
+      if (!response.ok) {
+        return { canApprove: false };
+      }
+      return response.json();
+    },
+    enabled: !!selectedUser?.UserProfile,
+  });
+
+  // Query for pending approval requests - user-centric view
+  const { 
+    data: pendingRequests = [], 
+    isLoading: isLoadingPending, 
+    error: errorPending,
+    refetch: refetchPending 
+  } = useQuery<Request[]>({
+    queryKey: ["/api/requests/pending-approval", selectedUser?.Identifier || selectedUser?.Id],
+    queryFn: async () => {
+      const userId = selectedUser?.Identifier || selectedUser?.Id;
+      const userProfile = selectedUser?.UserProfile;
+      
+      if (!userId || !userProfile) {
+        throw new Error("User information not available");
+      }
+
+      const response = await fetch(`/api/requests/pending-approval/${userId}?userProfile=${encodeURIComponent(userProfile)}`, {
+        credentials: "include"
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch pending requests");
+      }
+      return response.json();
+    },
+    enabled: !!selectedUser?.Identifier && !!selectedUser?.UserProfile && canApproveData?.canApprove,
+  });
+
   // Query for all requests (Todas las Solicitudes) - kept for admin view
   const { 
     data: allRequests = [], 
@@ -229,13 +274,8 @@ export default function Dashboard() {
     console.log("Usuario seleccionado:", user);
     setSelectedUser(user);
     
-    // Switch to available tab based on user profile
-    if (user?.UserProfile === "#usuario#") {
-      setActiveTab("lista");
-    } else if (user?.UserProfile === "#JefeGrupo#" && activeTab === "esquemas") {
-      setActiveTab("lista");
-    }
-    // adminCuenta can access all tabs, so no need to change
+    // Always switch to "lista" (Mis Solicitudes) when selecting a new user
+    setActiveTab("lista");
   };
 
   return (
@@ -308,13 +348,15 @@ export default function Dashboard() {
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className={`grid w-full mb-6 ${
-            selectedUser?.UserProfile === "#usuario#" ? "grid-cols-1" :
+            // Dynamic grid based on available tabs
+            !canApproveData?.canApprove && selectedUser?.UserProfile !== "#JefeGrupo#" && selectedUser?.UserProfile !== "#adminCuenta#" ? "grid-cols-1" :
+            canApproveData?.canApprove && selectedUser?.UserProfile !== "#JefeGrupo#" && selectedUser?.UserProfile !== "#adminCuenta#" ? "grid-cols-2" :
             selectedUser?.UserProfile === "#JefeGrupo#" ? "grid-cols-3" :
             selectedUser?.UserProfile === "#adminCuenta#" ? "grid-cols-4" :
-            "grid-cols-4"
+            "grid-cols-1"
           }`}>
             <TabsTrigger value="lista">Mis Solicitudes</TabsTrigger>
-            {selectedUser?.UserProfile && ["#JefeGrupo#", "#adminCuenta#"].includes(selectedUser.UserProfile) && (
+            {(canApproveData?.canApprove || (selectedUser?.UserProfile && ["#JefeGrupo#", "#adminCuenta#"].includes(selectedUser.UserProfile))) && (
               <TabsTrigger value="pendientes">Solicitudes pendientes</TabsTrigger>
             )}
             {selectedUser?.UserProfile && ["#JefeGrupo#", "#adminCuenta#"].includes(selectedUser.UserProfile) && (
@@ -340,7 +382,7 @@ export default function Dashboard() {
             />
           </TabsContent>
 
-          {selectedUser?.UserProfile && ["#JefeGrupo#", "#adminCuenta#"].includes(selectedUser.UserProfile) && (
+          {(canApproveData?.canApprove || (selectedUser?.UserProfile && ["#JefeGrupo#", "#adminCuenta#"].includes(selectedUser.UserProfile))) && (
             <TabsContent value="pendientes" className="space-y-6">
               {/* Pending Requests Table with Checkboxes */}
               <PendingRequestsTable
