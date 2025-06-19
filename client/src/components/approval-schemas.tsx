@@ -311,21 +311,33 @@ export function ApprovalSchemas({ selectedUser }: ApprovalSchemasProps) {
   const updateSchemaMutation = useMutation({
     mutationFn: async (data: { id: number; updates: Partial<ApprovalSchema> }) => {
       const response = await apiRequest("PATCH", `/api/approval-schemas/${data.id}`, data.updates);
+      if (!response.ok) {
+        const error = await response.json();
+        throw error;
+      }
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/approval-schemas"] });
+      // Update the selected schema with the new data
+      setSelectedSchema(data);
       toast({
         title: "Configuración actualizada",
         description: "La configuración del esquema ha sido actualizada exitosamente.",
       });
     },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Ocurrió un error al actualizar la configuración.",
-        variant: "destructive",
-      });
+    onError: (error: any) => {
+      console.error("Error updating schema:", error);
+      if (error.error === "DUPLICATE_MOTIVOS") {
+        setDuplicateMotivos(error.duplicateMotivos || []);
+        setShowDuplicateAlert(true);
+      } else {
+        toast({
+          title: "Error",
+          description: error.message || "Ocurrió un error al actualizar la configuración.",
+          variant: "destructive",
+        });
+      }
     },
   });
 

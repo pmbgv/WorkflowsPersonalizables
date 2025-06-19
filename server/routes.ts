@@ -438,6 +438,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const updates = req.body;
       
+      // Validar motivos duplicados para esquemas de tipo Permiso (solo si se están actualizando motivos)
+      if (updates.motivos && Array.isArray(updates.motivos) && updates.motivos.length > 0) {
+        const existingSchemas = await storage.getApprovalSchemas();
+        const duplicateMotivos: string[] = [];
+        
+        console.log(`Checking for duplicate motivos during PATCH for schema ${id}:`, updates.motivos);
+        
+        for (const schema of existingSchemas) {
+          // Excluir el esquema que se está editando
+          if (schema.id === id) {
+            console.log(`Excluding schema ${id} from duplicate validation`);
+            continue;
+          }
+          
+          if (schema.tipoSolicitud === "Permiso" && schema.motivos && Array.isArray(schema.motivos)) {
+            console.log(`Checking schema "${schema.nombre}" (ID: ${schema.id}) with motivos:`, schema.motivos);
+            for (const motivo of updates.motivos) {
+              if (schema.motivos.includes(motivo)) {
+                console.log(`Found duplicate motivo: "${motivo}" in schema "${schema.nombre}"`);
+                duplicateMotivos.push(motivo);
+              }
+            }
+          }
+        }
+        
+        if (duplicateMotivos.length > 0) {
+          const uniqueDuplicates = [...new Set(duplicateMotivos)];
+          console.log("Rejecting PATCH due to duplicate motivos:", uniqueDuplicates);
+          return res.status(400).json({
+            message: "Motivos duplicados detectados",
+            duplicateMotivos: uniqueDuplicates,
+            error: "DUPLICATE_MOTIVOS"
+          });
+        } else {
+          console.log("No duplicates found during PATCH, proceeding with update");
+        }
+      }
+      
       const updatedSchema = await storage.updateApprovalSchema(id, updates);
       
       if (!updatedSchema) {
@@ -446,6 +484,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(updatedSchema);
     } catch (error) {
+      console.error("Error updating approval schema:", error);
       res.status(500).json({ message: "Error updating approval schema" });
     }
   });
