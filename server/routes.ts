@@ -105,9 +105,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.addRequestHistory({
         requestId: newRequest.id,
         previousState: null,
-        newState: "Pendiente",
+        newState: newRequest.estado,
         changedBy: validatedData.solicitadoPor,
-        changeReason: "Solicitud creada"
+        changeReason: newRequest.estado === "Aprobado" ? "Solicitud creada - Aprobación automática (sin pasos de aprobación)" : "Solicitud creada"
       });
       
       res.status(201).json(newRequest);
