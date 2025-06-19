@@ -390,21 +390,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const existingSchemas = await storage.getApprovalSchemas();
         const duplicateMotivos: string[] = [];
         
+        console.log("Checking for duplicate motivos in:", validatedData.motivos);
+        console.log("Against existing schemas:", existingSchemas.length);
+        
         for (const schema of existingSchemas) {
-          if (schema.tipoSolicitud === "Permiso" && schema.motivos) {
-            const commonMotivos = validatedData.motivos.filter(motivo => 
-              schema.motivos!.includes(motivo)
-            );
-            duplicateMotivos.push(...commonMotivos);
+          if (schema.tipoSolicitud === "Permiso" && schema.motivos && Array.isArray(schema.motivos)) {
+            console.log(`Checking schema "${schema.nombre}" with motivos:`, schema.motivos);
+            for (const motivo of validatedData.motivos) {
+              if (schema.motivos.includes(motivo)) {
+                console.log(`Found duplicate motivo: "${motivo}" in schema "${schema.nombre}"`);
+                duplicateMotivos.push(motivo);
+              }
+            }
           }
         }
         
         if (duplicateMotivos.length > 0) {
           const uniqueDuplicates = [...new Set(duplicateMotivos)];
+          console.log("Rejecting due to duplicate motivos:", uniqueDuplicates);
           return res.status(400).json({
             message: "Motivos duplicados detectados",
-            duplicateMotivos: uniqueDuplicates
+            duplicateMotivos: uniqueDuplicates,
+            error: "DUPLICATE_MOTIVOS"
           });
+        } else {
+          console.log("No duplicates found, proceeding with creation");
         }
       }
       

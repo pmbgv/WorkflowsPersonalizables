@@ -125,6 +125,7 @@ This is a full-stack web application for managing employee requests and approval
 - **CDN Ready**: Static assets can be served from CDN in production
 
 ## Changelog
+- June 19, 2025: Fixed schema creation validation to exclude currently selected schema from duplicate motivo detection - resolves issue where editing a schema interfered with creating new schemas
 - June 18, 2025: Implemented automatic profile saving in approval step forms - changes now save immediately when user selects different profiles
 - June 18, 2025: Fixed profile display in approval step forms by adding proper SelectValue placeholders and system profile integration
 - June 18, 2025: Fixed approval step profile management and added system profiles (Seleccionar, Revisor, Aprobador, Supervisor) to support workflow-specific roles beyond user profiles

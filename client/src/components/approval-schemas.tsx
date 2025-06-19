@@ -333,24 +333,36 @@ export function ApprovalSchemas({ selectedUser }: ApprovalSchemasProps) {
   const createSchemaMutation = useMutation({
     mutationFn: async (data: InsertApprovalSchema) => {
       const response = await apiRequest("POST", "/api/approval-schemas", data);
+      if (!response.ok) {
+        const error = await response.json();
+        throw error;
+      }
       return response.json();
     },
     onSuccess: (data) => {
       console.log("Schema created successfully:", data);
       queryClient.invalidateQueries({ queryKey: ["/api/approval-schemas"] });
+      setNewSchemaName("");
+      setNewSchemaType("Permiso");
+      setNewSchemaMotivos([]);
+      setSelectedSchema(data); // Select the newly created schema
       toast({
         title: "Esquema creado",
         description: "El esquema de aprobación ha sido creado exitosamente.",
       });
-      setNewSchemaName("");
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error("Error creating schema:", error);
-      toast({
-        title: "Error",
-        description: `Ocurrió un error al crear el esquema: ${error.message}`,
-        variant: "destructive",
-      });
+      if (error.error === "DUPLICATE_MOTIVOS") {
+        setDuplicateMotivos(error.duplicateMotivos || []);
+        setShowDuplicateAlert(true);
+      } else {
+        toast({
+          title: "Error",
+          description: error.message || "Ocurrió un error al crear el esquema.",
+          variant: "destructive",
+        });
+      }
     },
   });
 
