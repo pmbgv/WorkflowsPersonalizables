@@ -250,11 +250,16 @@ export function ApprovalSchemas({ selectedUser }: ApprovalSchemasProps) {
     }
   }, [steps.length, selectedSchema?.id]);
 
-  // Función para validar motivos duplicados
-  const validateDuplicateMotivos = (selectedMotivos: string[]): string[] => {
+  // Función para validar motivos duplicados (excluye esquema actual cuando se está creando uno nuevo)
+  const validateDuplicateMotivos = (selectedMotivos: string[], excludeCurrentSchema: boolean = false): string[] => {
     const duplicates: string[] = [];
     
     for (const schema of schemas) {
+      // Si estamos creando un esquema nuevo, excluir el esquema actualmente seleccionado
+      if (excludeCurrentSchema && selectedSchema && schema.id === selectedSchema.id) {
+        continue;
+      }
+      
       if (schema.motivos && schema.motivos.length > 0) {
         const commonMotivos = selectedMotivos.filter(motivo => 
           schema.motivos!.includes(motivo)
@@ -552,7 +557,7 @@ export function ApprovalSchemas({ selectedUser }: ApprovalSchemasProps) {
 
     // Validar motivos duplicados solo para esquemas de permisos
     if (newSchemaType === "Permiso") {
-      const duplicates = validateDuplicateMotivos(newSchemaMotivos);
+      const duplicates = validateDuplicateMotivos(newSchemaMotivos, true); // Excluir esquema actual
       if (duplicates.length > 0) {
         setDuplicateMotivos(duplicates);
         setShowDuplicateAlert(true);
@@ -651,7 +656,11 @@ export function ApprovalSchemas({ selectedUser }: ApprovalSchemasProps) {
         <Card>
           <CardContent className="p-4">
             <Button 
-              onClick={() => setShowCreateModal(true)}
+              onClick={() => {
+                // Limpiar selección de esquema al crear uno nuevo
+                setSelectedSchema(null);
+                setShowCreateModal(true);
+              }}
               className="w-full flex items-center gap-2"
             >
               <Plus className="h-4 w-4" />

@@ -384,6 +384,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("POST /api/approval-schemas called with body:", req.body);
       const validatedData = insertApprovalSchemaSchema.parse(req.body);
       console.log("Validated data:", validatedData);
+      
+      // Validar motivos duplicados para esquemas de tipo Permiso
+      if (validatedData.tipoSolicitud === "Permiso" && validatedData.motivos && validatedData.motivos.length > 0) {
+        const existingSchemas = await storage.getApprovalSchemas();
+        const duplicateMotivos: string[] = [];
+        
+        for (const schema of existingSchemas) {
+          if (schema.tipoSolicitud === "Permiso" && schema.motivos) {
+            const commonMotivos = validatedData.motivos.filter(motivo => 
+              schema.motivos!.includes(motivo)
+            );
+            duplicateMotivos.push(...commonMotivos);
+          }
+        }
+        
+        if (duplicateMotivos.length > 0) {
+          const uniqueDuplicates = [...new Set(duplicateMotivos)];
+          return res.status(400).json({
+            message: "Motivos duplicados detectados",
+            duplicateMotivos: uniqueDuplicates
+          });
+        }
+      }
+      
       const newSchema = await storage.createApprovalSchema(validatedData);
       console.log("Created schema:", newSchema);
       res.status(201).json(newSchema);
