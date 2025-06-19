@@ -572,6 +572,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Check if user can approve requests based on approval step configurations
+  app.get("/api/users/:userProfile/can-approve", async (req, res) => {
+    try {
+      const { userProfile } = req.params;
+      
+      if (!userProfile) {
+        return res.status(400).json({ error: "User profile is required" });
+      }
+
+      // Get all approval schemas and their steps
+      const schemas = await storage.getApprovalSchemas();
+      let canApprove = false;
+
+      // Check if user profile matches any approval step configuration
+      for (const schema of schemas) {
+        const steps = await storage.getApprovalSteps(schema.id);
+        const hasMatchingStep = steps.some(step => step.perfil === userProfile);
+        
+        if (hasMatchingStep) {
+          canApprove = true;
+          break;
+        }
+      }
+
+      res.json({ canApprove, userProfile });
+    } catch (error) {
+      console.error('Error checking user approval capabilities:', error);
+      res.status(500).json({ error: "Failed to check user approval capabilities" });
+    }
+  });
+
   // ===== MOTIVOS DE PERMISOS ROUTES =====
   
   // Get all motivos de permisos organizados por categoría

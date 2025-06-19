@@ -123,6 +123,23 @@ export default function Dashboard() {
     enabled: !!(selectedUser?.Identifier || selectedUser?.Id),
   });
 
+  // Query to check if user can approve requests
+  const { data: canApproveData } = useQuery<{ canApprove: boolean }>({
+    queryKey: ["/api/users", selectedUser?.UserProfile, "can-approve"],
+    queryFn: async () => {
+      if (!selectedUser?.UserProfile) {
+        return { canApprove: false };
+      }
+      
+      const response = await fetch(`/api/users/${encodeURIComponent(selectedUser.UserProfile)}/can-approve`);
+      if (!response.ok) {
+        return { canApprove: false };
+      }
+      return response.json();
+    },
+    enabled: !!selectedUser?.UserProfile,
+  });
+
   // Query for pending approval requests (Solicitudes pendientes)
   const { 
     data: pendingRequests = [], 
@@ -152,53 +169,10 @@ export default function Dashboard() {
       }
       return response.json();
     },
-    enabled: !!selectedUser?.Identifier && !!selectedUser?.UserProfile,
+    enabled: !!selectedUser?.Identifier && !!selectedUser?.UserProfile && (canApproveData?.canApprove || (selectedUser?.UserProfile && ["#JefeGrupo#", "#adminCuenta#"].includes(selectedUser.UserProfile))),
   });
 
-  // Query to check if user can approve requests
-  const { data: canApproveData } = useQuery<{ canApprove: boolean }>({
-    queryKey: ["/api/users", selectedUser?.UserProfile, "can-approve"],
-    queryFn: async () => {
-      if (!selectedUser?.UserProfile) {
-        return { canApprove: false };
-      }
-      
-      const response = await fetch(`/api/users/${encodeURIComponent(selectedUser.UserProfile)}/can-approve`);
-      if (!response.ok) {
-        return { canApprove: false };
-      }
-      return response.json();
-    },
-    enabled: !!selectedUser?.UserProfile,
-  });
 
-  // Query for pending approval requests - user-centric view
-  const { 
-    data: pendingRequests = [], 
-    isLoading: isLoadingPending, 
-    error: errorPending,
-    refetch: refetchPending 
-  } = useQuery<Request[]>({
-    queryKey: ["/api/requests/pending-approval", selectedUser?.Identifier || selectedUser?.Id],
-    queryFn: async () => {
-      const userId = selectedUser?.Identifier || selectedUser?.Id;
-      const userProfile = selectedUser?.UserProfile;
-      
-      if (!userId || !userProfile) {
-        throw new Error("User information not available");
-      }
-
-      const response = await fetch(`/api/requests/pending-approval/${userId}?userProfile=${encodeURIComponent(userProfile)}`, {
-        credentials: "include"
-      });
-      
-      if (!response.ok) {
-        throw new Error("Failed to fetch pending requests");
-      }
-      return response.json();
-    },
-    enabled: !!selectedUser?.Identifier && !!selectedUser?.UserProfile && canApproveData?.canApprove,
-  });
 
   // Query for all requests (Todas las Solicitudes) - kept for admin view
   const { 
