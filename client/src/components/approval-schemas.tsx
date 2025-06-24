@@ -466,30 +466,57 @@ export function ApprovalSchemas({ selectedUser }: ApprovalSchemasProps) {
     }
     
     console.log("=== VALIDATION DEBUG ===");
+    console.log("selectedSchema:", selectedSchema?.nombre);
     console.log("Validating approval steps...");
     console.log("localSteps.length:", localSteps.length);
     console.log("localSteps:", localSteps);
-    console.log("selectedSchema:", selectedSchema?.nombre);
     
-    // Check if schema has approval steps
+    // Check if schema has approval steps and at least one obligatory step
+    const obligatorySteps = localSteps.filter(step => step.obligatorio === "Si");
+    const optionalSteps = localSteps.filter(step => step.obligatorio === "No");
+    
+    console.log("🔍 STEP ANALYSIS:");
+    console.log("Total steps:", localSteps.length);
+    console.log("Obligatory steps:", obligatorySteps.length);
+    console.log("Optional steps:", optionalSteps.length);
+    
     if (localSteps.length === 0) {
-      console.log("NO APPROVAL STEPS - Showing modal");
+      console.log("🚨 NO APPROVAL STEPS - Showing modal");
       console.log("Current showNoStepsAlert state:", showNoStepsAlert);
       
       // Force state update with setTimeout to ensure proper rendering
       setTimeout(() => {
-        console.log("Setting showNoStepsAlert to true...");
+        console.log("🔄 Setting showNoStepsAlert to true...");
         setShowNoStepsAlert(true);
-        console.log("setShowNoStepsAlert(true) called with setTimeout");
+        console.log("✅ setShowNoStepsAlert(true) called with setTimeout");
       }, 100);
       
-      console.log("Returning early - save blocked");
+      console.log("🛑 Returning early - save blocked (no steps)");
       return;
     }
     
-    console.log("Schema has approval steps, proceeding with save...");
+    if (obligatorySteps.length === 0) {
+      console.log("🚨 NO OBLIGATORY STEPS - All steps are optional, showing modal");
+      console.log("Total steps:", localSteps.length);
+      console.log("Obligatory steps:", obligatorySteps.length);
+      console.log("Optional steps:", optionalSteps.length);
+      console.log("Current showNoStepsAlert state:", showNoStepsAlert);
+      
+      // Force state update with setTimeout to ensure proper rendering
+      setTimeout(() => {
+        console.log("🔄 Setting showNoStepsAlert to true...");
+        setShowNoStepsAlert(true);
+        console.log("✅ setShowNoStepsAlert(true) called with setTimeout");
+      }, 100);
+      
+      console.log("🛑 Returning early - save blocked (no obligatory steps)");
+      return;
+    }
     
-    console.log("Has approval steps, proceeding with save...");
+    console.log("✅ Schema has obligatory approval steps, proceeding with save...");
+    console.log("Will save with", obligatorySteps.length, "obligatory steps and", optionalSteps.length, "optional steps");
+    
+
     
     const updates = {
       motivos: newSchemaMotivos.length > 0 ? newSchemaMotivos : selectedSchema.motivos,
