@@ -109,6 +109,9 @@ export function ApprovalSchemas({ selectedUser }: ApprovalSchemasProps) {
   const [showDuplicateAlert, setShowDuplicateAlert] = useState(false);
   const [duplicateMotivos, setDuplicateMotivos] = useState<string[]>([]);
   
+  // Estado para el diálogo de alerta de esquemas sin pasos
+  const [showNoStepsAlert, setShowNoStepsAlert] = useState(false);
+  
   // Estado para el diálogo de confirmación de eliminación
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   
@@ -453,6 +456,12 @@ export function ApprovalSchemas({ selectedUser }: ApprovalSchemasProps) {
   // Handle update schema configuration
   const handleUpdateSchema = () => {
     if (!selectedSchema) return;
+    
+    // Check if schema has approval steps
+    if (localSteps.length === 0) {
+      setShowNoStepsAlert(true);
+      return;
+    }
     
     const updates = {
       motivos: newSchemaMotivos.length > 0 ? newSchemaMotivos : selectedSchema.motivos,
