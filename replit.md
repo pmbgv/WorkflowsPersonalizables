@@ -125,6 +125,7 @@ This is a full-stack web application for managing employee requests and approval
 - **CDN Ready**: Static assets can be served from CDN in production
 
 ## Changelog  
+- June 19, 2025: Implemented optional steps validation - schemas with only optional steps now show modal preventing save until at least one obligatory step is configured
 - June 19, 2025: Enhanced modal with debug indicators and setTimeout for proper state management - added visual confirmation and timing fixes to ensure modal appears
 - June 19, 2025: Fixed modal positioning issue - moved AlertDialog components to correct scope level to display properly when validation is triggered
 - June 19, 2025: Enhanced modal validation with debugging logs and comprehensive tests - verified complete flow from schema selection to save prevention

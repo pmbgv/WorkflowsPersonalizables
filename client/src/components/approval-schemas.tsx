@@ -1524,11 +1524,11 @@ export function ApprovalSchemas({ selectedUser }: ApprovalSchemasProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Configuración incompleta</AlertDialogTitle>
             <AlertDialogDescription>
-              No se puede guardar la configuración porque el esquema no tiene pasos de aprobación configurados.
+              No se puede guardar la configuración porque el esquema no tiene pasos de aprobación obligatorios configurados.
               <br /><br />
-              Para completar la configuración del esquema, debe agregar al menos un paso de aprobación en la pestaña "Pasos de Aprobación".
+              Para completar la configuración del esquema, debe agregar al menos un paso de aprobación obligatorio en la pestaña "Pasos de Aprobación".
               <br /><br />
-              Los esquemas sin pasos de aprobación no pueden procesar solicitudes correctamente.
+              Los esquemas sin pasos obligatorios no pueden procesar solicitudes correctamente, ya que no habrá ningún nivel de aprobación requerido.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
