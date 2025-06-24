@@ -1852,6 +1852,50 @@ function ApprovalStepRow({
           <Trash2 className="h-4 w-4" />
         </Button>
       </div>
+
+      {/* Alerta de motivos duplicados */}
+      <AlertDialog open={showDuplicateAlert} onOpenChange={setShowDuplicateAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Motivos duplicados</AlertDialogTitle>
+            <AlertDialogDescription>
+              Los siguientes motivos ya están configurados en otros esquemas:
+              <ul className="list-disc list-inside mt-2">
+                {duplicateMotivos.map((motivo, index) => (
+                  <li key={index}>{motivo}</li>
+                ))}
+              </ul>
+              Por favor, selecciona motivos diferentes o modifica el esquema existente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setShowDuplicateAlert(false)}>
+              Entendido
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Alerta de esquemas sin pasos de aprobación */}
+      <AlertDialog open={showNoStepsAlert} onOpenChange={setShowNoStepsAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Configuración incompleta</AlertDialogTitle>
+            <AlertDialogDescription>
+              No se puede guardar la configuración porque el esquema no tiene pasos de aprobación configurados.
+              <br /><br />
+              Para completar la configuración del esquema, debe agregar al menos un paso de aprobación en la pestaña "Pasos de Aprobación".
+              <br /><br />
+              Los esquemas sin pasos de aprobación no pueden procesar solicitudes correctamente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setShowNoStepsAlert(false)}>
+              Entendido
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
