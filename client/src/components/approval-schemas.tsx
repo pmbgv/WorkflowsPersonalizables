@@ -455,13 +455,23 @@ export function ApprovalSchemas({ selectedUser }: ApprovalSchemasProps) {
 
   // Handle update schema configuration
   const handleUpdateSchema = () => {
-    if (!selectedSchema) return;
+    if (!selectedSchema) {
+      console.log("No schema selected");
+      return;
+    }
+    
+    console.log("Validating approval steps...");
+    console.log("localSteps.length:", localSteps.length);
+    console.log("localSteps:", localSteps);
     
     // Check if schema has approval steps
     if (localSteps.length === 0) {
+      console.log("NO APPROVAL STEPS - Showing modal");
       setShowNoStepsAlert(true);
       return;
     }
+    
+    console.log("Has approval steps, proceeding with save...");
     
     const updates = {
       motivos: newSchemaMotivos.length > 0 ? newSchemaMotivos : selectedSchema.motivos,

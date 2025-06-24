@@ -125,6 +125,7 @@ This is a full-stack web application for managing employee requests and approval
 - **CDN Ready**: Static assets can be served from CDN in production
 
 ## Changelog  
+- June 19, 2025: Enhanced modal validation with debugging logs and comprehensive tests - verified complete flow from schema selection to save prevention
 - June 19, 2025: Fixed modal implementation - added AlertDialog JSX to component to display validation modal when saving schemas without approval steps
 - June 19, 2025: Changed approach from auto-approval to prevention validation - implemented frontend modal to prevent saving schema configurations without approval steps instead of auto-approving requests
 - June 19, 2025: Fixed automatic approval logic implementation - properly modified createRequest method to detect schemas without approval steps and auto-approve requests immediately, including test2 schema with "Permiso con Goce" motivo
