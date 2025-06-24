@@ -112,6 +112,11 @@ export function ApprovalSchemas({ selectedUser }: ApprovalSchemasProps) {
   // Estado para el diálogo de alerta de esquemas sin pasos
   const [showNoStepsAlert, setShowNoStepsAlert] = useState(false);
   
+  // Debug effect to track modal state changes
+  useEffect(() => {
+    console.log("showNoStepsAlert state changed to:", showNoStepsAlert);
+  }, [showNoStepsAlert]);
+  
   // Estado para el diálogo de confirmación de eliminación
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   
@@ -467,7 +472,14 @@ export function ApprovalSchemas({ selectedUser }: ApprovalSchemasProps) {
     // Check if schema has approval steps
     if (localSteps.length === 0) {
       console.log("NO APPROVAL STEPS - Showing modal");
-      setShowNoStepsAlert(true);
+      console.log("Current showNoStepsAlert state:", showNoStepsAlert);
+      
+      // Force state update with setTimeout to ensure proper rendering
+      setTimeout(() => {
+        setShowNoStepsAlert(true);
+        console.log("setShowNoStepsAlert(true) called with setTimeout");
+      }, 50);
+      
       return;
     }
     
