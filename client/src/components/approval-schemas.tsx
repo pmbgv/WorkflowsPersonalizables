@@ -465,9 +465,11 @@ export function ApprovalSchemas({ selectedUser }: ApprovalSchemasProps) {
       return;
     }
     
+    console.log("=== VALIDATION DEBUG ===");
     console.log("Validating approval steps...");
     console.log("localSteps.length:", localSteps.length);
     console.log("localSteps:", localSteps);
+    console.log("selectedSchema:", selectedSchema?.nombre);
     
     // Check if schema has approval steps
     if (localSteps.length === 0) {
@@ -476,12 +478,16 @@ export function ApprovalSchemas({ selectedUser }: ApprovalSchemasProps) {
       
       // Force state update with setTimeout to ensure proper rendering
       setTimeout(() => {
+        console.log("Setting showNoStepsAlert to true...");
         setShowNoStepsAlert(true);
         console.log("setShowNoStepsAlert(true) called with setTimeout");
-      }, 50);
+      }, 100);
       
+      console.log("Returning early - save blocked");
       return;
     }
+    
+    console.log("Schema has approval steps, proceeding with save...");
     
     console.log("Has approval steps, proceeding with save...");
     
@@ -1501,6 +1507,40 @@ export function ApprovalSchemas({ selectedUser }: ApprovalSchemasProps) {
           </Card>
         )}
       </div>
+
+      {/* Debug indicator - temporary visual confirmation */}
+      {showNoStepsAlert && (
+        <div className="fixed top-4 right-4 bg-red-500 text-white p-2 rounded z-50 text-sm">
+          Modal State: TRUE
+        </div>
+      )}
+
+      {/* Diálogo de alerta para esquemas sin pasos de aprobación */}
+      <AlertDialog open={showNoStepsAlert} onOpenChange={(open) => {
+        console.log("AlertDialog onOpenChange called with:", open);
+        setShowNoStepsAlert(open);
+      }}>
+        <AlertDialogContent className="sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Configuración incompleta</AlertDialogTitle>
+            <AlertDialogDescription>
+              No se puede guardar la configuración porque el esquema no tiene pasos de aprobación configurados.
+              <br /><br />
+              Para completar la configuración del esquema, debe agregar al menos un paso de aprobación en la pestaña "Pasos de Aprobación".
+              <br /><br />
+              Los esquemas sin pasos de aprobación no pueden procesar solicitudes correctamente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => {
+              console.log("Modal dismissed by user");
+              setShowNoStepsAlert(false);
+            }}>
+              Entendido
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Diálogo de alerta para motivos duplicados */}
       <AlertDialog open={showDuplicateAlert} onOpenChange={setShowDuplicateAlert}>
