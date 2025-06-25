@@ -125,6 +125,7 @@ This is a full-stack web application for managing employee requests and approval
 - **CDN Ready**: Static assets can be served from CDN in production
 
 ## Changelog  
+- June 25, 2025: Implemented refined request visibility logic - pending requests only appear for users whose profile matches current approval step, all requests visible to users with any role in workflow but without management dropdown for non-current steps
 - June 25, 2025: Implemented complete approval workflow processing logic with support for all approval scenarios (optional-only, obligatory-only, mixed steps) including proper state transitions, rejection handling, and sequential processing
 - June 25, 2025: Added approval processing API endpoints and enhanced request details modal with approval workflow visualization and action buttons
 - June 25, 2025: Extended database schema to support approval step tracking with user information and implemented comprehensive approval step management

@@ -16,6 +16,8 @@ interface PendingRequestsTableProps {
   onBulkStatusChange: (requestIds: number[], newStatus: string) => void;
   selectedGroupUsers?: any[];
   selectedUser?: any;
+  currentUser?: any;
+  showManagementDropdown?: boolean;
 }
 
 export function PendingRequestsTable({ 
@@ -25,7 +27,9 @@ export function PendingRequestsTable({
   onDownload, 
   onBulkStatusChange,
   selectedGroupUsers = [],
-  selectedUser
+  selectedUser,
+  currentUser,
+  showManagementDropdown = true
 }: PendingRequestsTableProps) {
   const [selectedRequests, setSelectedRequests] = useState<number[]>([]);
   const [createModalOpen, setCreateModalOpen] = useState(false);

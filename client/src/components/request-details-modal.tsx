@@ -25,6 +25,8 @@ interface RequestDetailsModalProps {
 }
 
 export function RequestDetailsModal({ request, open, onOpenChange, onDownload, onStatusChange, isAllRequestsTab = false, currentUser }: RequestDetailsModalProps) {
+  if (!request) return null;
+
   const [comentario, setComentario] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
