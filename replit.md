@@ -125,6 +125,9 @@ This is a full-stack web application for managing employee requests and approval
 - **CDN Ready**: Static assets can be served from CDN in production
 
 ## Changelog  
+- June 25, 2025: Implemented complete approval workflow processing logic with support for all approval scenarios (optional-only, obligatory-only, mixed steps) including proper state transitions, rejection handling, and sequential processing
+- June 25, 2025: Added approval processing API endpoints and enhanced request details modal with approval workflow visualization and action buttons
+- June 25, 2025: Extended database schema to support approval step tracking with user information and implemented comprehensive approval step management
 - June 19, 2025: Fixed obligatory steps validation implementation - added proper filtering logic and enhanced debugging to correctly identify when schemas have only optional steps
 - June 19, 2025: Implemented optional steps validation - schemas with only optional steps now show modal preventing save until at least one obligatory step is configured
 - June 19, 2025: Enhanced modal with debug indicators and setTimeout for proper state management - added visual confirmation and timing fixes to ensure modal appears

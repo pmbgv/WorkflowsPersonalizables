@@ -430,6 +430,82 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async processApprovalStep(requestId: number, stepId: number, action: "Aprobado" | "Rechazado", userProfile: string, comentario?: string): Promise<{ success: boolean; requestStatus: string; message: string }> {
+    try {
+      // 1. Verificar que el usuario puede aprobar este paso
+      const canApprove = await this.checkUserCanApprove(requestId, userProfile);
+      if (!canApprove) {
+        return { success: false, requestStatus: "Pendiente", message: "Usuario no autorizado para aprobar este paso" };
+      }
+
+      // 2. Actualizar el paso actual
+      await this.updateRequestApprovalStep(stepId, { 
+        estado: action, 
+        fechaAprobacion: new Date(),
+        comentario: comentario || null
+      });
+
+      // 3. Agregar al historial
+      await this.addRequestHistory({
+        requestId,
+        accion: action,
+        comentario: comentario || `Paso ${action.toLowerCase()} por ${userProfile}`,
+        usuarioResponsable: userProfile
+      });
+
+      // 4. Si es rechazo, terminar inmediatamente
+      if (action === "Rechazado") {
+        await this.updateRequest(requestId, { estado: "Rechazado" });
+        return { success: true, requestStatus: "Rechazado", message: "Solicitud rechazada" };
+      }
+
+      // 5. Obtener todos los pasos de aprobación para esta solicitud
+      const allSteps = await db
+        .select({
+          requestApprovalStep: requestApprovalSteps,
+          approvalStep: approvalSteps
+        })
+        .from(requestApprovalSteps)
+        .innerJoin(approvalSteps, eq(requestApprovalSteps.approvalStepId, approvalSteps.id))
+        .where(eq(requestApprovalSteps.requestId, requestId))
+        .orderBy(asc(approvalSteps.orden));
+
+      const obligatorySteps = allSteps.filter(step => step.approvalStep.obligatorio === "Si");
+      const optionalSteps = allSteps.filter(step => step.approvalStep.obligatorio === "No");
+
+      console.log(`Processing approval for request ${requestId}:`);
+      console.log(`Total steps: ${allSteps.length}, Obligatory: ${obligatorySteps.length}, Optional: ${optionalSteps.length}`);
+
+      // 6. Determinar lógica de flujo según configuración de pasos
+      if (obligatorySteps.length === 0) {
+        // Caso: Múltiples pasos, todos opcionales - primera aprobación completa todo
+        console.log("All steps are optional - completing request");
+        await this.updateRequest(requestId, { estado: "Aprobado" });
+        return { success: true, requestStatus: "Aprobado", message: "Solicitud aprobada (todos los pasos opcionales)" };
+      } else {
+        // Caso: Al menos un paso obligatorio - verificar si todos los obligatorios están aprobados
+        const pendingObligatory = obligatorySteps.filter(step => step.requestApprovalStep.estado === "Pendiente");
+        
+        console.log(`Obligatory steps pending: ${pendingObligatory.length}`);
+        
+        if (pendingObligatory.length === 0) {
+          // Todos los pasos obligatorios completados
+          console.log("All obligatory steps completed - approving request");
+          await this.updateRequest(requestId, { estado: "Aprobado" });
+          return { success: true, requestStatus: "Aprobado", message: "Solicitud aprobada (todos los pasos obligatorios completados)" };
+        } else {
+          // Aún hay pasos obligatorios pendientes
+          console.log("Request continues - obligatory steps still pending");
+          return { success: true, requestStatus: "Pendiente", message: "Paso aprobado, solicitud continúa en proceso" };
+        }
+      }
+
+    } catch (error) {
+      console.error("Error processing approval step:", error);
+      return { success: false, requestStatus: "Pendiente", message: "Error interno al procesar aprobación" };
+    }
+  }
+
   async updateRequest(id: number, updates: Partial<Request>): Promise<Request | undefined> {
     const [updatedRequest] = await db
       .update(requests)
@@ -655,6 +731,25 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error("Error updating request approval step:", error);
       return undefined;
+    }
+  }
+
+  async getRequestApprovalStepsWithDetails(requestId: number): Promise<Array<{ requestApprovalStep: RequestApprovalStep; approvalStep: ApprovalStep }>> {
+    try {
+      const result = await db
+        .select({
+          requestApprovalStep: requestApprovalSteps,
+          approvalStep: approvalSteps
+        })
+        .from(requestApprovalSteps)
+        .innerJoin(approvalSteps, eq(requestApprovalSteps.approvalStepId, approvalSteps.id))
+        .where(eq(requestApprovalSteps.requestId, requestId))
+        .orderBy(asc(approvalSteps.orden));
+      
+      return result;
+    } catch (error) {
+      console.error("Error getting request approval steps with details:", error);
+      return [];
     }
   }
 

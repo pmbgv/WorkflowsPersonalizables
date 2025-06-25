@@ -17,6 +17,77 @@ interface RequestDetailsModalProps {
 }
 
 export function RequestDetailsModal({ request, open, onOpenChange, onDownload, onStatusChange, isAllRequestsTab = false, currentUser }: RequestDetailsModalProps) {
+  const [comentario, setComentario] = useState("");
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Get approval steps for this request
+  const { data: approvalSteps = [], isLoading: isLoadingSteps } = useQuery({
+    queryKey: ["/api/requests", request?.id, "approval-steps"],
+    queryFn: async () => {
+      if (!request?.id) return [];
+      const response = await fetch(`/api/requests/${request.id}/approval-steps`);
+      if (!response.ok) throw new Error("Failed to fetch approval steps");
+      return response.json();
+    },
+    enabled: !!request?.id && open,
+  });
+
+  // Process approval mutation
+  const processApprovalMutation = useMutation({
+    mutationFn: async ({ action, stepId }: { action: "Aprobado" | "Rechazado"; stepId: number }) => {
+      if (!request?.id || !currentUser?.UserProfile) {
+        throw new Error("Missing request ID or user profile");
+      }
+      
+      return apiRequest("PATCH", `/api/requests/${request.id}/process-approval`, {
+        stepId,
+        action,
+        userProfile: currentUser.UserProfile,
+        comentario: comentario.trim() || undefined
+      });
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Acción procesada",
+        description: data.message,
+      });
+      
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ["/api/requests"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/requests", "my-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/requests", "pending-approval"] });
+      
+      // Update request status if provided
+      if (onStatusChange && data.requestStatus !== request.estado) {
+        onStatusChange(request.id, data.requestStatus);
+      }
+      
+      // Close modal if request is completed
+      if (data.requestStatus === "Aprobado" || data.requestStatus === "Rechazado") {
+        onOpenChange(false);
+      }
+      
+      // Clear comment
+      setComentario("");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Error al procesar la acción",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Check if current user can approve this request
+  const currentStep = approvalSteps.find(step => 
+    step.requestApprovalStep.estado === "Pendiente" && 
+    step.approvalStep.perfil === currentUser?.UserProfile
+  );
+
+  const canApprove = !!currentStep && request.estado === "Pendiente";
+
   if (!request) return null;
 
   // Determine if current user can cancel/anular the request
