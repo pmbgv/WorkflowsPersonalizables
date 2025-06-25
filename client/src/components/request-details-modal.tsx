@@ -177,6 +177,106 @@ export function RequestDetailsModal({ request, open, onOpenChange, onDownload, o
             </div>
 
             <div className="space-y-4">
+              {/* Approval Steps Section */}
+              {approvalSteps.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm font-medium flex items-center gap-2">
+                      <Clock className="h-4 w-4" />
+                      Flujo de Aprobación
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {isLoadingSteps ? (
+                      <p className="text-sm text-muted-foreground">Cargando pasos de aprobación...</p>
+                    ) : (
+                      approvalSteps.map((step, index) => (
+                        <div key={step.requestApprovalStep.id} className="flex items-center gap-3 p-3 border rounded-lg">
+                          <div className="flex-shrink-0">
+                            {step.requestApprovalStep.estado === "Aprobado" ? (
+                              <CheckCircle className="h-5 w-5 text-green-600" />
+                            ) : step.requestApprovalStep.estado === "Rechazado" ? (
+                              <XCircle className="h-5 w-5 text-red-600" />
+                            ) : (
+                              <Clock className="h-5 w-5 text-gray-400" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <p className="text-sm font-medium">
+                                Paso {step.approvalStep.orden}: {step.approvalStep.descripcion}
+                              </p>
+                              <Badge variant={step.approvalStep.obligatorio === "Si" ? "default" : "outline"} className="text-xs">
+                                {step.approvalStep.obligatorio === "Si" ? "Obligatorio" : "Opcional"}
+                              </Badge>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              Perfil: {step.approvalStep.perfil}
+                            </p>
+                            {step.requestApprovalStep.fechaAprobacion && (
+                              <p className="text-xs text-muted-foreground">
+                                {step.requestApprovalStep.estado} el{" "}
+                                {format(new Date(step.requestApprovalStep.fechaAprobacion), "dd/MM/yyyy HH:mm", { locale: es })}
+                              </p>
+                            )}
+                            {step.requestApprovalStep.comentario && (
+                              <p className="text-xs text-gray-600 mt-1 italic">
+                                "{step.requestApprovalStep.comentario}"
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Approval Actions Section */}
+              {canApprove && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm font-medium">Acciones de Aprobación</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="comentario">Comentario (opcional)</Label>
+                      <Textarea
+                        id="comentario"
+                        placeholder="Agregar comentario sobre la decisión..."
+                        value={comentario}
+                        onChange={(e) => setComentario(e.target.value)}
+                        rows={3}
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => processApprovalMutation.mutate({ action: "Aprobado", stepId: currentStep.requestApprovalStep.id })}
+                        disabled={processApprovalMutation.isPending}
+                        className="flex-1"
+                        variant="default"
+                      >
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Aprobar
+                      </Button>
+                      <Button
+                        onClick={() => processApprovalMutation.mutate({ action: "Rechazado", stepId: currentStep.requestApprovalStep.id })}
+                        disabled={processApprovalMutation.isPending}
+                        className="flex-1"
+                        variant="destructive"
+                      >
+                        <XCircle className="h-4 w-4 mr-2" />
+                        Rechazar
+                      </Button>
+                    </div>
+                    {processApprovalMutation.isPending && (
+                      <p className="text-sm text-muted-foreground text-center">
+                        Procesando acción...
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
               <div>
                 <label className="block text-sm font-medium text-gray-600">Identificador</label>
                 <div className="mt-1 p-2 bg-gray-100 rounded text-gray-900">{request.identificador || "16345990-8"}</div>
