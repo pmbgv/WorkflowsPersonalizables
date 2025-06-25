@@ -183,29 +183,61 @@ export default function Dashboard() {
   } = useQuery<Request[]>({
     queryKey: ["/api/requests", "all-requests", selectedUser?.UserProfile, queryString],
     queryFn: async () => {
-      if (!selectedUser?.UserProfile) return [];
+      if (!selectedUser?.UserProfile) {
+        console.log("No user profile for all-requests");
+        return [];
+      }
+      
       const params = new URLSearchParams();
       if (queryString) {
         const existingParams = new URLSearchParams(queryString);
         existingParams.forEach((value, key) => params.append(key, value));
       }
+      
       const url = `/api/requests/all-requests/${encodeURIComponent(selectedUser.UserProfile)}?${params.toString()}`;
+      console.log("Fetching all requests from:", url);
+      
       const response = await fetch(url, { credentials: "include" });
+      
+      // Handle both error responses and empty responses gracefully
       if (!response.ok) {
-        throw new Error("Failed to fetch all requests");
+        console.error("All requests fetch failed:", response.status, response.statusText);
+        return []; // Return empty array instead of throwing
       }
-      return response.json();
+      
+      const data = await response.json();
+      console.log("All requests data received:", data?.length || 0, "items");
+      return Array.isArray(data) ? data : [];
     },
     enabled: selectedUser?.UserProfile && ["#JefeGrupo#", "#adminCuenta#"].includes(selectedUser.UserProfile),
+    retry: 1, // Reduce retries to prevent multiple error toasts
+    retryDelay: 1000,
   });
 
+  // Error handling with debouncing to prevent multiple toasts
   useEffect(() => {
-    if (error || errorAll || errorPending) {
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar las solicitudes.",
-        variant: "destructive",
-      });
+    const errors = [
+      { error, name: "requests" },
+      { error: errorAll, name: "all-requests" },
+      { error: errorPending, name: "pending-requests" }
+    ].filter(({ error }) => error);
+
+    if (errors.length > 0) {
+      // Only show one toast for all errors to prevent spam
+      const errorMessages = errors.map(({ name }) => name).join(", ");
+      console.error("Request loading errors:", errors);
+      
+      // Debounce toasts to prevent multiple modals
+      const toastTimeout = setTimeout(() => {
+        toast({
+          title: "Error de carga",
+          description: `Error al cargar: ${errorMessages}`,
+          variant: "destructive",
+          duration: 5000,
+        });
+      }, 100);
+
+      return () => clearTimeout(toastTimeout);
     }
   }, [error, errorAll, errorPending, toast]);
 
