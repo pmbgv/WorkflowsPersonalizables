@@ -202,6 +202,8 @@ export default function Dashboard() {
       // Handle both error responses and empty responses gracefully
       if (!response.ok) {
         console.error("All requests fetch failed:", response.status, response.statusText);
+        const errorText = await response.text();
+        console.error("Error response body:", errorText);
         return []; // Return empty array instead of throwing
       }
       
