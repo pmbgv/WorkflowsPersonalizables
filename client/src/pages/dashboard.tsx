@@ -174,16 +174,22 @@ export default function Dashboard() {
 
 
 
-  // Query for all requests (Todas las Solicitudes) - kept for admin view
+  // Query for all requests visible to user profile (Todas las Solicitudes)
   const { 
     data: allRequests = [], 
     isLoading: isLoadingAll, 
     error: errorAll,
     refetch: refetchAll 
   } = useQuery<Request[]>({
-    queryKey: ["/api/requests", "all", queryString],
+    queryKey: ["/api/requests", "all-requests", selectedUser?.UserProfile, queryString],
     queryFn: async () => {
-      const url = queryString ? `/api/requests?${queryString}` : "/api/requests";
+      if (!selectedUser?.UserProfile) return [];
+      const params = new URLSearchParams();
+      if (queryString) {
+        const existingParams = new URLSearchParams(queryString);
+        existingParams.forEach((value, key) => params.append(key, value));
+      }
+      const url = `/api/requests/all-requests/${encodeURIComponent(selectedUser.UserProfile)}?${params.toString()}`;
       const response = await fetch(url, { credentials: "include" });
       if (!response.ok) {
         throw new Error("Failed to fetch all requests");
@@ -367,21 +373,25 @@ export default function Dashboard() {
                 onBulkStatusChange={handleBulkStatusChange}
                 selectedGroupUsers={selectedGroupUsers}
                 selectedUser={selectedUser}
+                currentUser={selectedUser}
+                showManagementDropdown={true}
               />
             </TabsContent>
           )}
           
           {selectedUser?.UserProfile && ["#JefeGrupo#", "#adminCuenta#"].includes(selectedUser.UserProfile) && (
             <TabsContent value="todas" className="space-y-6">
-              {/* All Requests Table */}
-              <RequestTable
+              {/* All Requests Table - View only, no management */}
+              <PendingRequestsTable
                 requests={allRequests}
                 isLoading={isLoadingAll}
                 onViewDetails={handleViewDetails}
                 onDownload={handleDownload}
-                title="Todas las Solicitudes"
-                allowStatusChange={true}
-                onStatusChange={handleStatusChange}
+                onBulkStatusChange={handleBulkStatusChange}
+                selectedGroupUsers={selectedGroupUsers}
+                selectedUser={selectedUser}
+                currentUser={selectedUser}
+                showManagementDropdown={false}
               />
             </TabsContent>
           )}

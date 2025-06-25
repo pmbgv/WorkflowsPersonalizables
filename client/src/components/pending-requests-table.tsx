@@ -171,12 +171,14 @@ export function PendingRequestsTable({
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50">
-              <TableHead className="w-12">
-                <Checkbox
-                  checked={selectedRequests.length === currentRequests.length && currentRequests.length > 0}
-                  onCheckedChange={toggleAllSelection}
-                />
-              </TableHead>
+              {showManagementDropdown && (
+                <TableHead className="w-12">
+                  <Checkbox
+                    checked={selectedRequests.length === currentRequests.length && currentRequests.length > 0}
+                    onCheckedChange={toggleAllSelection}
+                  />
+                </TableHead>
+              )}
               <TableHead 
                 className="cursor-pointer hover:text-gray-700"
                 onClick={() => handleSort('usuarioSolicitado')}
@@ -239,12 +241,14 @@ export function PendingRequestsTable({
           <TableBody>
             {currentRequests.map((request) => (
               <TableRow key={request.id} className="hover:bg-gray-50">
-                <TableCell>
-                  <Checkbox
-                    checked={selectedRequests.includes(request.id)}
-                    onCheckedChange={() => toggleRequestSelection(request.id)}
-                  />
-                </TableCell>
+                {showManagementDropdown && (
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedRequests.includes(request.id)}
+                      onCheckedChange={() => toggleRequestSelection(request.id)}
+                    />
+                  </TableCell>
+                )}
                 <TableCell className="text-sm">
                   {request.usuarioSolicitado || request.solicitadoPor}
                 </TableCell>
@@ -299,10 +303,12 @@ export function PendingRequestsTable({
           <div key={request.id} className="bg-white border rounded-lg p-4">
             <div className="flex justify-between items-start mb-3">
               <div className="flex items-center space-x-3">
-                <Checkbox
-                  checked={selectedRequests.includes(request.id)}
-                  onCheckedChange={() => toggleRequestSelection(request.id)}
-                />
+                {showManagementDropdown && (
+                  <Checkbox
+                    checked={selectedRequests.includes(request.id)}
+                    onCheckedChange={() => toggleRequestSelection(request.id)}
+                  />
+                )}
                 <div>
                   <h4 className="font-medium text-gray-900">{request.tipo}</h4>
                   <p className="text-sm text-gray-500">
