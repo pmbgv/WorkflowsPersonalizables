@@ -125,6 +125,7 @@ This is a full-stack web application for managing employee requests and approval
 - **CDN Ready**: Static assets can be served from CDN in production
 
 ## Changelog  
+- June 25, 2025: Fixed tab interface logic - "Solicitudes pendientes" uses PendingRequestsTable with checkboxes and management buttons, "Todas las solicitudes" uses RequestTable for view-only access without any management capabilities
 - June 25, 2025: Implemented checkbox-based management system - pending requests show checkboxes and approve/reject buttons only for current step users, all requests tab shows view-only interface without management controls
 - June 25, 2025: Implemented refined request visibility logic - pending requests only appear for users whose profile matches current approval step, all requests visible to users with any role in workflow but without management dropdown for non-current steps
 - June 25, 2025: Implemented complete approval workflow processing logic with support for all approval scenarios (optional-only, obligatory-only, mixed steps) including proper state transitions, rejection handling, and sequential processing

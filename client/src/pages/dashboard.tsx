@@ -382,16 +382,14 @@ export default function Dashboard() {
           {selectedUser?.UserProfile && ["#JefeGrupo#", "#adminCuenta#"].includes(selectedUser.UserProfile) && (
             <TabsContent value="todas" className="space-y-6">
               {/* All Requests Table - View only, no management */}
-              <PendingRequestsTable
+              <RequestTable
                 requests={allRequests}
                 isLoading={isLoadingAll}
                 onViewDetails={handleViewDetails}
                 onDownload={handleDownload}
-                onBulkStatusChange={handleBulkStatusChange}
-                selectedGroupUsers={selectedGroupUsers}
-                selectedUser={selectedUser}
-                currentUser={selectedUser}
-                showManagementDropdown={false}
+                title="Todas las Solicitudes"
+                showCreateButton={false}
+                allowStatusChange={false}
               />
             </TabsContent>
           )}

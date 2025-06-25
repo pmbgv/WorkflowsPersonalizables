@@ -125,35 +125,39 @@ export function PendingRequestsTable({
 
   return (
     <div className="space-y-4">
-      {/* Header with actions */}
+      {/* Header with actions - Only show management buttons when allowed */}
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Solicitudes pendientes</h2>
-        <div className="flex space-x-2">
-          <Button 
-            onClick={() => setCreateModalOpen(true)}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Crear solicitud
-          </Button>
-          <Button 
-            onClick={handleBulkReject}
-            disabled={selectedRequests.length === 0}
-            variant="outline"
-            className="border-red-500 text-red-500 hover:bg-red-50"
-          >
-            <XCircle className="w-4 h-4 mr-2" />
-            Rechazar
-          </Button>
-          <Button 
-            onClick={handleBulkApprove}
-            disabled={selectedRequests.length === 0}
-            className="bg-green-600 hover:bg-green-700"
-          >
-            <CheckCircle className="w-4 h-4 mr-2" />
-            Aprobar
-          </Button>
-        </div>
+        <h2 className="text-xl font-semibold">
+          {showManagementDropdown ? "Solicitudes pendientes" : "Todas las Solicitudes"}
+        </h2>
+        {showManagementDropdown && (
+          <div className="flex space-x-2">
+            <Button 
+              onClick={() => setCreateModalOpen(true)}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Crear solicitud
+            </Button>
+            <Button 
+              onClick={handleBulkReject}
+              disabled={selectedRequests.length === 0}
+              variant="outline"
+              className="border-red-500 text-red-500 hover:bg-red-50"
+            >
+              <XCircle className="w-4 h-4 mr-2" />
+              Rechazar
+            </Button>
+            <Button 
+              onClick={handleBulkApprove}
+              disabled={selectedRequests.length === 0}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              <CheckCircle className="w-4 h-4 mr-2" />
+              Aprobar
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Requests count */}
