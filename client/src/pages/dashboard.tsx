@@ -181,10 +181,16 @@ export default function Dashboard() {
     error: errorAll,
     refetch: refetchAll 
   } = useQuery<Request[]>({
-    queryKey: ["/api/requests", "all-requests", selectedUser?.UserProfile, queryString],
+    queryKey: ["/api/requests", "all-requests", selectedUser?.UserProfile, queryString, activeTab],
     queryFn: async () => {
       if (!selectedUser?.UserProfile) {
         console.log("No user profile for all-requests");
+        return [];
+      }
+      
+      // Only fetch when we're actually on the all-requests tab or approval schemas tab
+      if (activeTab !== "all-requests" && activeTab !== "approval-schemas") {
+        console.log("Not on all-requests or approval-schemas tab, skipping fetch");
         return [];
       }
       
@@ -197,7 +203,13 @@ export default function Dashboard() {
       const url = `/api/requests/all-requests/${encodeURIComponent(selectedUser.UserProfile)}?${params.toString()}`;
       console.log("Fetching all requests from:", url);
       
-      const response = await fetch(url, { credentials: "include" });
+      const response = await fetch(url, { 
+        credentials: "include",
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
       
       // Handle both error responses and empty responses gracefully
       if (!response.ok) {
@@ -207,11 +219,19 @@ export default function Dashboard() {
         return []; // Return empty array instead of throwing
       }
       
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        console.error("Response is not JSON, content-type:", contentType);
+        const textResponse = await response.text();
+        console.error("Non-JSON response:", textResponse.substring(0, 200));
+        return [];
+      }
+      
       const data = await response.json();
       console.log("All requests data received:", data?.length || 0, "items");
       return Array.isArray(data) ? data : [];
     },
-    enabled: selectedUser?.UserProfile && ["#JefeGrupo#", "#adminCuenta#"].includes(selectedUser.UserProfile),
+    enabled: selectedUser?.UserProfile && ["#JefeGrupo#", "#adminCuenta#"].includes(selectedUser.UserProfile) && (activeTab === "all-requests" || activeTab === "approval-schemas"),
     retry: 1, // Reduce retries to prevent multiple error toasts
     retryDelay: 1000,
   });

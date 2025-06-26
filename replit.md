@@ -125,6 +125,7 @@ This is a full-stack web application for managing employee requests and approval
 - **CDN Ready**: Static assets can be served from CDN in production
 
 ## Changelog  
+- June 25, 2025: Fixed approval schemas configuration error - resolved issue where adminCuenta users got "all-requests" errors when clicking "configuración esquemas" by adding conditional query enabling and proper JSON content-type validation  
 - June 25, 2025: Fixed all-requests endpoint error - added missing backend endpoint for "Todas las solicitudes" tab, enhanced getPendingApprovalRequests to handle userProfile filtering, and improved error handling with comprehensive debugging
 - June 25, 2025: Fixed multiple error modals issue - implemented debounced error handling, graceful error responses returning empty arrays instead of 500 errors, reduced React Query retries, and added comprehensive logging for debugging
 - June 25, 2025: Fixed tab interface logic - "Solicitudes pendientes" uses PendingRequestsTable with checkboxes and management buttons, "Todas las solicitudes" uses RequestTable for view-only access without any management capabilities

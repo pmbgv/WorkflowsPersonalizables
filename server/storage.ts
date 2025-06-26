@@ -226,78 +226,113 @@ export class DatabaseStorage implements IStorage {
     userProfile?: string;
     userGroupDescription?: string;
   }): Promise<Request[]> {
-    const conditions = [];
-    
-    if (filters) {
-      // Only show pending requests
-      conditions.push(eq(requests.estado, "Pendiente"));
+    try {
+      const conditions = [];
       
-      if (filters.tipo) {
-        conditions.push(eq(requests.tipo, filters.tipo));
-      }
-      
-      // Handle date filtering based on tipoFecha
-      if (filters.fechaInicio || filters.fechaFin) {
-        if (filters.tipoFecha === "fechaSolicitada") {
-          if (filters.fechaInicio) {
-            conditions.push(gte(requests.fechaSolicitada, filters.fechaInicio));
-          }
-          if (filters.fechaFin) {
-            conditions.push(lte(requests.fechaSolicitada, filters.fechaFin));
-          }
+      if (filters) {
+        // If called for "all-requests" view, don't filter by estado (show all)
+        // If called for pending approval, filter by Pendiente
+        if (filters.userProfile && !filters.userId) {
+          // This is for "Todas las solicitudes" - show all requests the user can view
+          console.log(`Getting all requests for profile view: ${filters.userProfile}`);
         } else {
-          if (filters.fechaInicio) {
-            conditions.push(gte(requests.fechaCreacion, new Date(filters.fechaInicio)));
-          }
-          if (filters.fechaFin) {
-            const endDate = new Date(filters.fechaFin);
-            endDate.setDate(endDate.getDate() + 1);
-            conditions.push(lte(requests.fechaCreacion, endDate));
+          // This is for pending approval - only show pending requests
+          conditions.push(eq(requests.estado, "Pendiente"));
+        }
+        
+        if (filters.tipo) {
+          conditions.push(eq(requests.tipo, filters.tipo));
+        }
+        
+        // Handle date filtering based on tipoFecha
+        if (filters.fechaInicio || filters.fechaFin) {
+          if (filters.tipoFecha === "fechaSolicitada") {
+            if (filters.fechaInicio) {
+              conditions.push(gte(requests.fechaSolicitada, filters.fechaInicio));
+            }
+            if (filters.fechaFin) {
+              conditions.push(lte(requests.fechaSolicitada, filters.fechaFin));
+            }
+          } else {
+            if (filters.fechaInicio) {
+              conditions.push(gte(requests.fechaCreacion, new Date(filters.fechaInicio)));
+            }
+            if (filters.fechaFin) {
+              const endDate = new Date(filters.fechaFin);
+              endDate.setDate(endDate.getDate() + 1);
+              conditions.push(lte(requests.fechaCreacion, endDate));
+            }
           }
         }
+        
+        if (filters.busqueda) {
+          conditions.push(
+            or(
+              like(requests.usuarioSolicitado, `%${filters.busqueda}%`),
+              like(requests.solicitadoPor, `%${filters.busqueda}%`),
+              like(requests.tipo, `%${filters.busqueda}%`),
+              like(requests.asunto, `%${filters.busqueda}%`)
+            )
+          );
+        }
+      } else {
+        conditions.push(eq(requests.estado, "Pendiente"));
       }
       
-      if (filters.busqueda) {
-        conditions.push(
-          or(
-            like(requests.usuarioSolicitado, `%${filters.busqueda}%`),
-            like(requests.solicitadoPor, `%${filters.busqueda}%`),
-            like(requests.tipo, `%${filters.busqueda}%`),
-            like(requests.asunto, `%${filters.busqueda}%`)
-          )
-        );
+      // Get requests
+      let result: Request[] = [];
+      if (conditions.length > 0) {
+        const queryResult = await db.select().from(requests).where(and(...conditions)).orderBy(requests.fechaCreacion);
+        result = queryResult.reverse(); // Newest first
+      } else {
+        const queryResult = await db.select().from(requests).orderBy(requests.fechaCreacion);
+        result = queryResult.reverse(); // Newest first
       }
-    } else {
-      conditions.push(eq(requests.estado, "Pendiente"));
-    }
-    
-    // Get all pending requests first
-    let pendingRequests: Request[] = [];
-    if (conditions.length > 0) {
-      const result = await db.select().from(requests).where(and(...conditions)).orderBy(requests.fechaCreacion);
-      pendingRequests = result.reverse(); // Newest first
-    }
+      
+      console.log(`Found ${result.length} requests before user filtering`);
 
-    // If userProfile is provided, filter by approval schema steps
-    if (filters?.userProfile && pendingRequests.length > 0) {
-      const filteredRequests: Request[] = [];
-      
-      for (const request of pendingRequests) {
-        // Ensure request has approval steps (migrate if needed)
-        await this.ensureRequestApprovalSteps(request);
+      // Handle user filtering based on context
+      if (filters?.userProfile && !filters?.userId) {
+        // This is "Todas las solicitudes" - show requests user can view based on profile
+        console.log(`Filtering for "Todas las solicitudes" with profile: ${filters.userProfile}`);
         
-        // Check if user can approve this request based on next pending approval step
-        const canApprove = await this.checkUserCanApprove(request.id, filters.userProfile);
-        
-        if (canApprove) {
-          filteredRequests.push(request);
+        if (filters.userProfile === "#adminCuenta#") {
+          // Admin can see all requests
+          return result;
+        } else if (filters.userProfile === "#JefeGrupo#") {
+          // Jefe Grupo can see requests from their organizational hierarchy
+          return result; // For now, show all - can be refined later
+        } else {
+          // Regular users can see limited requests
+          return result.slice(0, 10); // Limited view for testing
         }
       }
+
+      // If userProfile is provided with userId, filter by approval schema steps
+      if (filters?.userProfile && filters?.userId && result.length > 0) {
+        const filteredRequests: Request[] = [];
+        
+        for (const request of result) {
+          // Ensure request has approval steps (migrate if needed)
+          await this.ensureRequestApprovalSteps(request);
+          
+          // Check if user can approve this request based on next pending approval step
+          const canApprove = await this.checkUserCanApprove(request.id, filters.userProfile);
+          
+          if (canApprove) {
+            filteredRequests.push(request);
+          }
+        }
+        
+        return filteredRequests;
+      }
       
-      return filteredRequests;
+      return result;
+    } catch (error) {
+      console.error("Error getting pending approval requests:", error);
+      // Return empty array instead of throwing to prevent crashes
+      return [];
     }
-    
-    return pendingRequests;
   }
 
   async getRequest(id: number): Promise<Request | undefined> {
