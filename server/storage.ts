@@ -310,6 +310,7 @@ export class DatabaseStorage implements IStorage {
 
       // If userProfile is provided with userId, filter by approval schema steps
       if (filters?.userProfile && filters?.userId && result.length > 0) {
+        console.log(`Filtering ${result.length} requests for user ${filters.userProfile} (userId: ${filters.userId})`);
         const filteredRequests: Request[] = [];
         
         for (const request of result) {
@@ -320,10 +321,14 @@ export class DatabaseStorage implements IStorage {
           const canApprove = await this.checkUserCanApprove(request.id, filters.userProfile);
           
           if (canApprove) {
+            console.log(`✅ Request ${request.id} is pending for user ${filters.userProfile}`);
             filteredRequests.push(request);
+          } else {
+            console.log(`❌ Request ${request.id} is not pending for user ${filters.userProfile}`);
           }
         }
         
+        console.log(`Final filtered requests for ${filters.userProfile}: ${filteredRequests.length}`);
         return filteredRequests;
       }
       
