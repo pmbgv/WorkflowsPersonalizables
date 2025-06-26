@@ -45,6 +45,65 @@ const PERMISSION_TYPES = [
   "Permiso otro"
 ];
 
+// Validation function for step configuration
+const validateStepConfiguration = (steps: ApprovalStep[]) => {
+  if (!steps || steps.length === 0) {
+    return { isValid: false, error: "NO_APPROVAL_STEPS" };
+  }
+
+  // Get obligatory and optional steps in order
+  const sortedSteps = [...steps].sort((a, b) => a.orden - b.orden);
+  
+  // Check for single optional steps between obligatory steps
+  for (let i = 0; i < sortedSteps.length; i++) {
+    const currentStep = sortedSteps[i];
+    
+    // If current step is optional
+    if (!currentStep.esObligatorio) {
+      // Find the nearest obligatory steps before and after
+      let prevObligatoryIndex = -1;
+      let nextObligatoryIndex = -1;
+      
+      // Look for previous obligatory step
+      for (let j = i - 1; j >= 0; j--) {
+        if (sortedSteps[j].esObligatorio) {
+          prevObligatoryIndex = j;
+          break;
+        }
+      }
+      
+      // Look for next obligatory step
+      for (let j = i + 1; j < sortedSteps.length; j++) {
+        if (sortedSteps[j].esObligatorio) {
+          nextObligatoryIndex = j;
+          break;
+        }
+      }
+      
+      // If there are obligatory steps both before and after this optional step
+      if (prevObligatoryIndex !== -1 && nextObligatoryIndex !== -1) {
+        // Count optional steps between these obligatory steps
+        let optionalCount = 0;
+        for (let k = prevObligatoryIndex + 1; k < nextObligatoryIndex; k++) {
+          if (!sortedSteps[k].esObligatorio) {
+            optionalCount++;
+          }
+        }
+        
+        // If there's only one optional step between obligatory steps, it's invalid
+        if (optionalCount === 1) {
+          return { 
+            isValid: false, 
+            error: "SINGLE_OPTIONAL_BETWEEN_OBLIGATORY" 
+          };
+        }
+      }
+    }
+  }
+  
+  return { isValid: true, error: null };
+};
+
 // PROFILES will be fetched dynamically from the API
 
 
@@ -111,6 +170,18 @@ export function ApprovalSchemas({ selectedUser }: ApprovalSchemasProps) {
   
   // Estado para el diálogo de alerta de esquemas sin pasos
   const [showNoStepsAlert, setShowNoStepsAlert] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
+
+  const getValidationMessage = () => {
+    switch (validationError) {
+      case "NO_APPROVAL_STEPS":
+        return "No se puede guardar un esquema de aprobación sin pasos configurados. Por favor agregue al menos un paso de aprobación antes de guardar.";
+      case "SINGLE_OPTIONAL_BETWEEN_OBLIGATORY":
+        return "No se puede tener un solo paso opcional entre pasos obligatorios. Debe haber al menos dos pasos opcionales consecutivos o reorganizar la configuración.";
+      default:
+        return "Configuración de esquema inválida. Por favor revise la configuración de pasos.";
+    }
+  };
   
   // Debug effect to track modal state changes
   useEffect(() => {
