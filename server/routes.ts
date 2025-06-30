@@ -567,17 +567,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .from(approvalSteps)
         .where(eq(approvalSteps.perfil, userProfile));
       
-      const canViewAllRequests = approvalStepsQuery.length > 0;
-      
-      res.json({ canViewAllRequests });
-    } catch (error) {
-      console.error("Error checking if user can view all requests:", error);
-      res.status(500).json({ error: "Error interno del servidor" });
-    }
-  });
-        .where(eq(approvalSteps.perfil, userProfile));
-      
-      const canViewAllRequests = approvalSteps.length > 0;
+      const canViewAllRequests = hasApprovalSteps;
       
       res.json({ canViewAllRequests });
     } catch (error) {
@@ -651,12 +641,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userProfile = decodeURIComponent(req.params.userProfile);
       
       // Check if this profile is configured in any approval step
-      const approvalStepsQuery = await db
-        .select()
-        .from(approvalSteps)
-        .where(eq(approvalSteps.perfil, userProfile));
+      const schemas = await storage.getApprovalSchemas();
+      let hasApprovalSteps = false;
       
-      const canApprove = approvalStepsQuery.length > 0;
+      for (const schema of schemas) {
+        const steps = await storage.getApprovalSteps(schema.id);
+        if (steps.some(step => step.perfil === userProfile)) {
+          hasApprovalSteps = true;
+          break;
+        }
+      }
+      
+      const canApprove = hasApprovalSteps;
       
       res.json({ canApprove });
     } catch (error) {
