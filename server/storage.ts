@@ -408,11 +408,7 @@ export class DatabaseStorage implements IStorage {
         await this.createRequestApprovalStep({
           requestId: request.id,
           approvalStepId: step.id,
-          orden: step.orden,
-          estado: "Pendiente",
-          esObligatorio: step.obligatorio === "Si",
-          perfiles: [step.perfil],
-          fechaCreacion: new Date()
+          estado: "Pendiente"
         });
       }
     } catch (error) {
@@ -467,7 +463,7 @@ export class DatabaseStorage implements IStorage {
         const step = stepData.requestApprovalStep;
         const stepConfig = stepData.approvalStep;
         
-        console.log(`  Step ${step.orden}: ${step.estado} (${stepConfig.obligatorio}) - Profile: ${stepConfig.perfil}`);
+        console.log(`  Step ${stepConfig.orden}: ${step.estado} (${stepConfig.obligatorio}) - Profile: ${stepConfig.perfil}`);
         
         if (step.estado === "Pendiente") {
           // This is a pending step - check if it's ready for processing
@@ -486,7 +482,7 @@ export class DatabaseStorage implements IStorage {
             console.log(`    Previous obligatory steps completed: ${allPreviousObligatoryCompleted}`);
             
             if (!allPreviousObligatoryCompleted) {
-              console.log(`    ⏸️ Step ${step.orden} not ready - previous obligatory steps pending`);
+              console.log(`    ⏸️ Step ${stepConfig.orden} not ready - previous obligatory steps pending`);
               continue; // This step is not ready yet
             }
           } else {
@@ -498,23 +494,22 @@ export class DatabaseStorage implements IStorage {
             );
             
             if (remainingObligatorySteps.length > 0) {
-              console.log(`    ⏸️ Optional step ${step.orden} waiting - obligatory steps still pending`);
+              console.log(`    ⏸️ Optional step ${stepConfig.orden} waiting - obligatory steps still pending`);
               continue; // Optional steps wait for obligatory ones
             }
           }
           
           // This step is ready - check if user can approve it
           const canApproveThisStep = stepConfig.perfil === userProfile || 
-                                   step.perfiles?.includes(userProfile) ||
                                    stepConfig.perfil === "Todos los perfiles";
           
           console.log(`    Profile match: ${canApproveThisStep} (step profile: ${stepConfig.perfil}, user: ${userProfile})`);
           
           if (canApproveThisStep) {
-            console.log(`✅ User ${userProfile} CAN approve step ${step.orden} of request ${requestId}`);
+            console.log(`✅ User ${userProfile} CAN approve step ${stepConfig.orden} of request ${requestId}`);
             return true;
           } else {
-            console.log(`❌ User ${userProfile} profile doesn't match step ${step.orden} requirements`);
+            console.log(`❌ User ${userProfile} profile doesn't match step ${stepConfig.orden} requirements`);
             return false;
           }
         }

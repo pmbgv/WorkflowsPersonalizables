@@ -322,6 +322,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get request approval steps
+  app.get("/api/requests/:id/approval-steps", async (req, res) => {
+    try {
+      const requestId = parseInt(req.params.id);
+      const steps = await storage.getRequestApprovalSteps(requestId);
+      res.json(steps);
+    } catch (error) {
+      console.error("Error getting request approval steps:", error);
+      res.status(500).json({ error: "Error interno del servidor" });
+    }
+  });
+
+  // Process approval step
+  app.post("/api/requests/:requestId/approval-steps/:stepId/process", async (req, res) => {
+    try {
+      const requestId = parseInt(req.params.requestId);
+      const stepId = parseInt(req.params.stepId);
+      const { action, userProfile, comentario } = req.body;
+
+      if (!action || !userProfile) {
+        return res.status(400).json({ error: "Action and userProfile are required" });
+      }
+
+      if (!["Aprobado", "Rechazado"].includes(action)) {
+        return res.status(400).json({ error: "Invalid action" });
+      }
+
+      const result = await storage.processApprovalStep(requestId, stepId, action, userProfile, comentario);
+      res.json(result);
+    } catch (error) {
+      console.error("Error processing approval step:", error);
+      res.status(500).json({ error: "Error interno del servidor" });
+    }
+  });
+
   // Get user vacation balance
   app.get("/api/vacation-balance/:identificador", async (req, res) => {
     try {
