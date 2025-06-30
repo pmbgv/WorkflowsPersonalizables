@@ -140,6 +140,23 @@ export default function Dashboard() {
     enabled: !!selectedUser?.UserProfile,
   });
 
+  // Query to check if user can view all requests
+  const { data: canViewAllRequestsData } = useQuery<{ canViewAllRequests: boolean }>({
+    queryKey: ["/api/users", selectedUser?.UserProfile, "can-view-all-requests"],
+    queryFn: async () => {
+      if (!selectedUser?.UserProfile) {
+        return { canViewAllRequests: false };
+      }
+      
+      const response = await fetch(`/api/users/${encodeURIComponent(selectedUser.UserProfile)}/can-view-all-requests`);
+      if (!response.ok) {
+        return { canViewAllRequests: false };
+      }
+      return response.json();
+    },
+    enabled: !!selectedUser?.UserProfile,
+  });
+
   // Query for pending approval requests (Solicitudes pendientes)
   const { 
     data: pendingRequests = [], 
@@ -231,7 +248,7 @@ export default function Dashboard() {
       console.log("All requests data received:", data?.length || 0, "items");
       return Array.isArray(data) ? data : [];
     },
-    enabled: selectedUser?.UserProfile && ["#JefeGrupo#", "#adminCuenta#"].includes(selectedUser.UserProfile) && (activeTab === "all-requests" || activeTab === "approval-schemas"),
+    enabled: selectedUser?.UserProfile && canViewAllRequestsData?.canViewAllRequests && (activeTab === "all-requests" || activeTab === "approval-schemas"),
     retry: 1, // Reduce retries to prevent multiple error toasts
     retryDelay: 1000,
   });
@@ -383,9 +400,9 @@ export default function Dashboard() {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className={`grid w-full mb-6 ${
             // Dynamic grid based on available tabs
-            !canApproveData?.canApprove && selectedUser?.UserProfile !== "#JefeGrupo#" && selectedUser?.UserProfile !== "#adminCuenta#" ? "grid-cols-1" :
-            canApproveData?.canApprove && selectedUser?.UserProfile !== "#JefeGrupo#" && selectedUser?.UserProfile !== "#adminCuenta#" ? "grid-cols-2" :
-            selectedUser?.UserProfile === "#JefeGrupo#" ? "grid-cols-3" :
+            !canApproveData?.canApprove && !canViewAllRequestsData?.canViewAllRequests && selectedUser?.UserProfile !== "#adminCuenta#" ? "grid-cols-1" :
+            canApproveData?.canApprove && !canViewAllRequestsData?.canViewAllRequests && selectedUser?.UserProfile !== "#adminCuenta#" ? "grid-cols-2" :
+            canViewAllRequestsData?.canViewAllRequests && selectedUser?.UserProfile !== "#adminCuenta#" ? "grid-cols-3" :
             selectedUser?.UserProfile === "#adminCuenta#" ? "grid-cols-4" :
             "grid-cols-1"
           }`}>
@@ -393,7 +410,7 @@ export default function Dashboard() {
             {(canApproveData?.canApprove || (selectedUser?.UserProfile && ["#JefeGrupo#", "#adminCuenta#"].includes(selectedUser.UserProfile))) && (
               <TabsTrigger value="pendientes">Solicitudes pendientes</TabsTrigger>
             )}
-            {selectedUser?.UserProfile && ["#JefeGrupo#", "#adminCuenta#"].includes(selectedUser.UserProfile) && (
+            {canViewAllRequestsData?.canViewAllRequests && (
               <TabsTrigger value="todas">Todas las Solicitudes</TabsTrigger>
             )}
             {selectedUser?.UserProfile === "#adminCuenta#" && (
@@ -433,7 +450,7 @@ export default function Dashboard() {
             </TabsContent>
           )}
           
-          {selectedUser?.UserProfile && ["#JefeGrupo#", "#adminCuenta#"].includes(selectedUser.UserProfile) && (
+          {canViewAllRequestsData?.canViewAllRequests && (
             <TabsContent value="todas" className="space-y-6">
               {/* All Requests Table - View only, no management */}
               <RequestTable
