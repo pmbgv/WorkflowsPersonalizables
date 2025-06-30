@@ -548,6 +548,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Check if user can approve requests based on approval steps configuration
+  app.get("/api/users/:userProfile/can-approve", async (req, res) => {
+    try {
+      const userProfile = decodeURIComponent(req.params.userProfile);
+      
+      // Get all approval steps that match this user profile
+      const approvalSteps = await db
+        .select()
+        .from(approvalSteps)
+        .where(eq(approvalSteps.perfil, userProfile));
+      
+      const canApprove = approvalSteps.length > 0;
+      
+      res.json({ canApprove });
+    } catch (error) {
+      console.error("Error checking if user can approve:", error);
+      res.status(500).json({ error: "Error interno del servidor" });
+    }
+  });
+
+  // Check if user can view all requests based on approval steps configuration
+  app.get("/api/users/:userProfile/can-view-all-requests", async (req, res) => {
+    try {
+      const userProfile = decodeURIComponent(req.params.userProfile);
+      
+      // Admin and JefeGrupo always have access
+      if (["#adminCuenta#", "#JefeGrupo#"].includes(userProfile)) {
+        return res.json({ canViewAllRequests: true });
+      }
+      
+      // Check if this profile is configured in any approval step
+      const approvalSteps = await db
+        .select()
+        .from(approvalSteps)
+        .where(eq(approvalSteps.perfil, userProfile));
+      
+      const canViewAllRequests = approvalSteps.length > 0;
+      
+      res.json({ canViewAllRequests });
+    } catch (error) {
+      console.error("Error checking if user can view all requests:", error);
+      res.status(500).json({ error: "Error interno del servidor" });
+    }
+  });
+
   // Approval Steps routes
   app.get("/api/approval-schemas/:schemaId/steps", async (req, res) => {
     try {
