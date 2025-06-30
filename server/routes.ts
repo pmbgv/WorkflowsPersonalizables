@@ -3,6 +3,9 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertRequestSchema, insertApprovalSchemaSchema, insertApprovalStepSchema, insertMotivoPermisoSchema } from "@shared/schema";
 import { z } from "zod";
+import { db } from "./db";
+import { approvalSteps } from "@shared/schema";
+import { eq } from "drizzle-orm";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Get all requests with optional filters
@@ -548,26 +551,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Check if user can approve requests based on approval steps configuration
-  app.get("/api/users/:userProfile/can-approve", async (req, res) => {
-    try {
-      const userProfile = decodeURIComponent(req.params.userProfile);
-      
-      // Get all approval steps that match this user profile
-      const approvalSteps = await db
-        .select()
-        .from(approvalSteps)
-        .where(eq(approvalSteps.perfil, userProfile));
-      
-      const canApprove = approvalSteps.length > 0;
-      
-      res.json({ canApprove });
-    } catch (error) {
-      console.error("Error checking if user can approve:", error);
-      res.status(500).json({ error: "Error interno del servidor" });
-    }
-  });
-
   // Check if user can view all requests based on approval steps configuration
   app.get("/api/users/:userProfile/can-view-all-requests", async (req, res) => {
     try {
@@ -579,9 +562,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Check if this profile is configured in any approval step
-      const approvalSteps = await db
+      const approvalStepsQuery = await db
         .select()
         .from(approvalSteps)
+        .where(eq(approvalSteps.perfil, userProfile));
+      
+      const canViewAllRequests = approvalStepsQuery.length > 0;
+      
+      res.json({ canViewAllRequests });
+    } catch (error) {
+      console.error("Error checking if user can view all requests:", error);
+      res.status(500).json({ error: "Error interno del servidor" });
+    }
+  });
         .where(eq(approvalSteps.perfil, userProfile));
       
       const canViewAllRequests = approvalSteps.length > 0;
@@ -652,34 +645,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Check if user can approve requests based on approval step configurations
+  // Check if user can approve requests based on approval step configurations  
   app.get("/api/users/:userProfile/can-approve", async (req, res) => {
     try {
-      const { userProfile } = req.params;
+      const userProfile = decodeURIComponent(req.params.userProfile);
       
-      if (!userProfile) {
-        return res.status(400).json({ error: "User profile is required" });
-      }
-
-      // Get all approval schemas and their steps
-      const schemas = await storage.getApprovalSchemas();
-      let canApprove = false;
-
-      // Check if user profile matches any approval step configuration
-      for (const schema of schemas) {
-        const steps = await storage.getApprovalSteps(schema.id);
-        const hasMatchingStep = steps.some(step => step.perfil === userProfile);
-        
-        if (hasMatchingStep) {
-          canApprove = true;
-          break;
-        }
-      }
-
-      res.json({ canApprove, userProfile });
+      // Check if this profile is configured in any approval step
+      const approvalStepsQuery = await db
+        .select()
+        .from(approvalSteps)
+        .where(eq(approvalSteps.perfil, userProfile));
+      
+      const canApprove = approvalStepsQuery.length > 0;
+      
+      res.json({ canApprove });
     } catch (error) {
-      console.error('Error checking user approval capabilities:', error);
-      res.status(500).json({ error: "Failed to check user approval capabilities" });
+      console.error("Error checking if user can approve:", error);
+      res.status(500).json({ error: "Error interno del servidor" });
     }
   });
 
