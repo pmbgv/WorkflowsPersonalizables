@@ -414,13 +414,16 @@ export function CreateRequestModal({ open: externalOpen, onOpenChange, onRequest
 
   // Función para manejar el cambio de rango de fechas
   const handleDateRangeChange = (range: DateRange | undefined) => {
+    console.log("🗓️ Calendar selection:", range);
     setDateRange(range);
     if (range?.from) {
       const formattedFrom = formatDateToLocal(range.from);
+      console.log("📅 From date - Original:", range.from, "Formatted:", formattedFrom);
       handleInputChange('fechaSolicitada', formattedFrom);
     }
     if (range?.to) {
       const formattedTo = formatDateToLocal(range.to);
+      console.log("📅 To date - Original:", range.to, "Formatted:", formattedTo);
       handleInputChange('fechaFin', formattedTo);
     } else {
       handleInputChange('fechaFin', "");
@@ -621,7 +624,8 @@ export function CreateRequestModal({ open: externalOpen, onOpenChange, onRequest
       }
     }
 
-    console.log("Request body:", requestData);
+    console.log("📋 Final request data:", JSON.stringify(requestData, null, 2));
+    console.log("📅 Final dates - fechaSolicitada:", requestData.fechaSolicitada, "fechaFin:", requestData.fechaFin);
     createRequestMutation.mutate(requestData as InsertRequest);
   };
 

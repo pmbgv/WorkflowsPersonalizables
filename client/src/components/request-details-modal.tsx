@@ -201,11 +201,11 @@ export function RequestDetailsModal({ request, open, onOpenChange, onDownload, o
                       <p className="text-sm text-muted-foreground">Cargando pasos de aprobación...</p>
                     ) : (
                       approvalSteps.map((step, index) => (
-                        <div key={step.requestApprovalStep.id} className="flex items-center gap-3 p-3 border rounded-lg">
+                        <div key={step.requestApprovalStep?.id || index} className="flex items-center gap-3 p-3 border rounded-lg">
                           <div className="flex-shrink-0">
-                            {step.requestApprovalStep.estado === "Aprobado" ? (
+                            {step.requestApprovalStep?.estado === "Aprobado" ? (
                               <CheckCircle className="h-5 w-5 text-green-600" />
-                            ) : step.requestApprovalStep.estado === "Rechazado" ? (
+                            ) : step.requestApprovalStep?.estado === "Rechazado" ? (
                               <XCircle className="h-5 w-5 text-red-600" />
                             ) : (
                               <Clock className="h-5 w-5 text-gray-400" />
@@ -223,13 +223,13 @@ export function RequestDetailsModal({ request, open, onOpenChange, onDownload, o
                             <p className="text-xs text-muted-foreground">
                               Perfil: {step.approvalStep.perfil}
                             </p>
-                            {step.requestApprovalStep.fechaAprobacion && (
+                            {step.requestApprovalStep?.fechaAprobacion && (
                               <p className="text-xs text-muted-foreground">
-                                {step.requestApprovalStep.estado} el{" "}
+                                {step.requestApprovalStep?.estado} el{" "}
                                 {format(new Date(step.requestApprovalStep.fechaAprobacion), "dd/MM/yyyy HH:mm", { locale: es })}
                               </p>
                             )}
-                            {step.requestApprovalStep.comentario && (
+                            {step.requestApprovalStep?.comentario && (
                               <p className="text-xs text-gray-600 mt-1 italic">
                                 "{step.requestApprovalStep.comentario}"
                               </p>
