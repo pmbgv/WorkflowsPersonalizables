@@ -416,10 +416,12 @@ export function CreateRequestModal({ open: externalOpen, onOpenChange, onRequest
   const handleDateRangeChange = (range: DateRange | undefined) => {
     setDateRange(range);
     if (range?.from) {
-      handleInputChange('fechaSolicitada', formatDateToLocal(range.from));
+      const formattedFrom = formatDateToLocal(range.from);
+      handleInputChange('fechaSolicitada', formattedFrom);
     }
     if (range?.to) {
-      handleInputChange('fechaFin', formatDateToLocal(range.to));
+      const formattedTo = formatDateToLocal(range.to);
+      handleInputChange('fechaFin', formattedTo);
     } else {
       handleInputChange('fechaFin', "");
     }
@@ -743,9 +745,9 @@ export function CreateRequestModal({ open: externalOpen, onOpenChange, onRequest
                         <CalendarIcon className="mr-2 h-4 w-4" />
                         {dateRange?.from ? (
                           dateRange.to ? (
-                            `${format(dateRange.from, "dd/MM/yyyy", { locale: es })} - ${format(dateRange.to, "dd/MM/yyyy", { locale: es })}`
+                            `${formatDateToLocal(dateRange.from).split('-').reverse().join('/')} - ${formatDateToLocal(dateRange.to).split('-').reverse().join('/')}`
                           ) : (
-                            format(dateRange.from, "dd/MM/yyyy", { locale: es })
+                            formatDateToLocal(dateRange.from).split('-').reverse().join('/')
                           )
                         ) : (
                           "Seleccionar"

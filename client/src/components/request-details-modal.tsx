@@ -92,8 +92,8 @@ export function RequestDetailsModal({ request, open, onOpenChange, onDownload, o
 
   // Check if current user can approve this request
   const currentStep = approvalSteps.find(step => 
-    step.requestApprovalStep.estado === "Pendiente" && 
-    step.approvalStep.perfil === currentUser?.UserProfile
+    step.requestApprovalStep?.estado === "Pendiente" && 
+    step.approvalStep?.perfil === currentUser?.UserProfile
   );
 
   const canApprove = !!currentStep && request.estado === "Pendiente";
