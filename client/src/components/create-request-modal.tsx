@@ -404,14 +404,22 @@ export function CreateRequestModal({ open: externalOpen, onOpenChange, onRequest
     return conflicts.length > 0;
   };
 
+  // Función para convertir fecha a string local sin problemas de zona horaria
+  const formatDateToLocal = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   // Función para manejar el cambio de rango de fechas
   const handleDateRangeChange = (range: DateRange | undefined) => {
     setDateRange(range);
     if (range?.from) {
-      handleInputChange('fechaSolicitada', format(range.from, "yyyy-MM-dd"));
+      handleInputChange('fechaSolicitada', formatDateToLocal(range.from));
     }
     if (range?.to) {
-      handleInputChange('fechaFin', format(range.to, "yyyy-MM-dd"));
+      handleInputChange('fechaFin', formatDateToLocal(range.to));
     } else {
       handleInputChange('fechaFin', "");
     }
