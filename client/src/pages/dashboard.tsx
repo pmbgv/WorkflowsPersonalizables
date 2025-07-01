@@ -314,15 +314,9 @@ export default function Dashboard() {
     refetchAll();
   };
 
-  const handleGroupSelect = (groupName: string, users: any[]) => {
-    setSelectedGroup(groupName);
-    setSelectedGroupUsers(users);
-  };
-
   const handleUserSelect = (user: any) => {
     console.log("Usuario seleccionado:", user);
     setSelectedUser(user);
-    
     // Always switch to "lista" (Mis Solicitudes) when selecting a new user
     setActiveTab("lista");
   };
@@ -348,7 +342,7 @@ export default function Dashboard() {
         </div>
         
         <div className="header-content flex items-center gap-4">
-          <div className="info-buttons cursor-pointer" onClick={() => setGroupsModalOpen(true)}>
+          <div className="info-buttons cursor-pointer" onClick={() => setUsersModalOpen(true)}>
             <Globe className="h-5 w-5 color-lightblue2" />
           </div>
           
@@ -357,11 +351,12 @@ export default function Dashboard() {
           </div>
 
           <div className="flex-1 min-w-0">
-            <UserSelector
-              users={selectedGroupUsers}
-              selectedGroup={selectedGroup}
-              onUserSelect={handleUserSelect}
-            />
+            {selectedUser && (
+              <div className="selected-user-info">
+                <span>{selectedUser.displayName || `${selectedUser.Name} ${selectedUser.LastName}`}</span>
+                <span className="text-sm text-gray-500">({selectedUser.profile || selectedUser.UserProfile})</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -426,7 +421,6 @@ export default function Dashboard() {
               title="Mis Solicitudes"
               showCreateButton={true}
               onRequestCreated={handleRequestCreated}
-              selectedGroupUsers={selectedGroupUsers}
               selectedUser={selectedUser}
             />
           </TabsContent>
@@ -440,7 +434,6 @@ export default function Dashboard() {
                 onViewDetails={handleViewDetails}
                 onDownload={handleDownload}
                 onBulkStatusChange={handleBulkStatusChange}
-                selectedGroupUsers={selectedGroupUsers}
                 selectedUser={selectedUser}
                 currentUser={selectedUser}
                 showManagementDropdown={true}
@@ -482,11 +475,11 @@ export default function Dashboard() {
             currentUser={selectedUser}
           />
 
-          {/* Groups Modal */}
-          <GroupsModal
-            open={groupsModalOpen}
-            onOpenChange={setGroupsModalOpen}
-            onGroupSelect={handleGroupSelect}
+          {/* Users Modal */}
+          <UsersModal
+            open={usersModalOpen}
+            onOpenChange={setUsersModalOpen}
+            onUserSelect={handleUserSelect}
           />
         </div>
       </div>
