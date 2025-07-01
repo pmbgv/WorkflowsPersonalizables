@@ -358,33 +358,81 @@ export function CreateRequestModal({ open: externalOpen, onOpenChange, onRequest
 
   // Función para verificar conflictos de fechas
   const checkDateConflicts = (startDate: string, endDate?: string): boolean => {
-    if (!startDate) return false;
+    console.log("🔍 Iniciando verificación de conflictos de fechas");
+    console.log("📅 Fechas a verificar:", { startDate, endDate });
+    
+    if (!startDate) {
+      console.log("❌ No hay fecha de inicio, no hay conflictos");
+      return false;
+    }
 
     const requestStart = new Date(startDate);
     const requestEnd = endDate ? new Date(endDate) : requestStart;
+    
+    console.log("📅 Fechas parseadas:", { 
+      requestStart: requestStart.toISOString(), 
+      requestEnd: requestEnd.toISOString() 
+    });
+    console.log("📋 Solicitudes existentes a verificar:", existingRequests.length);
 
     const conflicts = existingRequests.filter(request => {
+      console.log("🔎 Verificando solicitud:", {
+        id: request.id,
+        solicitadoPor: request.solicitadoPor,
+        estado: request.estado,
+        fechaSolicitada: request.fechaSolicitada,
+        fechaFin: request.fechaFin
+      });
+      
       // Solo verificar solicitudes del mismo usuario
-      if (request.solicitadoPor !== formData.solicitadoPor) return false;
+      if (request.solicitadoPor !== formData.solicitadoPor) {
+        console.log("⏭️ Saltando - diferente usuario");
+        return false;
+      }
       
       // Solo verificar solicitudes que no estén rechazadas o canceladas
-      if (request.estado === "Rechazada" || request.estado === "Cancelada") return false;
+      if (request.estado === "Rechazada" || request.estado === "Cancelada") {
+        console.log("⏭️ Saltando - estado rechazada/cancelada");
+        return false;
+      }
       
       // Verificar que las fechas de la solicitud existente sean válidas
-      if (!request.fechaSolicitada || request.fechaSolicitada === "") return false;
+      if (!request.fechaSolicitada || request.fechaSolicitada === "") {
+        console.log("⏭️ Saltando - sin fecha solicitada");
+        return false;
+      }
       
       const existingStart = new Date(request.fechaSolicitada);
       const existingEnd = request.fechaFin && request.fechaFin !== "" ? new Date(request.fechaFin) : existingStart;
 
+      console.log("📅 Fechas existentes parseadas:", {
+        existingStart: existingStart.toISOString(),
+        existingEnd: existingEnd.toISOString()
+      });
+
       // Verificar que las fechas sean válidas
-      if (isNaN(existingStart.getTime()) || isNaN(existingEnd.getTime())) return false;
-      if (isNaN(requestStart.getTime()) || isNaN(requestEnd.getTime())) return false;
+      if (isNaN(existingStart.getTime()) || isNaN(existingEnd.getTime())) {
+        console.log("⏭️ Saltando - fechas existentes inválidas");
+        return false;
+      }
+      if (isNaN(requestStart.getTime()) || isNaN(requestEnd.getTime())) {
+        console.log("⏭️ Saltando - fechas solicitadas inválidas");
+        return false;
+      }
 
       // Verificar si hay solapamiento
       const hasOverlap = (requestStart <= existingEnd) && (requestEnd >= existingStart);
       
+      console.log("🔄 Verificación de solapamiento:", {
+        condicion1: `${requestStart.toISOString()} <= ${existingEnd.toISOString()}`,
+        resultado1: requestStart <= existingEnd,
+        condicion2: `${requestEnd.toISOString()} >= ${existingStart.toISOString()}`,
+        resultado2: requestEnd >= existingStart,
+        hasOverlap
+      });
+      
       if (hasOverlap) {
-        console.log("Conflicto detectado:", {
+        console.log("⚠️ CONFLICTO DETECTADO:", {
           solicitudExistente: request,
           fechasSolicitadas: { inicio: startDate, fin: endDate },
           solapamiento: hasOverlap
@@ -394,11 +442,12 @@ export function CreateRequestModal({ open: externalOpen, onOpenChange, onRequest
       return hasOverlap;
     });
 
-    console.log("Validación de fechas:", {
+    console.log("📊 Resultado final de validación:", {
       fechaSolicitada: startDate,
       fechaFin: endDate,
       solicitudesExistentes: existingRequests.length,
-      conflictosEncontrados: conflicts.length
+      conflictosEncontrados: conflicts.length,
+      hayConflictos: conflicts.length > 0
     });
 
     return conflicts.length > 0;
@@ -544,9 +593,16 @@ export function CreateRequestModal({ open: externalOpen, onOpenChange, onRequest
     }
 
     // Verificar conflictos de fechas si hay fechas seleccionadas
+    console.log("🚀 SUBMIT: Verificando conflictos antes de envío");
+    console.log("📅 formData.fechaSolicitada:", formData.fechaSolicitada);
+    console.log("📅 formData.fechaFin:", formData.fechaFin);
+    
     if (formData.fechaSolicitada && checkDateConflicts(formData.fechaSolicitada, formData.fechaFin ?? undefined)) {
+      console.log("❌ SUBMIT: Conflicto detectado, mostrando alerta");
       setShowDateConflictAlert(true);
       return;
+    } else {
+      console.log("✅ SUBMIT: No hay conflictos, continuando con envío");
     }
 
     // Preparar datos según el tipo de solicitud
@@ -939,9 +995,9 @@ export function CreateRequestModal({ open: externalOpen, onOpenChange, onRequest
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {dateRange?.from ? (
                         dateRange.to ? (
-                          `${format(dateRange.from, "dd/MM/yyyy", { locale: es })} - ${format(dateRange.to, "dd/MM/yyyy", { locale: es })}`
+                          `${formatDateToLocal(dateRange.from).split('-').reverse().join('/')} - ${formatDateToLocal(dateRange.to).split('-').reverse().join('/')}`
                         ) : (
-                          format(dateRange.from, "dd/MM/yyyy", { locale: es })
+                          formatDateToLocal(dateRange.from).split('-').reverse().join('/')
                         )
                       ) : (
                         "Seleccionar"

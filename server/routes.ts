@@ -99,10 +99,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create a new request
   app.post("/api/requests", async (req, res) => {
     try {
-      console.log("Request body:", req.body);
+      console.log("🚀 SERVER: Recibiendo nueva solicitud");
+      console.log("📅 Request body fechas:", {
+        fechaSolicitada: req.body.fechaSolicitada,
+        fechaFin: req.body.fechaFin
+      });
+      console.log("📋 Request body completo:", req.body);
+      
       const validatedData = insertRequestSchema.parse(req.body);
-      console.log("Validated data:", validatedData);
+      console.log("📅 Validated data fechas:", {
+        fechaSolicitada: validatedData.fechaSolicitada,
+        fechaFin: validatedData.fechaFin
+      });
+      console.log("✅ Validated data completo:", validatedData);
+      
       const newRequest = await storage.createRequest(validatedData);
+      console.log("💾 REQUEST GUARDADO:", {
+        id: newRequest.id,
+        fechaSolicitada: newRequest.fechaSolicitada,
+        fechaFin: newRequest.fechaFin
+      });
       
       // Add initial history entry
       await storage.addRequestHistory({
