@@ -9,7 +9,7 @@ import { CreateRequestModal } from "@/components/create-request-modal";
 import { RequestDetailsModal } from "@/components/request-details-modal";
 import { FiltersSection } from "@/components/filters-section";
 import { ApprovalSchemas } from "@/components/approval-schemas";
-import { UsersModal } from "@/components/users-modal";
+import { GroupsModal } from "@/components/groups-modal";
 import { UserSelector } from "@/components/user-selector";
 import { useToast } from "@/hooks/use-toast";
 import type { Request } from "@shared/schema";
@@ -17,7 +17,9 @@ import type { Request } from "@shared/schema";
 export default function Dashboard() {
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
-  const [usersModalOpen, setUsersModalOpen] = useState(false);
+  const [groupsModalOpen, setGroupsModalOpen] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState<string>("");
+  const [selectedGroupUsers, setSelectedGroupUsers] = useState<any[]>([]);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [activeTab, setActiveTab] = useState("lista");
   const [filters, setFilters] = useState({
@@ -314,9 +316,15 @@ export default function Dashboard() {
     refetchAll();
   };
 
+  const handleGroupSelect = (groupName: string, users: any[]) => {
+    setSelectedGroup(groupName);
+    setSelectedGroupUsers(users);
+  };
+
   const handleUserSelect = (user: any) => {
     console.log("Usuario seleccionado:", user);
     setSelectedUser(user);
+    
     // Always switch to "lista" (Mis Solicitudes) when selecting a new user
     setActiveTab("lista");
   };
@@ -342,7 +350,7 @@ export default function Dashboard() {
         </div>
         
         <div className="header-content flex items-center gap-4">
-          <div className="info-buttons cursor-pointer" onClick={() => setUsersModalOpen(true)}>
+          <div className="info-buttons cursor-pointer" onClick={() => setGroupsModalOpen(true)}>
             <Globe className="h-5 w-5 color-lightblue2" />
           </div>
           
@@ -351,12 +359,11 @@ export default function Dashboard() {
           </div>
 
           <div className="flex-1 min-w-0">
-            {selectedUser && (
-              <div className="selected-user-info">
-                <span>{selectedUser.displayName || `${selectedUser.Name} ${selectedUser.LastName}`}</span>
-                <span className="text-sm text-gray-500">({selectedUser.profile || selectedUser.UserProfile})</span>
-              </div>
-            )}
+            <UserSelector
+              users={selectedGroupUsers}
+              selectedGroup={selectedGroup}
+              onUserSelect={handleUserSelect}
+            />
           </div>
         </div>
       </div>
@@ -421,6 +428,7 @@ export default function Dashboard() {
               title="Mis Solicitudes"
               showCreateButton={true}
               onRequestCreated={handleRequestCreated}
+              selectedGroupUsers={selectedGroupUsers}
               selectedUser={selectedUser}
             />
           </TabsContent>
@@ -434,6 +442,7 @@ export default function Dashboard() {
                 onViewDetails={handleViewDetails}
                 onDownload={handleDownload}
                 onBulkStatusChange={handleBulkStatusChange}
+                selectedGroupUsers={selectedGroupUsers}
                 selectedUser={selectedUser}
                 currentUser={selectedUser}
                 showManagementDropdown={true}
@@ -475,11 +484,11 @@ export default function Dashboard() {
             currentUser={selectedUser}
           />
 
-          {/* Users Modal */}
-          <UsersModal
-            open={usersModalOpen}
-            onOpenChange={setUsersModalOpen}
-            onUserSelect={handleUserSelect}
+          {/* Groups Modal */}
+          <GroupsModal
+            open={groupsModalOpen}
+            onOpenChange={setGroupsModalOpen}
+            onGroupSelect={handleGroupSelect}
           />
         </div>
       </div>
