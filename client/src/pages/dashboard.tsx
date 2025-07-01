@@ -9,7 +9,7 @@ import { CreateRequestModal } from "@/components/create-request-modal";
 import { RequestDetailsModal } from "@/components/request-details-modal";
 import { FiltersSection } from "@/components/filters-section";
 import { ApprovalSchemas } from "@/components/approval-schemas";
-import { GroupsModal } from "@/components/groups-modal";
+import { UsersModal } from "@/components/users-modal";
 import { UserSelector } from "@/components/user-selector";
 import { useToast } from "@/hooks/use-toast";
 import type { Request } from "@shared/schema";
@@ -17,9 +17,7 @@ import type { Request } from "@shared/schema";
 export default function Dashboard() {
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
-  const [groupsModalOpen, setGroupsModalOpen] = useState(false);
-  const [selectedGroup, setSelectedGroup] = useState<string>("");
-  const [selectedGroupUsers, setSelectedGroupUsers] = useState<any[]>([]);
+  const [usersModalOpen, setUsersModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [activeTab, setActiveTab] = useState("lista");
   const [filters, setFilters] = useState({

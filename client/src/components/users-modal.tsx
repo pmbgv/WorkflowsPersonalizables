@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Search, Users, User } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
-interface GroupsModalProps {
+interface UsersModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUserSelect?: (user: SimplifiedUser) => void;
@@ -30,7 +30,7 @@ interface SimplifiedUser {
   originalData: UserData;
 }
 
-export function GroupsModal({ open, onOpenChange, onUserSelect }: GroupsModalProps) {
+export function UsersModal({ open, onOpenChange, onUserSelect }: UsersModalProps) {
   const [searchTerm, setSearchTerm] = useState("");
 
   // Obtener datos de usuarios desde la API
