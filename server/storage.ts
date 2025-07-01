@@ -790,11 +790,27 @@ export class DatabaseStorage implements IStorage {
   // Request Approval Steps implementation
   async getRequestApprovalSteps(requestId: number): Promise<RequestApprovalStep[]> {
     try {
-      return await db
-        .select()
+      const result = await db
+        .select({
+          id: requestApprovalSteps.id,
+          requestId: requestApprovalSteps.requestId,
+          approvalStepId: requestApprovalSteps.approvalStepId,
+          estado: requestApprovalSteps.estado,
+          fechaAprobacion: requestApprovalSteps.fechaAprobacion,
+          comentario: requestApprovalSteps.comentario,
+          aprobadoPor: requestApprovalSteps.aprobadoPor,
+          fechaCreacion: requestApprovalSteps.fechaCreacion,
+          // Add approval step details
+          perfil: approvalSteps.perfil,
+          orden: approvalSteps.orden,
+          obligatorio: approvalSteps.obligatorio
+        })
         .from(requestApprovalSteps)
+        .innerJoin(approvalSteps, eq(requestApprovalSteps.approvalStepId, approvalSteps.id))
         .where(eq(requestApprovalSteps.requestId, requestId))
-        .orderBy(asc(requestApprovalSteps.fechaCreacion));
+        .orderBy(asc(approvalSteps.orden));
+      
+      return result as RequestApprovalStep[];
     } catch (error) {
       console.error("Error fetching request approval steps:", error);
       return [];
