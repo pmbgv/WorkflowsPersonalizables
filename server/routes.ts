@@ -567,7 +567,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .from(approvalSteps)
         .where(eq(approvalSteps.perfil, userProfile));
       
-      const canViewAllRequests = hasApprovalSteps;
+      const canViewAllRequests = approvalStepsQuery.length > 0;
       
       res.json({ canViewAllRequests });
     } catch (error) {
