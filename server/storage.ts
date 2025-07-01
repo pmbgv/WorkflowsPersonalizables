@@ -533,18 +533,27 @@ export class DatabaseStorage implements IStorage {
       }
 
       // 2. Actualizar el paso actual
-      await this.updateRequestApprovalStep(stepId, { 
+      console.log(`🔧 Updating approval step ${stepId} to ${action} for request ${requestId}`);
+      const updatedStep = await this.updateRequestApprovalStep(stepId, { 
         estado: action, 
         fechaAprobacion: new Date(),
-        comentario: comentario || null
+        comentario: comentario || null,
+        aprobadoPor: userProfile
       });
+      
+      if (!updatedStep) {
+        console.error(`❌ Failed to update approval step ${stepId}`);
+        return { success: false, requestStatus: "Pendiente", message: "Error al actualizar paso de aprobación" };
+      }
+      
+      console.log(`✅ Successfully updated step ${stepId} to ${action}`);
 
       // 3. Agregar al historial
       await this.addRequestHistory({
         requestId,
-        accion: action,
-        comentario: comentario || `Paso ${action.toLowerCase()} por ${userProfile}`,
-        usuarioResponsable: userProfile
+        newState: action,
+        changedBy: userProfile,
+        changeReason: comentario || `Paso ${action.toLowerCase()} por ${userProfile}`
       });
 
       // 4. Si es rechazo, terminar inmediatamente
