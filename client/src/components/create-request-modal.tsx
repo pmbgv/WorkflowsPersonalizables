@@ -461,18 +461,40 @@ export function CreateRequestModal({ open: externalOpen, onOpenChange, onRequest
     return `${year}-${month}-${day}`;
   };
 
+  // Función robusta para extraer fecha sin problemas de zona horaria
+  const extractLocalDate = (date: Date): string => {
+    // Obtener componentes de fecha directamente sin conversión de zona horaria
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1; // getMonth() returns 0-11
+    const day = date.getDate();
+    
+    // Formatear con padding
+    const formattedMonth = String(month).padStart(2, '0');
+    const formattedDay = String(day).padStart(2, '0');
+    
+    return `${year}-${formattedMonth}-${formattedDay}`;
+  };
+
   // Función para manejar el cambio de rango de fechas
   const handleDateRangeChange = (range: DateRange | undefined) => {
     console.log("🗓️ Calendar selection:", range);
     setDateRange(range);
     if (range?.from) {
-      const formattedFrom = formatDateToLocal(range.from);
-      console.log("📅 From date - Original:", range.from, "Formatted:", formattedFrom);
+      const formattedFrom = extractLocalDate(range.from);
+      console.log("📅 From date - Original:", range.from.toISOString());
+      console.log("📅 From date - Year:", range.from.getFullYear());
+      console.log("📅 From date - Month:", range.from.getMonth() + 1);
+      console.log("📅 From date - Day:", range.from.getDate());
+      console.log("📅 From date - Final format:", formattedFrom);
       handleInputChange('fechaSolicitada', formattedFrom);
     }
     if (range?.to) {
-      const formattedTo = formatDateToLocal(range.to);
-      console.log("📅 To date - Original:", range.to, "Formatted:", formattedTo);
+      const formattedTo = extractLocalDate(range.to);
+      console.log("📅 To date - Original:", range.to.toISOString());
+      console.log("📅 To date - Year:", range.to.getFullYear());
+      console.log("📅 To date - Month:", range.to.getMonth() + 1);
+      console.log("📅 To date - Day:", range.to.getDate());
+      console.log("📅 To date - Final format:", formattedTo);
       handleInputChange('fechaFin', formattedTo);
     } else {
       handleInputChange('fechaFin', "");
