@@ -1,0 +1,58 @@
+
+
+Ejemplo: test3 motivo "Ley 20823" con 2 pasos obligatorios. Test en grupo Concón donde hay perfil #usuario#, #supervisor#, #admincuenta#.
+
+
+
+Configuración del esquema:
+
+Esquema: test3
+Motivo: Ley 20823
+Paso 1: Orden 1, Obligatorio, administra paso Perfil #supervisor#
+Paso 2: Orden 2, Obligatorio, administra paso Perfil #adminCuenta#
+
+Flujo esperado completo:
+
+1. Usuario crea solicitud:
+
+Usuario "Prueba GC", o "Pepita mendieta" del grupo Concón crea solicitud de Permiso
+Motivo: "Ley 20823"
+Sistema encuentra esquema test3 que incluye este motivo
+Se crean 2 pasos de aprobación en tabla request_approval_steps:
+
+Paso 1: orden=1, estado="Pendiente", perfiles=["#supervisor#"], esObligatorio=true
+Paso 2: orden=2, estado="Pendiente", perfiles=["#adminCuenta#"], esObligatorio=true
+Estado inicial solicitud: "Pendiente"
+
+2. Pestañas estado inicial - antes de cualquier aprobación:
+
+"Mis solicitudes" (usuario Prueba GC): Ve su solicitud en estado "Pendiente"
+"Solicitudes pendientes" (#supervisor#): Ve la solicitud (puede aprobar paso 1)
+"Solicitudes pendientes" (#adminCuenta#): NO ve la solicitud (paso 1 aún no aprobado)
+"Todas las solicitudes": (#supervisor# y #adminCuenta#) ven la solicitud en "Pendiente".
+
+3. Supervisor aprueba paso 1:
+
+Usuario con perfil #supervisor# aprueba
+Se actualiza paso 1: estado="Aprobado", procesadoPor="#supervisor#"
+Estado solicitud: Permanece "Pendiente" (aún falta paso 2)
+
+4. Estado después de paso 1 aprobado:
+
+"Mis solicitudes" (usuario Prueba GC): Ve su solicitud TODAVÍA en "Pendiente"
+"Solicitudes pendientes" (#supervisor#): Ya NO ve la solicitud (su paso completado)
+"Solicitudes pendientes" (#adminCuenta#): AHORA ve la solicitud (puede aprobar paso 2)
+"Todas las solicitudes": (#supervisor# y #adminCuenta#) ven la solicitud en "Pendiente", porque la solicitud no ha terminado el flujo.
+
+5. AdminCuenta aprueba paso 2:
+
+Usuario con perfil #adminCuenta# aprueba
+Se actualiza paso 2: estado="Aprobado", procesadoPor="#adminCuenta#"
+Estado solicitud: Cambia a "Aprobado" (todos los pasos obligatorios completados)
+
+6. Estado final - todos los pasos aprobados:
+
+"Mis solicitudes" (usuario Prueba GC): Ve su solicitud en "Aprobado"
+"Solicitudes pendientes" (#supervisor#): NO ve la solicitud
+"Solicitudes pendientes" (#adminCuenta#): NO ve la solicitud
+"Todas las solicitudes": (#supervisor# y #adminCuenta#) ven la solicitud en "Aprobado", porque la solicitud ha terminado el flujo.
