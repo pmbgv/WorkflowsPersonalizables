@@ -57,7 +57,8 @@ export function RequestDetailsModal({ request, open, onOpenChange, onDownload, o
         comentario: comentario.trim() || undefined
       });
     },
-    onSuccess: (data) => {
+    onSuccess: async (response) => {
+      const data = await response.json();
       toast({
         title: "Acción procesada",
         description: data.message,
@@ -68,10 +69,9 @@ export function RequestDetailsModal({ request, open, onOpenChange, onDownload, o
       queryClient.invalidateQueries({ queryKey: ["/api/requests", "my-requests"] });
       queryClient.invalidateQueries({ queryKey: ["/api/requests", "pending-approval"] });
       
-      // Update request status if provided
-      if (onStatusChange && data.requestStatus !== request.estado) {
-        onStatusChange(request.id, data.requestStatus);
-      }
+      // Note: Do not call onStatusChange here - the approval process 
+      // manages request status internally. Calling onStatusChange would 
+      // interfere with sequential approval workflow logic.
       
       // Close modal if request is completed
       if (data.requestStatus === "Aprobado" || data.requestStatus === "Rechazado") {
