@@ -370,8 +370,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/requests/:id/approval-steps", async (req, res) => {
     try {
       const requestId = parseInt(req.params.id);
-      const steps = await storage.getRequestApprovalStepsWithDetails(requestId);
-      res.json(steps);
+      const flatSteps = await storage.getRequestApprovalSteps(requestId);
+      
+      // Transform flat structure to nested structure for frontend compatibility
+      const nestedSteps = flatSteps.map(step => ({
+        requestApprovalStep: {
+          id: step.id,
+          requestId: step.requestId,
+          approvalStepId: step.approvalStepId,
+          estado: step.estado,
+          fechaAprobacion: step.fechaAprobacion,
+          comentario: step.comentario,
+          aprobadoPor: step.aprobadoPor,
+          fechaCreacion: step.fechaCreacion
+        },
+        approvalStep: {
+          id: step.approvalStepId,
+          perfil: (step as any).perfil,
+          orden: (step as any).orden,
+          obligatorio: (step as any).obligatorio,
+          descripcion: `${(step as any).perfil} - Paso ${(step as any).orden}`
+        }
+      }));
+      
+      res.json(nestedSteps);
     } catch (error) {
       console.error("Error getting request approval steps:", error);
       res.status(500).json({ error: "Error interno del servidor" });
