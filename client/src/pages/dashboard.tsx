@@ -186,7 +186,7 @@ export default function Dashboard() {
       }
       return response.json();
     },
-    enabled: !!selectedUser?.Identifier && !!selectedUser?.UserProfile && (canApproveData?.canApprove || (selectedUser?.UserProfile && ["#JefeGrupo#", "#adminCuenta#"].includes(selectedUser.UserProfile))),
+    enabled: !!selectedUser?.Identifier && !!selectedUser?.UserProfile && (canApproveData?.canApprove || (selectedUser?.UserProfile && ["#JefeGrupo#", "#adminCuenta#", "#supervisor#"].includes(selectedUser.UserProfile))),
   });
 
 
@@ -407,7 +407,7 @@ export default function Dashboard() {
             "grid-cols-1"
           }`}>
             <TabsTrigger value="lista">Mis Solicitudes</TabsTrigger>
-            {(canApproveData?.canApprove || (selectedUser?.UserProfile && ["#JefeGrupo#", "#adminCuenta#"].includes(selectedUser.UserProfile))) && (
+            {(canApproveData?.canApprove || (selectedUser?.UserProfile && ["#JefeGrupo#", "#adminCuenta#", "#supervisor#"].includes(selectedUser.UserProfile))) && (
               <TabsTrigger value="pendientes">Solicitudes pendientes</TabsTrigger>
             )}
             {canViewAllRequestsData?.canViewAllRequests && (
@@ -433,7 +433,7 @@ export default function Dashboard() {
             />
           </TabsContent>
 
-          {(canApproveData?.canApprove || (selectedUser?.UserProfile && ["#JefeGrupo#", "#adminCuenta#"].includes(selectedUser.UserProfile))) && (
+          {(canApproveData?.canApprove || (selectedUser?.UserProfile && ["#JefeGrupo#", "#adminCuenta#", "#supervisor#"].includes(selectedUser.UserProfile))) && (
             <TabsContent value="pendientes" className="space-y-6">
               {/* Pending Requests Table with Checkboxes */}
               <PendingRequestsTable
