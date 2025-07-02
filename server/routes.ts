@@ -370,7 +370,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/requests/:id/approval-steps", async (req, res) => {
     try {
       const requestId = parseInt(req.params.id);
-      const steps = await storage.getRequestApprovalSteps(requestId);
+      const steps = await storage.getRequestApprovalStepsWithDetails(requestId);
       res.json(steps);
     } catch (error) {
       console.error("Error getting request approval steps:", error);

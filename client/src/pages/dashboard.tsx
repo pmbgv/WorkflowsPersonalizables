@@ -311,6 +311,12 @@ export default function Dashboard() {
   };
 
   const handleRequestCreated = () => {
+    // Invalidate all request-related queries to ensure fresh data
+    queryClient.invalidateQueries({ queryKey: ["/api/requests"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/requests/my-requests"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/requests/pending-approval"] });
+    
+    // Also call refetch for immediate update
     refetch();
     refetchPending();
     refetchAll();
