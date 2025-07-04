@@ -192,7 +192,15 @@ export function PendingRequestsTable({
                   <ArrowUpDown className="ml-1 h-4 w-4" />
                 </div>
               </TableHead>
-
+              <TableHead 
+                className="cursor-pointer hover:text-gray-700"
+                onClick={() => handleSort('identificadorUsuario')}
+              >
+                <div className="flex items-center">
+                  Identificador
+                  <ArrowUpDown className="ml-1 h-4 w-4" />
+                </div>
+              </TableHead>
               <TableHead>Grupo</TableHead>
               <TableHead 
                 className="cursor-pointer hover:text-gray-700"
@@ -247,6 +255,9 @@ export function PendingRequestsTable({
                 )}
                 <TableCell className="text-sm">
                   {request.usuarioSolicitado || request.solicitadoPor}
+                </TableCell>
+                <TableCell className="text-sm">
+                  {request.identificadorUsuario || request.identificador}
                 </TableCell>
                 <TableCell className="text-sm">{request.grupo || 'Concón'}</TableCell>
                 <TableCell className="text-sm">
@@ -320,6 +331,10 @@ export function PendingRequestsTable({
               <div className="flex justify-between">
                 <span>Usuario:</span>
                 <span>{request.usuarioSolicitado || request.solicitadoPor}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Identificador:</span>
+                <span>{request.identificadorUsuario || request.identificador}</span>
               </div>
               <div className="flex justify-between">
                 <span>Grupo:</span>
