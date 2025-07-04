@@ -125,6 +125,7 @@ This is a full-stack web application for managing employee requests and approval
 - **CDN Ready**: Static assets can be served from CDN in production
 
 ## Changelog  
+- July 2, 2025: Completely resolved sequential approval workflow - identified and fixed root cause where modal onStatusChange was interfering with approval logic, corrected 7 inconsistent request states in database, implemented comprehensive test suite preventing future regressions, and verified perfect frontend-backend synchronization for supervisor → adminCuenta workflow
 - July 2, 2025: Fixed sequential approval workflow regression - removed problematic onStatusChange call in request details modal that was overriding processApprovalStep logic, ensuring requests stay "Pendiente" until all obligatory steps complete and sequential supervisor → adminCuenta workflow functions correctly
 - July 2, 2025: Fixed modal error and query synchronization issues - corrected approval steps endpoint structure to resolve "Cannot read properties of undefined (reading 'orden')" error in request details modal, enhanced query invalidation in handleRequestCreated for immediate visibility of new requests, and verified complete supervisor → adminCuenta sequential workflow functions correctly
 - July 2, 2025: Fixed critical frontend visibility issue for supervisor users - added missing #supervisor# profile to frontend query conditions and tab visibility logic in dashboard.tsx, enabling supervisors to see and manage pending requests in the sequential approval workflow as designed
