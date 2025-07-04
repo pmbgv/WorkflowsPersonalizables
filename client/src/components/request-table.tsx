@@ -139,15 +139,6 @@ export function RequestTable({ requests, isLoading, onViewDetails, onDownload, t
                 </TableHead>
                 <TableHead 
                   className="cursor-pointer hover:text-gray-700"
-                  onClick={() => handleSort('usuarioSolicitado')}
-                >
-                  <div className="flex items-center">
-                    Usuario
-                    <ArrowUpDown className="ml-1 h-4 w-4" />
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer hover:text-gray-700"
                   onClick={() => handleSort('solicitadoPor')}
                 >
                   <div className="flex items-center">
@@ -164,7 +155,7 @@ export function RequestTable({ requests, isLoading, onViewDetails, onDownload, t
                     <ArrowUpDown className="ml-1 h-4 w-4" />
                   </div>
                 </TableHead>
-                <TableHead className="text-center">Acciones</TableHead>
+                <TableHead className="text-center">Detalle</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -178,30 +169,19 @@ export function RequestTable({ requests, isLoading, onViewDetails, onDownload, t
                   </TableCell>
                   <TableCell className="text-sm">{request.tipo}</TableCell>
                   <TableCell>{renderStatusCell(request)}</TableCell>
-                  <TableCell className="text-sm">{request.usuarioSolicitado || request.solicitadoPor}</TableCell>
                   <TableCell className="text-sm">{request.solicitadoPor}</TableCell>
                   <TableCell className="text-sm text-gray-500">
                     {formatDate(request.fechaCreacion)}
                   </TableCell>
                   <TableCell className="text-center">
-                    <div className="flex justify-center space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => onViewDetails(request)}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => onDownload(request.id)}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onViewDetails(request)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -227,10 +207,6 @@ export function RequestTable({ requests, isLoading, onViewDetails, onDownload, t
               </div>
               <div className="space-y-2 text-sm text-gray-600">
                 <div className="flex justify-between">
-                  <span>Usuario:</span>
-                  <span>{request.usuarioSolicitado || request.solicitadoPor}</span>
-                </div>
-                <div className="flex justify-between">
                   <span>Solicitado por:</span>
                   <span>{request.solicitadoPor}</span>
                 </div>
@@ -248,15 +224,6 @@ export function RequestTable({ requests, isLoading, onViewDetails, onDownload, t
                 >
                   <Eye className="w-4 h-4 mr-1" />
                   Ver detalles
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onDownload(request.id)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <Download className="w-4 h-4 mr-1" />
-                  Descargar
                 </Button>
               </div>
             </div>

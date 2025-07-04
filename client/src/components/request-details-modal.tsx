@@ -64,10 +64,15 @@ export function RequestDetailsModal({ request, open, onOpenChange, onDownload, o
         description: data.message,
       });
       
-      // Invalidate queries to refresh data
+      // Invalidate queries to refresh data using the exact query keys from dashboard
+      // This ensures that all tables (mis solicitudes, solicitudes pendientes, todas las solicitudes) refresh
+      queryClient.invalidateQueries({ queryKey: ["/api/requests/my-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/requests/pending-approval"] }); 
+      queryClient.invalidateQueries({ queryKey: ["/api/requests", "all-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/requests", request?.id, "approval-steps"] });
+      
+      // Also invalidate the general requests queries to be safe
       queryClient.invalidateQueries({ queryKey: ["/api/requests"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/requests", "my-requests"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/requests", "pending-approval"] });
       
       // Note: Do not call onStatusChange here - the approval process 
       // manages request status internally. Calling onStatusChange would 

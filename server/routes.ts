@@ -138,11 +138,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       console.log("✅ Validated data completo:", validatedData);
       
+      // Enrich with group information from GeoVictoria API if identifier is available
+      if (validatedData.identificadorUsuario) {
+        try {
+          const authHeader = process.env.AUTHORIZATION_HEADER;
+          if (authHeader) {
+            const response = await fetch("https://customerapi.geovictoria.com/api/v1/User/ListComplete", {
+              method: 'POST',
+              headers: {
+                "Authorization": authHeader,
+                "Content-Type": "application/json"
+              }
+            });
+
+            if (response.ok) {
+              const users = await response.json();
+              const user = users.find((u: any) => u.Identifier === validatedData.identificadorUsuario);
+              if (user && user.GroupDescription) {
+                validatedData.grupo = user.GroupDescription;
+                console.log(`📍 Grupo obtenido: ${user.GroupDescription} para usuario ${validatedData.identificadorUsuario}`);
+              }
+            }
+          }
+        } catch (error) {
+          console.log("⚠️ No se pudo obtener información de grupo desde GeoVictoria:", error);
+          // Continue without group info - not critical for request creation
+        }
+      }
+      
       const newRequest = await storage.createRequest(validatedData);
       console.log("💾 REQUEST GUARDADO:", {
         id: newRequest.id,
         fechaSolicitada: newRequest.fechaSolicitada,
-        fechaFin: newRequest.fechaFin
+        fechaFin: newRequest.fechaFin,
+        grupo: newRequest.grupo
       });
       
       // Add initial history entry

@@ -14,6 +14,7 @@ export const requests = pgTable("requests", {
   usuarioSolicitado: varchar("usuario_solicitado", { length: 100 }), // User the request is for
   identificador: varchar("identificador", { length: 50 }),
   identificadorUsuario: varchar("identificador_usuario", { length: 50 }), // ID of the user the request is for
+  grupo: varchar("grupo", { length: 100 }), // Group information from GeoVictoria API
   motivo: varchar("motivo", { length: 100 }),
   archivosAdjuntos: text("archivos_adjuntos").array(),
   diasSolicitados: integer("dias_solicitados"),

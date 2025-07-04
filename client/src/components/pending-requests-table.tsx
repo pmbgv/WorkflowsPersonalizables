@@ -259,7 +259,7 @@ export function PendingRequestsTable({
                 <TableCell className="text-sm">
                   {request.identificadorUsuario || request.identificador}
                 </TableCell>
-                <TableCell className="text-sm">-</TableCell>
+                <TableCell className="text-sm">{request.grupo || 'Concón'}</TableCell>
                 <TableCell className="text-sm">
                   {request.fechaFin ? 
                     `${formatDate(request.fechaSolicitada)} - ${formatDate(request.fechaFin)}` : 
@@ -335,6 +335,10 @@ export function PendingRequestsTable({
               <div className="flex justify-between">
                 <span>Identificador:</span>
                 <span>{request.identificadorUsuario || request.identificador}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Grupo:</span>
+                <span>{request.grupo || 'Concón'}</span>
               </div>
               <div className="flex justify-between">
                 <span>Fecha de creación:</span>
