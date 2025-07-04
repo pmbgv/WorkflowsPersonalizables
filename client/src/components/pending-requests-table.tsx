@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Eye, Download, ArrowUpDown, Plus, CheckCircle, XCircle } from "lucide-react";
+import { Eye, ArrowUpDown, Plus, CheckCircle, XCircle } from "lucide-react";
 import { formatDate, getStatusBadgeVariant } from "@/lib/utils";
 import { CreateRequestModal } from "@/components/create-request-modal";
 import type { Request } from "@shared/schema";
@@ -239,7 +239,6 @@ export function PendingRequestsTable({
                 </div>
               </TableHead>
               <TableHead className="text-center">Detalle</TableHead>
-              <TableHead className="text-center">Descargar</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -283,16 +282,6 @@ export function PendingRequestsTable({
                     className="h-8 w-8 p-0"
                   >
                     <Eye className="h-4 w-4" />
-                  </Button>
-                </TableCell>
-                <TableCell className="text-center">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onDownload(request.id)}
-                    className="h-8 w-8 p-0"
-                  >
-                    <Download className="h-4 w-4" />
                   </Button>
                 </TableCell>
               </TableRow>
@@ -354,15 +343,6 @@ export function PendingRequestsTable({
               >
                 <Eye className="w-4 h-4 mr-1" />
                 Ver detalles
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onDownload(request.id)}
-                className="text-blue-600 hover:text-blue-700"
-              >
-                <Download className="w-4 h-4 mr-1" />
-                Descargar
               </Button>
             </div>
           </div>
