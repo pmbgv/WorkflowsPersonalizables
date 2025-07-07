@@ -59,6 +59,7 @@ export interface IStorage {
   getNextPendingApprovalStep(requestId: number): Promise<RequestApprovalStep | undefined>;
   ensureRequestApprovalSteps(request: Request): Promise<void>;
   checkUserCanApprove(requestId: number, userProfile: string): Promise<boolean>;
+  checkUserHasRoleInWorkflow(requestId: number, userProfile: string): Promise<boolean>;
   createApprovalStepsForRequest(request: Request): Promise<void>;
   
   // User Vacation Balance
@@ -296,16 +297,26 @@ export class DatabaseStorage implements IStorage {
         // This is "Todas las solicitudes" - show requests user can view based on profile
         console.log(`Filtering for "Todas las solicitudes" with profile: ${filters.userProfile}`);
         
-        if (filters.userProfile === "#adminCuenta#") {
-          // Admin can see all requests
-          return result;
-        } else if (filters.userProfile === "#JefeGrupo#") {
-          // Jefe Grupo can see requests from their organizational hierarchy
-          return result; // For now, show all - can be refined later
-        } else {
-          // Regular users can see limited requests
-          return result.slice(0, 10); // Limited view for testing
+        // For "Todas las solicitudes", filter by requests where user has ANY role in approval workflow
+        const filteredRequests: Request[] = [];
+        
+        for (const request of result) {
+          // Ensure request has approval steps
+          await this.ensureRequestApprovalSteps(request);
+          
+          // Check if user has ANY role in this request's approval workflow
+          const hasRoleInWorkflow = await this.checkUserHasRoleInWorkflow(request.id, filters.userProfile);
+          
+          if (hasRoleInWorkflow) {
+            console.log(`✅ Request ${request.id} has role for user ${filters.userProfile} in workflow`);
+            filteredRequests.push(request);
+          } else {
+            console.log(`❌ Request ${request.id} has no role for user ${filters.userProfile} in workflow`);
+          }
         }
+        
+        console.log(`"Todas las solicitudes" filtered requests for ${filters.userProfile}: ${filteredRequests.length}`);
+        return filteredRequests;
       }
 
       // If userProfile is provided with userId, filter by approval schema steps
@@ -432,6 +443,42 @@ export class DatabaseStorage implements IStorage {
       }
     } catch (error) {
       console.error("Error ensuring request has approval steps:", error);
+    }
+  }
+
+  // Helper method to check if user has ANY role in the approval workflow
+  async checkUserHasRoleInWorkflow(requestId: number, userProfile: string): Promise<boolean> {
+    try {
+      console.log(`🔍 Checking if user ${userProfile} has any role in request ${requestId} workflow`);
+      
+      // Get ALL approval steps for this request
+      const allSteps = await db
+        .select({
+          requestApprovalStep: requestApprovalSteps,
+          approvalStep: approvalSteps
+        })
+        .from(requestApprovalSteps)
+        .innerJoin(approvalSteps, eq(requestApprovalSteps.approvalStepId, approvalSteps.id))
+        .where(eq(requestApprovalSteps.requestId, requestId))
+        .orderBy(asc(approvalSteps.orden));
+      
+      if (allSteps.length === 0) {
+        console.log(`❌ No approval steps found for request ${requestId}`);
+        return false;
+      }
+      
+      // Check if user profile matches ANY step in the workflow
+      const hasRole = allSteps.some(stepData => {
+        const stepConfig = stepData.approvalStep;
+        return stepConfig.perfil === userProfile || stepConfig.perfil === "Todos los perfiles";
+      });
+      
+      console.log(`${hasRole ? '✅' : '❌'} User ${userProfile} ${hasRole ? 'HAS' : 'DOES NOT HAVE'} role in request ${requestId} workflow`);
+      return hasRole;
+      
+    } catch (error) {
+      console.error("Error checking if user has role in workflow:", error);
+      return false;
     }
   }
 
