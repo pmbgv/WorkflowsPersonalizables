@@ -206,8 +206,8 @@ export default function Dashboard() {
       }
       
       // Only fetch when we're actually on the all-requests tab or approval schemas tab
-      if (activeTab !== "all-requests" && activeTab !== "approval-schemas") {
-        console.log("Not on all-requests or approval-schemas tab, skipping fetch");
+      if (activeTab !== "todas" && activeTab !== "esquemas") {
+        console.log("Not on todas or esquemas tab, skipping fetch");
         return [];
       }
       
@@ -248,7 +248,7 @@ export default function Dashboard() {
       console.log("All requests data received:", data?.length || 0, "items");
       return Array.isArray(data) ? data : [];
     },
-    enabled: selectedUser?.UserProfile && canViewAllRequestsData?.canViewAllRequests && (activeTab === "all-requests" || activeTab === "approval-schemas"),
+    enabled: selectedUser?.UserProfile && canViewAllRequestsData?.canViewAllRequests && (activeTab === "todas" || activeTab === "esquemas"),
     retry: 1, // Reduce retries to prevent multiple error toasts
     retryDelay: 1000,
   });
