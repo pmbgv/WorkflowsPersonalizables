@@ -603,10 +603,19 @@ export class DatabaseStorage implements IStorage {
         changeReason: comentario || `Paso ${action.toLowerCase()} por ${userProfile}`
       });
 
-      // 4. Si es rechazo, terminar inmediatamente
+      // 4. Si es rechazo, terminar inmediatamente usando status update logic
       if (action === "Rechazado") {
-        await this.updateRequest(requestId, { estado: "Rechazado" });
-        return { success: true, requestStatus: "Rechazado", message: "Solicitud rechazada" };
+        console.log("Request rejected - calling status update logic");
+        
+        const updateResult = await this.updateRequestStatus(requestId, "Rechazado", userProfile, comentario || "Solicitud rechazada");
+        
+        if (updateResult.success) {
+          console.log("Status update logic called successfully for rejection");
+          return { success: true, requestStatus: "Rechazado", message: "Solicitud rechazada" };
+        } else {
+          console.error("Failed to call status update logic for rejection:", updateResult.error);
+          return { success: false, requestStatus: "Pendiente", message: "Error al actualizar estado de rechazo" };
+        }
       }
 
       // 5. Obtener todos los pasos de aprobación para esta solicitud
@@ -629,9 +638,17 @@ export class DatabaseStorage implements IStorage {
       // 6. Determinar lógica de flujo según configuración de pasos
       if (obligatorySteps.length === 0) {
         // Caso: Múltiples pasos, todos opcionales - primera aprobación completa todo
-        console.log("All steps are optional - completing request");
-        await this.updateRequest(requestId, { estado: "Aprobado" });
-        return { success: true, requestStatus: "Aprobado", message: "Solicitud aprobada (todos los pasos opcionales)" };
+        console.log("All steps are optional - calling status update logic");
+        
+        const updateResult = await this.updateRequestStatus(requestId, "Aprobado", userProfile, "Todos los pasos opcionales");
+        
+        if (updateResult.success) {
+          console.log("Status update logic called successfully for optional steps");
+          return { success: true, requestStatus: "Aprobado", message: "Solicitud aprobada (todos los pasos opcionales)" };
+        } else {
+          console.error("Failed to call status update logic for optional steps:", updateResult.error);
+          return { success: false, requestStatus: "Pendiente", message: "Error al actualizar estado final" };
+        }
       } else {
         // Caso: Al menos un paso obligatorio - verificar si todos los obligatorios están aprobados
         const pendingObligatory = obligatorySteps.filter(step => step.requestApprovalStep.estado === "Pendiente");
@@ -639,10 +656,19 @@ export class DatabaseStorage implements IStorage {
         console.log(`Obligatory steps pending: ${pendingObligatory.length}`);
         
         if (pendingObligatory.length === 0) {
-          // Todos los pasos obligatorios completados
-          console.log("All obligatory steps completed - approving request");
-          await this.updateRequest(requestId, { estado: "Aprobado" });
-          return { success: true, requestStatus: "Aprobado", message: "Solicitud aprobada (todos los pasos obligatorios completados)" };
+          // Todos los pasos obligatorios completados - use status update logic
+          console.log("All obligatory steps completed - calling status update logic");
+          
+          // Call the status update logic through a shared function
+          const updateResult = await this.updateRequestStatus(requestId, "Aprobado", "Sistema de aprobación", "Todos los pasos obligatorios completados");
+          
+          if (updateResult.success) {
+            console.log("Status update logic called successfully");
+            return { success: true, requestStatus: "Aprobado", message: "Solicitud aprobada (todos los pasos obligatorios completados)" };
+          } else {
+            console.error("Failed to call status update logic:", updateResult.error);
+            return { success: false, requestStatus: "Pendiente", message: "Error al actualizar estado final" };
+          }
         } else {
           // Aún hay pasos obligatorios pendientes
           console.log("Request continues - obligatory steps still pending");
@@ -663,6 +689,181 @@ export class DatabaseStorage implements IStorage {
       .where(eq(requests.id, id))
       .returning();
     return updatedRequest || undefined;
+  }
+
+  // Shared status update logic that includes all the business logic from the status endpoint
+  async updateRequestStatus(requestId: number, estado: string, changedBy: string, changeReason: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      // Get current request to track previous state
+      const currentRequest = await this.getRequest(requestId);
+      if (!currentRequest) {
+        return { success: false, error: "Request not found" };
+      }
+      
+      // Update the request status
+      const updatedRequest = await this.updateRequest(requestId, { estado });
+      if (!updatedRequest) {
+        return { success: false, error: "Failed to update request" };
+      }
+
+      // Add to history if state changed
+      if (currentRequest.estado !== estado) {
+        await this.addRequestHistory({
+          requestId: requestId,
+          previousState: currentRequest.estado,
+          newState: estado,
+          changedBy: changedBy,
+          changeReason: changeReason
+        });
+      }
+
+      // If status changed to "Aprobado", execute all the external integrations
+      if (estado === "Aprobado") {
+        await this.handleApprovedRequestIntegrations(updatedRequest);
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error("Error in updateRequestStatus:", error);
+      return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
+    }
+  }
+
+  // Handle external integrations when request is approved
+  private async handleApprovedRequestIntegrations(updatedRequest: Request): Promise<void> {
+    try {
+      const authHeader = process.env.AUTHORIZATION_HEADER;
+      
+      if (!authHeader) {
+        console.error("AUTHORIZATION_HEADER not configured");
+        return;
+      }
+
+      // Get timeoff types to map motivo to ID
+      const typesUrl = "https://customerapi.geovictoria.com/api/v1/TimeOff/GetTypes";
+      const typesResponse = await fetch(typesUrl, {
+        method: 'POST',
+        headers: {
+          "Authorization": authHeader,
+          "Content-Type": "application/json"
+        }
+      });
+
+      if (typesResponse.ok) {
+        const timeOffTypes = await typesResponse.json();
+        
+        // Find the type ID based on motivo
+        const timeOffType = timeOffTypes.find((type: any) => 
+          type.TranslatedDescription === updatedRequest.motivo && type.Status === "enabled"
+        );
+
+        if (timeOffType) {
+          // Get complete user information
+          const usersUrl = "https://customerapi.geovictoria.com/api/v1/User/ListComplete";
+          const usersResponse = await fetch(usersUrl, {
+            method: 'POST',
+            headers: {
+              "Authorization": authHeader,
+              "Content-Type": "application/json"
+            }
+          });
+
+          let userName = "Usuario";
+          if (usersResponse.ok) {
+            const users = await usersResponse.json();
+            const user = users.find((u: any) => u.Identifier === updatedRequest.identificador);
+            if (user) {
+              userName = `${user.Name} ${user.LastName}`.trim();
+            }
+          }
+
+          // Format dates for GeoVictoria (YYYYMMDDHHMMSS)
+          const formatDateForGeoVictoria = (dateStr: string) => {
+            const date = new Date(dateStr);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}${month}${day}000000`;
+          };
+
+          const formatEndDateForGeoVictoria = (dateStr: string) => {
+            const date = new Date(dateStr);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}${month}${day}235959`;
+          };
+
+          // Prepare data according to required format
+          const geoVictoriaData = {
+            TimeOffTypeId: timeOffType.Id,
+            Starts: formatDateForGeoVictoria(updatedRequest.fechaSolicitada),
+            Ends: updatedRequest.fechaFin ? formatEndDateForGeoVictoria(updatedRequest.fechaFin) : formatEndDateForGeoVictoria(updatedRequest.fechaSolicitada),
+            TimeOffTypeDescription: timeOffType.TranslatedDescription,
+            Description: updatedRequest.descripcion || `Solicitud #${updatedRequest.id} aceptada`,
+            Identifier: "103285551",
+            Name: userName,
+            isParcial: timeOffType.IsParcial || false
+          };
+
+          console.log("ENVIANDO A GEOVICTORIA:", geoVictoriaData);
+
+          // Send to GeoVictoria
+          const upsertUrl = "https://customerapi.geovictoria.com/api/v1/TimeOff/Upsert";
+          const upsertResponse = await fetch(upsertUrl, {
+            method: 'POST',
+            headers: {
+              "Authorization": authHeader,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(geoVictoriaData)
+          });
+
+          if (!upsertResponse.ok) {
+            const errorText = await upsertResponse.text();
+            console.error("Failed to sync to GeoVictoria:", upsertResponse.status, errorText);
+          } else {
+            console.log("Request synced to GeoVictoria successfully");
+          }
+        } else {
+          console.error(`TimeOff type not found for motivo: ${updatedRequest.motivo}`);
+        }
+      } else {
+        console.error("Failed to fetch timeoff types:", typesResponse.status);
+      }
+
+      // Send notification to external system
+      const notificationData = {
+        asunto: updatedRequest.asunto,
+        fechaSolicitada: updatedRequest.fechaSolicitada,
+        fechaFin: updatedRequest.fechaFin,
+        descripcion: updatedRequest.descripcion,
+        motivo: updatedRequest.motivo,
+        solicitadoPor: updatedRequest.solicitadoPor,
+        identificador: updatedRequest.identificador,
+        usuarioSolicitado: updatedRequest.usuarioSolicitado,
+        identificadorUsuario: updatedRequest.identificadorUsuario,
+        estado: updatedRequest.estado,
+        message: "ESCRIBIENDO A LIBRO"
+      };
+
+      const response = await fetch("https://9448701c-ba39-418d-b9a3-bffb4f899f03-00-15wveztsmtm4l.picard.replit.dev/actualizar", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(notificationData)
+      });
+
+      if (!response.ok) {
+        console.error("Failed to send notification to external system:", response.status, response.statusText);
+      } else {
+        console.log("Notification sent successfully to external system");
+      }
+    } catch (error) {
+      console.error("Error in handleApprovedRequestIntegrations:", error);
+      // Don't fail the main request if external integrations fail
+    }
   }
 
   async deleteRequest(id: number): Promise<boolean> {
