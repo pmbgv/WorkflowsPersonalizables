@@ -13,7 +13,6 @@ interface PendingRequestsTableProps {
   isLoading: boolean;
   onViewDetails: (request: Request) => void;
   onDownload: (requestId: number) => void;
-  onBulkStatusChange: (requestIds: number[], newStatus: string) => void;
   selectedGroupUsers?: any[];
   selectedUser?: any;
   currentUser?: any;
@@ -25,52 +24,16 @@ export function PendingRequestsTable({
   isLoading, 
   onViewDetails, 
   onDownload, 
-  onBulkStatusChange,
   selectedGroupUsers = [],
   selectedUser,
   currentUser,
   showManagementDropdown = true
 }: PendingRequestsTableProps) {
-  const [selectedRequests, setSelectedRequests] = useState<number[]>([]);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [sortBy, setSortBy] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [currentPage, setCurrentPage] = useState(1);
   const requestsPerPage = 10;
-
-  // Toggle individual request selection
-  const toggleRequestSelection = (requestId: number) => {
-    setSelectedRequests(prev => 
-      prev.includes(requestId) 
-        ? prev.filter(id => id !== requestId)
-        : [...prev, requestId]
-    );
-  };
-
-  // Toggle all requests selection
-  const toggleAllSelection = () => {
-    if (selectedRequests.length === currentRequests.length) {
-      setSelectedRequests([]);
-    } else {
-      setSelectedRequests(currentRequests.map(req => req.id));
-    }
-  };
-
-  // Handle bulk approve
-  const handleBulkApprove = () => {
-    if (selectedRequests.length > 0) {
-      onBulkStatusChange(selectedRequests, "Aprobado");
-      setSelectedRequests([]);
-    }
-  };
-
-  // Handle bulk reject
-  const handleBulkReject = () => {
-    if (selectedRequests.length > 0) {
-      onBulkStatusChange(selectedRequests, "Rechazado");
-      setSelectedRequests([]);
-    }
-  };
 
   // Handle sorting
   const handleSort = (field: string) => {
@@ -139,23 +102,7 @@ export function PendingRequestsTable({
               <Plus className="w-4 h-4 mr-2" />
               Crear solicitud
             </Button>
-            <Button 
-              onClick={handleBulkReject}
-              disabled={selectedRequests.length === 0}
-              variant="outline"
-              className="border-red-500 text-red-500 hover:bg-red-50"
-            >
-              <XCircle className="w-4 h-4 mr-2" />
-              Rechazar
-            </Button>
-            <Button 
-              onClick={handleBulkApprove}
-              disabled={selectedRequests.length === 0}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              <CheckCircle className="w-4 h-4 mr-2" />
-              Aprobar
-            </Button>
+            {/* Bulk approval buttons removed - use individual approval through request details modal */}
           </div>
         )}
       </div>
@@ -163,11 +110,6 @@ export function PendingRequestsTable({
       {/* Requests count */}
       <div className="text-sm text-gray-600">
         {requests.length} solicitud{requests.length !== 1 ? 'es' : ''} pendiente{requests.length !== 1 ? 's' : ''}
-        {selectedRequests.length > 0 && (
-          <span className="ml-2 font-medium">
-            ({selectedRequests.length} seleccionada{selectedRequests.length !== 1 ? 's' : ''})
-          </span>
-        )}
       </div>
 
       {/* Desktop Table View */}
@@ -175,14 +117,6 @@ export function PendingRequestsTable({
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50">
-              {showManagementDropdown && (
-                <TableHead className="w-12">
-                  <Checkbox
-                    checked={selectedRequests.length === currentRequests.length && currentRequests.length > 0}
-                    onCheckedChange={toggleAllSelection}
-                  />
-                </TableHead>
-              )}
               <TableHead 
                 className="cursor-pointer hover:text-gray-700"
                 onClick={() => handleSort('usuarioSolicitado')}
@@ -245,14 +179,6 @@ export function PendingRequestsTable({
           <TableBody>
             {currentRequests.map((request) => (
               <TableRow key={request.id} className="hover:bg-gray-50">
-                {showManagementDropdown && (
-                  <TableCell>
-                    <Checkbox
-                      checked={selectedRequests.includes(request.id)}
-                      onCheckedChange={() => toggleRequestSelection(request.id)}
-                    />
-                  </TableCell>
-                )}
                 <TableCell className="text-sm">
                   {request.usuarioSolicitado || request.solicitadoPor}
                 </TableCell>

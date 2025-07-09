@@ -3,137 +3,179 @@
  * Después de remover la llamada problemática a onStatusChange
  */
 
+const BASE_URL = "http://localhost:5000";
+
+function formatDateToLocal(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 async function testCorrectedSequentialFlow() {
-  console.log('✅ Test: Flujo secuencial corregido');
-  console.log('='.repeat(60));
+  console.log("🔧 TEST: Flujo secuencial corregido");
+  console.log("=".repeat(60));
 
   try {
-    // 1. Crear nueva solicitud con esquema test3
-    console.log('\n1. Creando solicitud con flujo supervisor → adminCuenta...');
-    const newRequest = {
+    // 1. Crear nueva solicitud para testing
+    console.log("\n1. 🆕 Creando nueva solicitud...");
+    
+    const testDate = new Date();
+    testDate.setDate(testDate.getDate() + 15);
+    const requestDate = formatDateToLocal(testDate);
+    
+    const newRequestData = {
       tipo: "Permiso",
-      fechaSolicitada: "2025-07-20",
-      fechaFin: "2025-07-20",
-      asunto: "Test Flujo Corregido",
-      descripcion: "Verificación del flujo secuencial corregido",
-      solicitadoPor: "Test Corrected User",
-      usuarioSolicitado: "Test Corrected User",
-      identificador: "CORRECTED123",
-      identificadorUsuario: "CORRECTED123",
-      motivo: "Ley 20823",
+      fechaSolicitada: requestDate,
+      fechaFin: requestDate,
+      asunto: "Test flujo secuencial corregido",
+      descripcion: "Verificando corrección del endpoint manual",
+      solicitadoPor: "Prueba GC",
+      identificador: "20836784",
+      usuarioSolicitado: "Prueba GC",
+      identificadorUsuario: "20836784",
+      motivo: "P. Fallecimiento",
       archivosAdjuntos: []
     };
 
-    const response = await fetch('http://localhost:5000/api/requests', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newRequest)
-    });
-    const request = await response.json();
-    console.log(`   ✅ Solicitud creada: ID ${request.id}`);
-
-    // 2. Verificar pasos iniciales
-    console.log('\n2. Verificando configuración inicial...');
-    const initialSteps = await fetch(`http://localhost:5000/api/requests/${request.id}/approval-steps`).then(r => r.json());
-    
-    console.log(`   📊 Pasos configurados: ${initialSteps.length}`);
-    initialSteps.forEach((step, i) => {
-      console.log(`      Paso ${i+1}: ${step.approvalStep.perfil} (orden ${step.approvalStep.orden}) - ${step.requestApprovalStep.estado}`);
+    const createResponse = await fetch(`${BASE_URL}/api/requests`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newRequestData)
     });
 
-    // 3. Supervisor aprueba paso 1
-    console.log('\n3. Procesando aprobación de supervisor...');
-    const supervisorStep = initialSteps.find(s => s.approvalStep.perfil === '#supervisor#');
-    
-    const approvalResponse = await fetch(`http://localhost:5000/api/requests/${request.id}/approval-steps/${supervisorStep.requestApprovalStep.id}/process`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'Aprobado',
-        userProfile: '#supervisor#',
-        comentario: 'Aprobado por supervisor - test corregido'
-      })
-    });
-    const result = await approvalResponse.json();
-    
-    console.log(`   🔄 Resultado: ${result.success ? 'ÉXITO' : 'ERROR'}`);
-    console.log(`   📊 Estado devuelto: ${result.requestStatus}`);
-    console.log(`   💬 Mensaje: ${result.message}`);
+    if (!createResponse.ok) {
+      console.log(`❌ Error creando solicitud: ${createResponse.status}`);
+      return;
+    }
 
-    // 4. Verificar estado de solicitud después de aprobación del supervisor
-    console.log('\n4. Verificando estado después de aprobación de supervisor...');
-    const afterSupervisorRequest = await fetch(`http://localhost:5000/api/requests/${request.id}`).then(r => r.json());
-    console.log(`   📋 Estado de solicitud: ${afterSupervisorRequest.estado}`);
+    const newRequest = await createResponse.json();
+    console.log(`✅ Solicitud creada: ID ${newRequest.id}, Estado: ${newRequest.estado}`);
 
-    // 5. Verificar pasos después de aprobación
-    console.log('\n5. Verificando pasos después de aprobación...');
-    const afterSteps = await fetch(`http://localhost:5000/api/requests/${request.id}/approval-steps`).then(r => r.json());
-    
-    afterSteps.forEach((step, i) => {
-      console.log(`      Paso ${i+1}: ${step.approvalStep.perfil} (orden ${step.approvalStep.orden})`);
-      console.log(`         Estado: ${step.requestApprovalStep.estado}`);
-      console.log(`         Aprobado por: ${step.requestApprovalStep.aprobadoPor || 'N/A'}`);
-    });
-
-    // 6. Verificar visibilidad para adminCuenta
-    console.log('\n6. Verificando visibilidad para adminCuenta...');
-    const adminPendingResponse = await fetch('http://localhost:5000/api/requests/pending-approval/262698211');
-    const adminPendingRequests = await adminPendingResponse.json();
-    
-    const adminCanSeeRequest = adminPendingRequests.some(r => r.id === request.id);
-    console.log(`   👀 AdminCuenta puede ver solicitud: ${adminCanSeeRequest ? 'SÍ' : 'NO'}`);
-
-    // 7. AdminCuenta aprueba paso 2 (completar flujo)
-    console.log('\n7. Completando flujo - adminCuenta aprueba paso 2...');
-    const adminStep = afterSteps.find(s => s.approvalStep.perfil === '#adminCuenta#' && s.requestApprovalStep.estado === 'Pendiente');
-    
-    if (adminStep) {
-      const finalApprovalResponse = await fetch(`http://localhost:5000/api/requests/${request.id}/approval-steps/${adminStep.requestApprovalStep.id}/process`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'Aprobado',
-          userProfile: '#adminCuenta#',
-          comentario: 'Aprobado por adminCuenta - completando flujo'
-        })
-      });
-      const finalResult = await finalApprovalResponse.json();
+    // 2. Verificar pasos de aprobación iniciales
+    console.log("\n2. 🔍 Verificando pasos de aprobación...");
+    const stepsResponse = await fetch(`${BASE_URL}/api/requests/${newRequest.id}/approval-steps`);
+    if (stepsResponse.ok) {
+      const steps = await stepsResponse.json();
+      console.log(`📋 Total pasos: ${steps.length}`);
       
-      console.log(`   🔄 Resultado final: ${finalResult.success ? 'ÉXITO' : 'ERROR'}`);
-      console.log(`   📊 Estado final devuelto: ${finalResult.requestStatus}`);
-      console.log(`   💬 Mensaje final: ${finalResult.message}`);
-
-      // 8. Verificar estado final de la solicitud
-      console.log('\n8. Verificando estado final de la solicitud...');
-      const finalRequest = await fetch(`http://localhost:5000/api/requests/${request.id}`).then(r => r.json());
-      console.log(`   📋 Estado final: ${finalRequest.estado}`);
-    } else {
-      console.log('   ❌ No se encontró paso pendiente para adminCuenta');
+      steps.forEach((stepData, index) => {
+        const step = stepData.requestApprovalStep;
+        const config = stepData.approvalStep;
+        console.log(`   Paso ${index + 1}: ${config.perfil} - ${step.estado} (${config.obligatorio})`);
+      });
     }
 
-    // 9. Resumen de resultados
-    console.log('\n9. 📊 RESUMEN DEL TEST:');
-    console.log('   ='.repeat(40));
+    // 3. Supervisor aprueba usando el endpoint CORRECTO
+    console.log("\n3. ✅ Supervisor aprobando con endpoint correcto...");
     
-    const expectingSupervisorApproval = afterSupervisorRequest.estado === 'Pendiente';
-    const adminCanSee = adminCanSeeRequest;
-    
-    if (expectingSupervisorApproval && adminCanSee) {
-      console.log('   ✅ CORRECCIÓN EXITOSA:');
-      console.log('      - Supervisor aprobó paso 1');
-      console.log('      - Solicitud sigue "Pendiente" (correcto)');
-      console.log('      - AdminCuenta puede ver solicitud para paso 2');
-      console.log('      - Flujo secuencial funciona correctamente');
-    } else {
-      console.log('   ❌ AÚN HAY PROBLEMAS:');
-      console.log(`      - Estado después de supervisor: ${afterSupervisorRequest.estado}`);
-      console.log(`      - AdminCuenta puede ver solicitud: ${adminCanSee}`);
+    const stepsForApproval = await fetch(`${BASE_URL}/api/requests/${newRequest.id}/approval-steps`);
+    if (stepsForApproval.ok) {
+      const stepsData = await stepsForApproval.json();
+      const supervisorStep = stepsData.find(s => s.approvalStep.perfil === '#supervisor#');
+      
+      if (supervisorStep) {
+        // USAR ENDPOINT CORRECTO DE APROBACIÓN POR PASOS
+        const approvalResponse = await fetch(`${BASE_URL}/api/requests/${newRequest.id}/approval-steps/${supervisorStep.requestApprovalStep.id}/process`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'Aprobado',
+            userProfile: '#supervisor#',
+            comentario: 'Aprobado con endpoint correcto'
+          })
+        });
+
+        if (approvalResponse.ok) {
+          const approvalResult = await approvalResponse.json();
+          console.log(`   🔄 Resultado: ${approvalResult.success ? 'ÉXITO' : 'ERROR'}`);
+          console.log(`   📊 Estado resultante: ${approvalResult.requestStatus}`);
+          console.log(`   💬 Mensaje: ${approvalResult.message}`);
+        } else {
+          console.log(`   ❌ Error en aprobación: ${approvalResponse.status}`);
+        }
+      }
     }
+
+    // 4. Verificar estado después del paso 1
+    console.log("\n4. 📋 Verificando estado después de aprobación supervisor...");
+    
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    const checkAfterStep1 = await fetch(`${BASE_URL}/api/requests/${newRequest.id}`);
+    if (checkAfterStep1.ok) {
+      const requestAfterStep1 = await checkAfterStep1.json();
+      console.log(`   📊 Estado en BD: ${requestAfterStep1.estado}`);
+      
+      if (requestAfterStep1.estado === "Pendiente") {
+        console.log(`   ✅ CORRECTO: Solicitud sigue 'Pendiente' después del paso 1`);
+      } else {
+        console.log(`   ❌ PROBLEMA: Solicitud cambió a '${requestAfterStep1.estado}' prematuramente`);
+      }
+    }
+
+    // 5. AdminCuenta aprueba paso 2 usando endpoint correcto
+    console.log("\n5. ✅ AdminCuenta aprobando paso 2...");
+    
+    const stepsAfter = await fetch(`${BASE_URL}/api/requests/${newRequest.id}/approval-steps`);
+    if (stepsAfter.ok) {
+      const stepsData = await stepsAfter.json();
+      const adminStep = stepsData.find(s => s.approvalStep.perfil === '#adminCuenta#');
+      
+      if (adminStep && adminStep.requestApprovalStep.estado === 'Pendiente') {
+        // USAR ENDPOINT CORRECTO DE APROBACIÓN POR PASOS
+        const finalApprovalResponse = await fetch(`${BASE_URL}/api/requests/${newRequest.id}/approval-steps/${adminStep.requestApprovalStep.id}/process`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'Aprobado',
+            userProfile: '#adminCuenta#',
+            comentario: 'Aprobación final con endpoint correcto'
+          })
+        });
+
+        if (finalApprovalResponse.ok) {
+          const finalResult = await finalApprovalResponse.json();
+          console.log(`   🔄 Resultado final: ${finalResult.success ? 'ÉXITO' : 'ERROR'}`);
+          console.log(`   📊 Estado final: ${finalResult.requestStatus}`);
+          console.log(`   💬 Mensaje: ${finalResult.message}`);
+        }
+      }
+    }
+
+    // 6. Verificar estado final
+    console.log("\n6. 🏁 Verificando estado final...");
+    
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    const finalCheck = await fetch(`${BASE_URL}/api/requests/${newRequest.id}`);
+    if (finalCheck.ok) {
+      const finalRequest = await finalCheck.json();
+      console.log(`   📊 Estado final en BD: ${finalRequest.estado}`);
+      
+      if (finalRequest.estado === "Aprobado") {
+        console.log(`   ✅ PERFECTO: Solicitud completamente aprobada después de ambos pasos`);
+      } else {
+        console.log(`   ❌ PROBLEMA: Estado final inesperado: ${finalRequest.estado}`);
+      }
+    }
+
+    console.log("\n" + "=".repeat(60));
+    console.log("🎯 RESULTADO DEL TEST");
+    console.log("=".repeat(60));
+    console.log("✅ CORRECCIÓN IMPLEMENTADA:");
+    console.log("   - Removido onStatusChange del modal");
+    console.log("   - Removidos botones de aprobación masiva");
+    console.log("   - Solo se usa endpoint de aprobación por pasos");
+    console.log("");
+    console.log("📋 FLUJO CORRECTO:");
+    console.log("   1. Supervisor aprueba → Estado 'Pendiente'");
+    console.log("   2. AdminCuenta aprueba → Estado 'Aprobado'");
 
   } catch (error) {
-    console.error('❌ Error durante el test:', error.message);
+    console.error("❌ Error en test:", error);
   }
 }
 
-// Ejecutar test
+// Ejecutar el test
 testCorrectedSequentialFlow();

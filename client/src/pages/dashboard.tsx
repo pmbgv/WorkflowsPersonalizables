@@ -289,15 +289,7 @@ export default function Dashboard() {
     updateStatusMutation.mutate({ requestId, newStatus });
   };
 
-  const handleBulkStatusChange = (requestIds: number[], newStatus: string) => {
-    requestIds.forEach(requestId => {
-      updateStatusMutation.mutate({ requestId, newStatus });
-    });
-    toast({
-      title: "Estado actualizado",
-      description: `${requestIds.length} solicitud${requestIds.length !== 1 ? 'es' : ''} ${newStatus.toLowerCase()}${requestIds.length !== 1 ? 's' : ''}`,
-    });
-  };
+
 
   const handleDownload = (requestId: number) => {
     toast({
@@ -447,7 +439,6 @@ export default function Dashboard() {
                 isLoading={isLoadingPending}
                 onViewDetails={handleViewDetails}
                 onDownload={handleDownload}
-                onBulkStatusChange={handleBulkStatusChange}
                 selectedGroupUsers={selectedGroupUsers}
                 selectedUser={selectedUser}
                 currentUser={selectedUser}
@@ -485,7 +476,6 @@ export default function Dashboard() {
             open={detailsModalOpen}
             onOpenChange={setDetailsModalOpen}
             onDownload={handleDownload}
-            onStatusChange={handleStatusChange}
             isAllRequestsTab={activeTab === "todas"}
             currentUser={selectedUser}
           />
