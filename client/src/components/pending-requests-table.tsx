@@ -13,6 +13,7 @@ interface PendingRequestsTableProps {
   isLoading: boolean;
   onViewDetails: (request: Request) => void;
   onDownload: (requestId: number) => void;
+  onBulkApprovalAction?: (requestIds: number[], action: "Aprobado" | "Rechazado") => void;
   selectedGroupUsers?: any[];
   selectedUser?: any;
   currentUser?: any;
@@ -24,6 +25,7 @@ export function PendingRequestsTable({
   isLoading, 
   onViewDetails, 
   onDownload, 
+  onBulkApprovalAction,
   selectedGroupUsers = [],
   selectedUser,
   currentUser,
@@ -33,6 +35,7 @@ export function PendingRequestsTable({
   const [sortBy, setSortBy] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedRequests, setSelectedRequests] = useState<number[]>([]);
   const requestsPerPage = 10;
 
   // Handle sorting
@@ -73,6 +76,29 @@ export function PendingRequestsTable({
     setCreateModalOpen(false);
   };
 
+  // Bulk selection handlers
+  const toggleRequestSelection = (requestId: number) => {
+    setSelectedRequests(prev => 
+      prev.includes(requestId) 
+        ? prev.filter(id => id !== requestId)
+        : [...prev, requestId]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedRequests.length === currentRequests.length) {
+      setSelectedRequests([]);
+    } else {
+      setSelectedRequests(currentRequests.map(r => r.id));
+    }
+  };
+
+  const handleBulkAction = (action: "Aprobado" | "Rechazado") => {
+    if (selectedRequests.length === 0 || !onBulkApprovalAction) return;
+    onBulkApprovalAction(selectedRequests, action);
+    setSelectedRequests([]);
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -102,7 +128,24 @@ export function PendingRequestsTable({
               <Plus className="w-4 h-4 mr-2" />
               Crear solicitud
             </Button>
-            {/* Bulk approval buttons removed - use individual approval through request details modal */}
+            {selectedRequests.length > 0 && onBulkApprovalAction && (
+              <>
+                <Button 
+                  onClick={() => handleBulkAction("Aprobado")}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Aprobar ({selectedRequests.length})
+                </Button>
+                <Button 
+                  onClick={() => handleBulkAction("Rechazado")}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  <XCircle className="w-4 h-4 mr-2" />
+                  Rechazar ({selectedRequests.length})
+                </Button>
+              </>
+            )}
           </div>
         )}
       </div>
@@ -117,6 +160,14 @@ export function PendingRequestsTable({
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50">
+              {showManagementDropdown && onBulkApprovalAction && (
+                <TableHead className="w-12">
+                  <Checkbox
+                    checked={selectedRequests.length === currentRequests.length && currentRequests.length > 0}
+                    onCheckedChange={toggleSelectAll}
+                  />
+                </TableHead>
+              )}
               <TableHead 
                 className="cursor-pointer hover:text-gray-700"
                 onClick={() => handleSort('usuarioSolicitado')}
@@ -179,6 +230,14 @@ export function PendingRequestsTable({
           <TableBody>
             {currentRequests.map((request) => (
               <TableRow key={request.id} className="hover:bg-gray-50">
+                {showManagementDropdown && onBulkApprovalAction && (
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedRequests.includes(request.id)}
+                      onCheckedChange={() => toggleRequestSelection(request.id)}
+                    />
+                  </TableCell>
+                )}
                 <TableCell className="text-sm">
                   {request.usuarioSolicitado || request.solicitadoPor}
                 </TableCell>
@@ -233,7 +292,7 @@ export function PendingRequestsTable({
           <div key={request.id} className="bg-white border rounded-lg p-4">
             <div className="flex justify-between items-start mb-3">
               <div className="flex items-center space-x-3">
-                {showManagementDropdown && (
+                {showManagementDropdown && onBulkApprovalAction && (
                   <Checkbox
                     checked={selectedRequests.includes(request.id)}
                     onCheckedChange={() => toggleRequestSelection(request.id)}

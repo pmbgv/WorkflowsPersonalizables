@@ -289,6 +289,81 @@ export default function Dashboard() {
     updateStatusMutation.mutate({ requestId, newStatus });
   };
 
+  // Bulk approval handler using proper workflow endpoints
+  const handleBulkApprovalAction = async (requestIds: number[], action: "Aprobado" | "Rechazado") => {
+    const userProfile = selectedUser?.UserProfile;
+    if (!userProfile) {
+      toast({
+        title: "Error",
+        description: "No se pudo identificar el perfil de usuario",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const requestId of requestIds) {
+      try {
+        // Get approval steps for this request
+        const stepsResponse = await fetch(`/api/requests/${requestId}/approval-steps`);
+        if (!stepsResponse.ok) {
+          errorCount++;
+          continue;
+        }
+        
+        const steps = await stepsResponse.json();
+        const currentStep = steps.find((stepData: any) => 
+          stepData.approvalStep.perfil === userProfile && 
+          stepData.requestApprovalStep.estado === 'Pendiente'
+        );
+
+        if (!currentStep) {
+          errorCount++;
+          continue;
+        }
+
+        // Process the approval step using the workflow endpoint
+        const approvalResponse = await fetch(`/api/requests/${requestId}/approval-steps/${currentStep.requestApprovalStep.id}/process`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action,
+            userProfile,
+            comentario: `Aprobación masiva: ${action}`
+          })
+        });
+
+        if (approvalResponse.ok) {
+          successCount++;
+        } else {
+          errorCount++;
+        }
+      } catch (error) {
+        errorCount++;
+      }
+    }
+
+    // Show result toast
+    if (successCount > 0) {
+      toast({
+        title: "Operación completada",
+        description: `${successCount} solicitud${successCount !== 1 ? 'es' : ''} ${action.toLowerCase()}${successCount !== 1 ? 's' : ''}${errorCount > 0 ? `, ${errorCount} con errores` : ''}`,
+      });
+      
+      // Refresh the data
+      queryClient.invalidateQueries({ queryKey: ['/api/requests/pending-approval'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/requests'] });
+    } else {
+      toast({
+        title: "Error en operación masiva",
+        description: "No se pudieron procesar las solicitudes seleccionadas",
+        variant: "destructive",
+      });
+    }
+  };
+
 
 
   const handleDownload = (requestId: number) => {
@@ -439,6 +514,7 @@ export default function Dashboard() {
                 isLoading={isLoadingPending}
                 onViewDetails={handleViewDetails}
                 onDownload={handleDownload}
+                onBulkApprovalAction={handleBulkApprovalAction}
                 selectedGroupUsers={selectedGroupUsers}
                 selectedUser={selectedUser}
                 currentUser={selectedUser}
