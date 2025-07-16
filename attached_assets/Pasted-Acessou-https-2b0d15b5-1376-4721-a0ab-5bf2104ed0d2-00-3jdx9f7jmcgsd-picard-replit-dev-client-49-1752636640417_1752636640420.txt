@@ -1,0 +1,60 @@
+Acessou https://2b0d15b5-1376-4721-a0ab-5bf2104ed0d2-00-3jdx9f7jmcgsd.picard.replit.dev/.
+client:495 [vite] connecting...
+client:618 [vite] connected.
+chunk-WERSD76P.js?v=59a44a0e:21551 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+chunk-WERSD76P.js?v=59a44a0e:377 [Violation] 'message' handler took 198ms
+dashboard.tsx:67  GET https://2b0d15b5-1376-4721-a0ab-5bf2104ed0d2-00-3jdx9f7jmcgsd.picard.replit.dev/api/requests 500 (Internal Server Error)
+queryFn @ dashboard.tsx:67
+fetchFn @ @tanstack_react-query.js?v=59a44a0e:840
+run @ @tanstack_react-query.js?v=59a44a0e:494
+start @ @tanstack_react-query.js?v=59a44a0e:536
+fetch @ @tanstack_react-query.js?v=59a44a0e:926
+executeFetch_fn @ @tanstack_react-query.js?v=59a44a0e:2211
+onSubscribe @ @tanstack_react-query.js?v=59a44a0e:1898
+subscribe @ @tanstack_react-query.js?v=59a44a0e:24
+(anônimo) @ @tanstack_react-query.js?v=59a44a0e:3022
+subscribeToStore @ chunk-WERSD76P.js?v=59a44a0e:11984
+commitHookEffectListMount @ chunk-WERSD76P.js?v=59a44a0e:16915
+commitPassiveMountOnFiber @ chunk-WERSD76P.js?v=59a44a0e:18156
+commitPassiveMountEffects_complete @ chunk-WERSD76P.js?v=59a44a0e:18129
+commitPassiveMountEffects_begin @ chunk-WERSD76P.js?v=59a44a0e:18119
+commitPassiveMountEffects @ chunk-WERSD76P.js?v=59a44a0e:18109
+flushPassiveEffectsImpl @ chunk-WERSD76P.js?v=59a44a0e:19490
+flushPassiveEffects @ chunk-WERSD76P.js?v=59a44a0e:19447
+performSyncWorkOnRoot @ chunk-WERSD76P.js?v=59a44a0e:18868
+flushSyncCallbacks @ chunk-WERSD76P.js?v=59a44a0e:9119
+commitRootImpl @ chunk-WERSD76P.js?v=59a44a0e:19432
+commitRoot @ chunk-WERSD76P.js?v=59a44a0e:19277
+finishConcurrentRender @ chunk-WERSD76P.js?v=59a44a0e:18805
+performConcurrentWorkOnRoot @ chunk-WERSD76P.js?v=59a44a0e:18718
+workLoop @ chunk-WERSD76P.js?v=59a44a0e:197
+flushWork @ chunk-WERSD76P.js?v=59a44a0e:176
+performWorkUntilDeadline @ chunk-WERSD76P.js?v=59a44a0e:384
+dashboard.tsx:85  GET https://2b0d15b5-1376-4721-a0ab-5bf2104ed0d2-00-3jdx9f7jmcgsd.picard.replit.dev/api/requests 500 (Internal Server Error)
+queryFn @ dashboard.tsx:85
+fetchFn @ @tanstack_react-query.js?v=59a44a0e:840
+run @ @tanstack_react-query.js?v=59a44a0e:494
+start @ @tanstack_react-query.js?v=59a44a0e:536
+fetch @ @tanstack_react-query.js?v=59a44a0e:926
+executeFetch_fn @ @tanstack_react-query.js?v=59a44a0e:2211
+onSubscribe @ @tanstack_react-query.js?v=59a44a0e:1898
+subscribe @ @tanstack_react-query.js?v=59a44a0e:24
+(anônimo) @ @tanstack_react-query.js?v=59a44a0e:3022
+subscribeToStore @ chunk-WERSD76P.js?v=59a44a0e:11984
+commitHookEffectListMount @ chunk-WERSD76P.js?v=59a44a0e:16915
+commitPassiveMountOnFiber @ chunk-WERSD76P.js?v=59a44a0e:18156
+commitPassiveMountEffects_complete @ chunk-WERSD76P.js?v=59a44a0e:18129
+commitPassiveMountEffects_begin @ chunk-WERSD76P.js?v=59a44a0e:18119
+commitPassiveMountEffects @ chunk-WERSD76P.js?v=59a44a0e:18109
+flushPassiveEffectsImpl @ chunk-WERSD76P.js?v=59a44a0e:19490
+flushPassiveEffects @ chunk-WERSD76P.js?v=59a44a0e:19447
+performSyncWorkOnRoot @ chunk-WERSD76P.js?v=59a44a0e:18868
+flushSyncCallbacks @ chunk-WERSD76P.js?v=59a44a0e:9119
+commitRootImpl @ chunk-WERSD76P.js?v=59a44a0e:19432
+commitRoot @ chunk-WERSD76P.js?v=59a44a0e:19277
+finishConcurrentRender @ chunk-WERSD76P.js?v=59a44a0e:18805
+performConcurrentWorkOnRoot @ chunk-WERSD76P.js?v=59a44a0e:18718
+workLoop @ chunk-WERSD76P.js?v=59a44a0e:197
+flushWork @ chunk-WERSD76P.js?v=59a44a0e:176
+performWorkUntilDeadline @ chunk-WERSD76P.js?v=59a44a0e:384
+chunk-WERSD76P.js?v=59a44a0e:18625 [Violation] 'setTimeout' handler took 53ms

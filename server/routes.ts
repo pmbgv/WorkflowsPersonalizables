@@ -1,7 +1,11 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertRequestSchema, insertApprovalSchemaSchema, insertApprovalStepSchema } from "@shared/schema";
+import {
+  insertRequestSchema,
+  insertApprovalSchemaSchema,
+  insertApprovalStepSchema,
+} from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -9,7 +13,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/requests", async (req, res) => {
     try {
       const { estado, tipo, fechaInicio, fechaFin, busqueda } = req.query;
-      
+
       const filters = {
         estado: estado as string,
         tipo: tipo as string,
@@ -21,7 +25,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const requests = await storage.getRequests(filters);
       res.json(requests);
     } catch (error) {
-      res.status(500).json({ message: "Error fetching requests" });
+      res.status(500).json({ message: "Error fetching requests: " + error });
     }
   });
 
@@ -30,11 +34,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const request = await storage.getRequest(id);
-      
+
       if (!request) {
         return res.status(404).json({ message: "Request not found" });
       }
-      
+
       res.json(request);
     } catch (error) {
       res.status(500).json({ message: "Error fetching request" });
@@ -49,9 +53,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(newRequest);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
-          message: "Validation error", 
-          errors: error.errors 
+        return res.status(400).json({
+          message: "Validation error",
+          errors: error.errors,
         });
       }
       res.status(500).json({ message: "Error creating request" });
@@ -63,13 +67,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const updates = req.body;
-      
+
       const updatedRequest = await storage.updateRequest(id, updates);
-      
+
       if (!updatedRequest) {
         return res.status(404).json({ message: "Request not found" });
       }
-      
+
       res.json(updatedRequest);
     } catch (error) {
       res.status(500).json({ message: "Error updating request" });
@@ -81,17 +85,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const { estado } = req.body;
-      
-      if (!estado || !["Pendiente", "Aprobado", "Rechazado", "Cancelada", "Anulada"].includes(estado)) {
+
+      if (
+        !estado ||
+        ![
+          "Pendiente",
+          "Aprobado",
+          "Rechazado",
+          "Cancelada",
+          "Anulada",
+        ].includes(estado)
+      ) {
         return res.status(400).json({ message: "Invalid status" });
       }
-      
+
       const updatedRequest = await storage.updateRequest(id, { estado });
-      
+
       if (!updatedRequest) {
         return res.status(404).json({ message: "Request not found" });
       }
-      
+
       res.json(updatedRequest);
     } catch (error) {
       console.error("Error updating request status:", error);
@@ -104,11 +117,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const deleted = await storage.deleteRequest(id);
-      
+
       if (!deleted) {
         return res.status(404).json({ message: "Request not found" });
       }
-      
+
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Error deleting request" });
@@ -129,11 +142,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const schema = await storage.getApprovalSchema(id);
-      
+
       if (!schema) {
         return res.status(404).json({ message: "Approval schema not found" });
       }
-      
+
       res.json(schema);
     } catch (error) {
       res.status(500).json({ message: "Error fetching approval schema" });
@@ -151,9 +164,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error in POST /api/approval-schemas:", error);
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
-          message: "Validation error", 
-          errors: error.errors 
+        return res.status(400).json({
+          message: "Validation error",
+          errors: error.errors,
         });
       }
       res.status(500).json({ message: "Error creating approval schema" });
@@ -164,13 +177,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const updates = req.body;
-      
+
       const updatedSchema = await storage.updateApprovalSchema(id, updates);
-      
+
       if (!updatedSchema) {
         return res.status(404).json({ message: "Approval schema not found" });
       }
-      
+
       res.json(updatedSchema);
     } catch (error) {
       res.status(500).json({ message: "Error updating approval schema" });
@@ -181,11 +194,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const deleted = await storage.deleteApprovalSchema(id);
-      
+
       if (!deleted) {
         return res.status(404).json({ message: "Approval schema not found" });
       }
-      
+
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Error deleting approval schema" });
@@ -210,9 +223,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(newStep);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
-          message: "Validation error", 
-          errors: error.errors 
+        return res.status(400).json({
+          message: "Validation error",
+          errors: error.errors,
         });
       }
       res.status(500).json({ message: "Error creating approval step" });
@@ -223,13 +236,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const updates = req.body;
-      
+
       const updatedStep = await storage.updateApprovalStep(id, updates);
-      
+
       if (!updatedStep) {
         return res.status(404).json({ message: "Approval step not found" });
       }
-      
+
       res.json(updatedStep);
     } catch (error) {
       res.status(500).json({ message: "Error updating approval step" });
@@ -240,11 +253,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const deleted = await storage.deleteApprovalStep(id);
-      
+
       if (!deleted) {
         return res.status(404).json({ message: "Approval step not found" });
       }
-      
+
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Error deleting approval step" });
