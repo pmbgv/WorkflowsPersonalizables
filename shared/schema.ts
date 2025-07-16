@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, varchar, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -10,10 +10,25 @@ export const requests = pgTable("requests", {
   asunto: text("asunto").notNull(),
   descripcion: text("descripcion"),
   estado: varchar("estado", { length: 20 }).notNull().default("Pendiente"),
-  solicitadoPor: varchar("solicitado_por", { length: 100 }).notNull(),
-  prioridad: varchar("prioridad", { length: 20 }).default("normal"),
+  solicitadoPor: varchar("solicitado_por", { length: 100 }).notNull(), // Who is making the request
+  usuarioSolicitado: varchar("usuario_solicitado", { length: 100 }), // User the request is for
+  identificador: varchar("identificador", { length: 50 }),
+  identificadorUsuario: varchar("identificador_usuario", { length: 50 }), // ID of the user the request is for
+  grupo: varchar("grupo", { length: 100 }), // Group information from GeoVictoria API
+  motivo: varchar("motivo", { length: 100 }),
   archivosAdjuntos: text("archivos_adjuntos").array(),
+  diasSolicitados: integer("dias_solicitados"),
+  diasEfectivos: integer("dias_efectivos"),
   fechaCreacion: timestamp("fecha_creacion").defaultNow().notNull(),
+  fechaActualizacion: timestamp("fecha_actualizacion").defaultNow().notNull(),
+});
+
+// Tabla para manejar saldos de vacaciones de usuarios
+export const userVacationBalance = pgTable("user_vacation_balance", {
+  id: serial("id").primaryKey(),
+  identificador: varchar("identificador", { length: 20 }).notNull().unique(),
+  nombreUsuario: varchar("nombre_usuario", { length: 100 }).notNull(),
+  diasDisponibles: integer("dias_disponibles").notNull().default(15),
   fechaActualizacion: timestamp("fecha_actualizacion").defaultNow().notNull(),
 });
 
@@ -22,6 +37,27 @@ export const approvalSchemas = pgTable("approval_schemas", {
   id: serial("id").primaryKey(),
   nombre: varchar("nombre", { length: 100 }).notNull(),
   tipoSolicitud: varchar("tipo_solicitud", { length: 50 }).notNull(),
+  motivos: text("motivos").array(), // Array de motivos específicos para permisos
+  visibilityPermissions: text("visibility_permissions").array(),
+  approvalPermissions: text("approval_permissions").array(),
+  // Configuración de tipos de permiso
+  tiposPermiso: text("tipos_permiso").array().default(["Comunes", "Turno completo", "Parciales"]),
+  // Configuración de características
+  adjuntarDocumentos: varchar("adjuntar_documentos", { length: 5 }).default("false"),
+  adjuntarDocumentosObligatorio: varchar("adjuntar_documentos_obligatorio", { length: 5 }).default("false"),
+  permitirModificarDocumentos: varchar("permitir_modificar_documentos", { length: 5 }).default("false"),
+  comentarioRequerido: varchar("comentario_requerido", { length: 5 }).default("false"),
+  comentarioObligatorio: varchar("comentario_obligatorio", { length: 5 }).default("false"),
+  comentarioOpcional: varchar("comentario_opcional", { length: 5 }).default("true"),
+  enviarCorreoNotificacion: varchar("enviar_correo_notificacion", { length: 5 }).default("false"),
+  solicitudCreada: varchar("solicitud_creada", { length: 5 }).default("false"),
+  solicitudAprobadaRechazada: varchar("solicitud_aprobada_rechazada", { length: 5 }).default("false"),
+  permitirSolicitudTerceros: varchar("permitir_solicitud_terceros", { length: 5 }).default("false"),
+  // Configuración de días
+  diasMinimo: integer("dias_minimo"),
+  diasMaximo: integer("dias_maximo"),
+  diasMultiplo: integer("dias_multiplo"),
+  tipoDias: varchar("tipo_dias", { length: 20 }).default("calendario"),
   fechaCreacion: timestamp("fecha_creacion").defaultNow().notNull(),
   fechaActualizacion: timestamp("fecha_actualizacion").defaultNow().notNull(),
 });
@@ -34,6 +70,28 @@ export const approvalSteps = pgTable("approval_steps", {
   descripcion: varchar("descripcion", { length: 255 }).notNull(),
   perfil: varchar("perfil", { length: 100 }).notNull(),
   obligatorio: varchar("obligatorio", { length: 2 }).notNull().default("Si"),
+  fechaCreacion: timestamp("fecha_creacion").defaultNow().notNull(),
+});
+
+export const requestHistory = pgTable("request_history", {
+  id: serial("id").primaryKey(),
+  requestId: integer("request_id").references(() => requests.id, { onDelete: 'cascade' }).notNull(),
+  previousState: varchar("previous_state", { length: 20 }),
+  newState: varchar("new_state", { length: 20 }).notNull(),
+  changedBy: varchar("changed_by", { length: 100 }).notNull(),
+  changeReason: text("change_reason"),
+  fechaCreacion: timestamp("fecha_creacion").defaultNow().notNull(),
+});
+
+// Tabla para rastrear el estado de cada paso de aprobación de las solicitudes
+export const requestApprovalSteps = pgTable("request_approval_steps", {
+  id: serial("id").primaryKey(),
+  requestId: integer("request_id").references(() => requests.id, { onDelete: 'cascade' }).notNull(),
+  approvalStepId: integer("approval_step_id").references(() => approvalSteps.id).notNull(),
+  estado: varchar("estado", { length: 20 }).notNull().default("Pendiente"), // Pendiente, Aprobado, Rechazado
+  aprobadoPor: varchar("aprobado_por", { length: 100 }),
+  comentario: text("comentario"),
+  fechaAprobacion: timestamp("fecha_aprobacion"),
   fechaCreacion: timestamp("fecha_creacion").defaultNow().notNull(),
 });
 
@@ -54,9 +112,49 @@ export const insertApprovalStepSchema = createInsertSchema(approvalSteps).omit({
   fechaCreacion: true,
 });
 
+export const insertRequestHistorySchema = createInsertSchema(requestHistory).omit({
+  id: true,
+  fechaCreacion: true,
+});
+
+export const insertRequestApprovalStepSchema = createInsertSchema(requestApprovalSteps).omit({
+  id: true,
+  fechaCreacion: true,
+});
+
+export const insertUserVacationBalanceSchema = createInsertSchema(userVacationBalance).omit({
+  id: true,
+  fechaActualizacion: true,
+});
+
+// Tabla para motivos de permisos organizados por categorías
+export const motivosPermisos = pgTable("motivos_permisos", {
+  id: serial("id").primaryKey(),
+  categoria: varchar("categoria", { length: 50 }).notNull(), // "Comunes", "Turno completo", "Parciales"
+  motivo: varchar("motivo", { length: 100 }).notNull(),
+  activo: varchar("activo", { length: 5 }).default("true"), // Usar varchar como los otros campos booleanos
+  orden: integer("orden").default(0), // Para ordenar los motivos dentro de cada categoría
+  fechaCreacion: timestamp("fecha_creacion").defaultNow(),
+  fechaActualizacion: timestamp("fecha_actualizacion").defaultNow(),
+});
+
+export const insertMotivoPermisoSchema = createInsertSchema(motivosPermisos).omit({
+  id: true,
+  fechaCreacion: true,
+  fechaActualizacion: true,
+});
+
 export type InsertRequest = z.infer<typeof insertRequestSchema>;
 export type Request = typeof requests.$inferSelect;
 export type ApprovalSchema = typeof approvalSchemas.$inferSelect;
 export type InsertApprovalSchema = z.infer<typeof insertApprovalSchemaSchema>;
 export type ApprovalStep = typeof approvalSteps.$inferSelect;
 export type InsertApprovalStep = z.infer<typeof insertApprovalStepSchema>;
+export type RequestHistory = typeof requestHistory.$inferSelect;
+export type InsertRequestHistory = z.infer<typeof insertRequestHistorySchema>;
+export type RequestApprovalStep = typeof requestApprovalSteps.$inferSelect;
+export type InsertRequestApprovalStep = z.infer<typeof insertRequestApprovalStepSchema>;
+export type UserVacationBalance = typeof userVacationBalance.$inferSelect;
+export type InsertUserVacationBalance = z.infer<typeof insertUserVacationBalanceSchema>;
+export type MotivoPermiso = typeof motivosPermisos.$inferSelect;
+export type InsertMotivoPermiso = z.infer<typeof insertMotivoPermisoSchema>;

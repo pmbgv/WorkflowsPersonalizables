@@ -1,0 +1,209 @@
+.alert {
+    padding: 0px;
+    display:flex;
+    margin-bottom: 0;
+    color: var(--gv-gray1);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 20px;
+    letter-spacing: -0.42px;
+}
+
+    .alert .alert-icon {
+        padding: 7px 6.5px;
+    }
+
+        .alert .alert-icon i {
+            font-size: 16px;
+            text-align: center;
+            height: 20px;
+            width: 20px;
+            line-height: 20px !important;
+        }
+
+    .alert .alert-content {
+        width: 100%;
+        padding: 7px 8px;
+        border-radius: 0 6px 6px 0;
+    }
+
+.alert.alert-primary {
+    border-color: var(--gv-lightblue2);
+    background-color: var(--gv-white);
+}
+
+    .alert.alert-primary .alert-content {
+        background-color: var(--gv-lightblue6) !important;
+    }
+
+    .alert.alert-primary .alert-icon i {
+        color: var(--gv-lightblue2);
+        font-size: 16px;
+    }
+
+.alert.alert-warning {
+    border-color: var(--gv-yellow1);
+    background-color: var(--gv-white);
+}
+
+    .alert.alert-warning .alert-content {
+        background-color: var(--gv-yellow5) !important;
+    }
+
+        .alert.alert-warning .alert-icon i {
+            color: var(--gv-yellow1);
+            font-size: 16px;
+        }
+
+.alert.alert-danger {
+    border-color: var(--gv-red1);
+    background-color: var(--gv-white);
+}
+
+    .alert.alert-danger .alert-content {
+        background-color: var(--gv-red5) !important;
+    }
+
+        .alert.alert-danger .alert-icon i {
+            color: var(--gv-red1);
+            font-size: 16px;
+        }
+
+.alert.alert-success {
+    border-color: var(--gv-green1);
+    background-color: var(--gv-white);
+}
+
+    .alert.alert-success .alert-content {
+        background-color: #ECF8EC !important;
+    }
+
+    .alert.alert-success .alert-icon i {
+        color: var(--gv-green1);
+        font-size: 16px;
+    }
+
+.alert.expandable-alert .expandable-alert-checkbox{
+    appearance: none;
+    background-image: url(../Assets/Icons/open-expandable-alert.svg);
+    width: 20px;
+    height: 20px;
+    background-repeat: no-repeat;
+    background-position: center;
+    cursor: pointer;
+    position: absolute;
+    right: 8px;
+    top: 8px;
+    background-color: inherit;
+}
+
+.alert.expandable-alert .expandable-alert-content {
+    margin: 0;
+    max-width: calc(100% - 20px);
+}
+
+.alert.expandable-alert .expandable-alert-checkbox:checked {
+    background-image: url(../Assets/Icons/close-expandable-alert.svg);
+}
+
+.alert.expandable-alert .expandable-alert-checkbox:not(:checked) + .expandable-alert-content{
+    margin: 0;
+    height: 20px;
+    overflow: hidden;
+}
+
+.alert.expandable-alert .expandable-alert-checkbox:checked + .expandable-alert-content{
+    margin: 0;
+    padding: 8px 0;
+    overflow-y: auto;
+    max-height: 110px;
+}
+
+.alert.expandable-alert .expandable-alert-checkbox:checked + .expandable-alert-content {
+    padding: 0;
+}
+
+.alert.alert-download .alert-content {
+    padding: 4px 8px;
+}
+
+.alert.alert-download .alert-title {
+    margin: 0;
+    padding: 4px 0 0 0;
+    height: 28px;
+}
+
+.alert.alert-download .expandable-alert-checkbox:not(:checked) + .expandable-alert-content{
+    margin: 0;
+    height: 0;
+    overflow: hidden;
+}
+
+.alert.alert-download .expandable-alert-checkbox:checked + .expandable-alert-content{
+    margin: 0;
+    padding: 8px 0;
+    overflow-y: scroll;
+    max-height: 110px;
+}
+
+.alert.alert-download .btn.inner-btn {
+    position: absolute;
+    right: 44px;
+    top: 4px;
+}
+
+.alert.alert-download .expandable-alert-checkbox{
+    top: 8px;
+}
+
+/* Estilos del scrollbar */
+.alert.expandable-alert .expandable-alert-checkbox:checked + .expandable-alert-content::-webkit-scrollbar{
+    width: 5px;
+}
+
+.alert.expandable-alert .expandable-alert-checkbox:checked + .expandable-alert-content::-webkit-scrollbar-track {
+    background: inherit;
+}
+
+.alert.expandable-alert .expandable-alert-checkbox:checked + .expandable-alert-content::-webkit-scrollbar-thumb {
+    background-color: var(--gv-gray2);
+    border-radius: 5px;
+}
+
+/* Estilos alerta con botón de cerrar */
+.alert.alert-close-button .alert-content{
+    padding-right: 28px;
+    margin: 0;
+}
+
+.alert.alert-close-button .close-btn{
+    background-color: transparent;
+    border: none;
+    position: absolute;
+    right: 8px;
+    top: 9px;
+    padding: 0;
+    color: var(--gv-gray1)
+}
+
+/* Estilos alerta con botón de cerrar y descargar */
+.alert.alert-download-close .alert-content{
+    padding-right: 130px;
+    margin: 0;
+}
+
+.alert.alert-download-close .alert-content .btn.inner-btn {
+    position: absolute;
+    right: 28px;
+    top: 3px;
+}
+
+.alert.alert-download-close .close-btn{
+    background-color: transparent;
+    border: none;
+    position: absolute;
+    right: 8px;
+    top: 9px;
+    padding: 0;
+    color: var(--gv-gray1)
+}

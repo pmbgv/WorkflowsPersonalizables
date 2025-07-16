@@ -1,0 +1,239 @@
+.color-box-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+}
+
+.color-box-container p {
+    text-align: justify;
+}
+
+.color-box {
+    height: 100px;
+    width: 200px;
+    border-radius: 6px;
+    border: 1px solid var(--gv-gray5);
+}
+
+@media (max-width: 767.98px) {
+    .color-box {
+        width: 120px;
+    }
+}
+
+
+/* Color */
+.color-lightblue1 {
+    color: var(--gv-lightblue1) !important;
+}
+
+.color-lightblue2 {
+    color: var(--gv-lightblue2) !important;
+}
+
+.color-lightblue3 {
+    color: var(--gv-lightblue3) !important;
+}
+
+.color-lightblue4 {
+    color: var(--gv-lightblue4) !important;
+}
+
+.color-lightblue5 {
+    color: var(--gv-lightblue5) !important;
+}
+
+.color-yellow1 {
+    color: var(--gv-yellow1) !important;
+}
+
+.color-yellow2 {
+    color: var(--gv-yellow2) !important;
+}
+
+.color-yellow3 {
+    color: var(--gv-yellow3) !important;
+}
+
+.color-yellow4 {
+    color: var(--gv-yellow4) !important;
+}
+
+.color-gray1 {
+    color: var(--gv-gray1) !important;
+}
+
+.color-gray2 {
+    color: var(--gv-gray2) !important;
+}
+
+.color-gray3 {
+    color: var(--gv-gray3) !important;
+}
+
+.color-gray4 {
+    color: var(--gv-gray4) !important;
+}
+
+.color-gray5 {
+    color: var(--gv-gray5) !important;
+}
+
+.color-gray6 {
+    color: var(--gv-gray6) !important;
+}
+
+.color-gray7 {
+    color: var(--gv-gray7) !important;
+}
+
+.color-gray8 {
+    color: var(--gv-gray8) !important;
+}
+
+.color-gray9 {
+    color: var(--gv-gray9) !important;
+}
+
+.color-red1 {
+    color: var(--gv-red1) !important;
+}
+
+.color-red2 {
+    color: var(--gv-red2) !important;
+}
+
+.color-red3 {
+    color: var(--gv-red3) !important;
+}
+
+.color-red4 {
+    color: var(--gv-red4) !important;
+}
+
+.color-green1 {
+    color: var(--gv-green1) !important;
+}
+
+.color-green2 {
+    color: var(--gv-green2) !important;
+}
+
+.color-green3 {
+    color: var(--gv-green3) !important;
+}
+
+.color-green4 {
+    color: var(--gv-green4) !important;
+}
+
+/* Background color */
+.bg-color-lightblue1 {
+    background-color: var(--gv-lightblue1) !important;
+}
+
+.bg-color-lightblue2 {
+    background-color: var(--gv-lightblue2) !important;
+}
+
+.bg-color-lightblue3 {
+    background-color: var(--gv-lightblue3) !important;
+}
+
+.bg-color-lightblue4 {
+    background-color: var(--gv-lightblue4) !important;
+}
+
+.bg-color-lightblue5 {
+    background-color: var(--gv-lightblue5) !important;
+}
+
+.bg-color-yellow1 {
+    background-color: var(--gv-yellow1) !important;
+}
+
+.bg-color-yellow2 {
+    background-color: var(--gv-yellow2) !important;
+}
+
+.bg-color-yellow3 {
+    background-color: var(--gv-yellow3) !important;
+}
+
+.bg-color-yellow4 {
+    background-color: var(--gv-yellow4) !important;
+}
+
+.bg-color-gray1 {
+    background-color: var(--gv-gray1) !important;
+}
+
+.bg-color-gray2 {
+    background-color: var(--gv-gray2) !important;
+}
+
+.bg-color-gray3 {
+    background-color: var(--gv-gray3) !important;
+}
+
+.bg-color-gray4 {
+    background-color: var(--gv-gray4) !important;
+}
+
+.bg-color-gray5 {
+    background-color: var(--gv-gray5) !important;
+}
+
+.bg-color-gray6 {
+    background-color: var(--gv-gray6) !important;
+}
+
+.bg-color-gray7 {
+    background-color: var(--gv-gray7) !important;
+}
+
+.bg-color-gray8 {
+    background-color: var(--gv-gray8) !important;
+}
+
+.bg-color-gray9 {
+    background-color: var(--gv-gray9) !important;
+}
+
+.bg-color-red1 {
+    background-color: var(--gv-red1) !important;
+}
+
+.bg-color-red2 {
+    background-color: var(--gv-red2) !important;
+}
+
+.bg-color-red3 {
+    background-color: var(--gv-red3) !important;
+}
+
+.bg-color-red4 {
+    background-color: var(--gv-red4) !important;
+}
+
+.bg-color-green1 {
+    background-color: var(--gv-green1) !important;
+}
+
+.bg-color-green2 {
+    background-color: var(--gv-green2) !important;
+}
+
+.bg-color-green3 {
+    background-color: var(--gv-green3) !important;
+}
+
+.bg-color-green4 {
+    background-color: var(--gv-green4) !important;
+}
+
+.bg-color-white {
+    background-color: white !important;
+}

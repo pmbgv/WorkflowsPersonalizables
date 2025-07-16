@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Eye, Download, ChevronLeft, ChevronRight, ArrowUpDown } from "lucide-react";
 import { formatDate, getStatusColor } from "@/lib/utils";
+import { CreateRequestModal } from "./create-request-modal";
 import type { Request } from "@shared/schema";
 
 interface RequestTableProps {
@@ -16,9 +17,13 @@ interface RequestTableProps {
   title?: string;
   allowStatusChange?: boolean;
   onStatusChange?: (requestId: number, newStatus: string) => void;
+  showCreateButton?: boolean;
+  onRequestCreated?: () => void;
+  selectedGroupUsers?: any[];
+  selectedUser?: any;
 }
 
-export function RequestTable({ requests, isLoading, onViewDetails, onDownload, title = "Lista de Solicitudes", allowStatusChange = false, onStatusChange }: RequestTableProps) {
+export function RequestTable({ requests, isLoading, onViewDetails, onDownload, title = "Lista de Solicitudes", allowStatusChange = false, onStatusChange, showCreateButton = false, onRequestCreated, selectedGroupUsers = [], selectedUser }: RequestTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
@@ -47,43 +52,23 @@ export function RequestTable({ requests, isLoading, onViewDetails, onDownload, t
   };
 
   const renderStatusCell = (request: Request) => {
-    // Show dropdown only if status change is allowed and we have the callback
-    if (allowStatusChange && onStatusChange) {
-      // For Pendiente status - can only cancel
-      if (request.estado === "Pendiente") {
-        return (
-          <Select 
-            defaultValue={request.estado}
-            onValueChange={(newStatus) => onStatusChange(request.id, newStatus)}
-          >
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Pendiente">Pendiente</SelectItem>
-              <SelectItem value="Cancelada">Cancelada</SelectItem>
-            </SelectContent>
-          </Select>
-        );
-      }
-      
-      // For Aprobado status - can only anular
-      if (request.estado === "Aprobado") {
-        return (
-          <Select 
-            defaultValue={request.estado}
-            onValueChange={(newStatus) => onStatusChange(request.id, newStatus)}
-          >
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Aprobado">Aprobado</SelectItem>
-              <SelectItem value="Anulada">Anulada</SelectItem>
-            </SelectContent>
-          </Select>
-        );
-      }
+    // Show dropdown only if status change is allowed, status is "Pendiente", and we have the callback
+    if (allowStatusChange && request.estado === "Pendiente" && onStatusChange) {
+      return (
+        <Select 
+          defaultValue={request.estado}
+          onValueChange={(newStatus) => onStatusChange(request.id, newStatus)}
+        >
+          <SelectTrigger className="w-32">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Pendiente">Pendiente</SelectItem>
+            <SelectItem value="Aprobado">Aceptar</SelectItem>
+            <SelectItem value="Rechazado">Rechazar</SelectItem>
+          </SelectContent>
+        </Select>
+      );
     }
     
     // Otherwise show the regular badge
@@ -109,7 +94,12 @@ export function RequestTable({ requests, isLoading, onViewDetails, onDownload, t
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>{title}</CardTitle>
+        <div className="flex items-center gap-4">
+          <CardTitle>{title}</CardTitle>
+          {showCreateButton && onRequestCreated && (
+            <CreateRequestModal onRequestCreated={onRequestCreated} selectedGroupUsers={selectedGroupUsers} selectedUser={selectedUser} />
+          )}
+        </div>
         <div className="text-sm text-gray-500">
           Mostrando {startIndex + 1} a {Math.min(endIndex, requests.length)} de {requests.length} solicitudes
         </div>
@@ -165,7 +155,7 @@ export function RequestTable({ requests, isLoading, onViewDetails, onDownload, t
                     <ArrowUpDown className="ml-1 h-4 w-4" />
                   </div>
                 </TableHead>
-                <TableHead className="text-center">Acciones</TableHead>
+                <TableHead className="text-center">Detalle</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -173,8 +163,8 @@ export function RequestTable({ requests, isLoading, onViewDetails, onDownload, t
                 <TableRow key={request.id} className="hover:bg-gray-50">
                   <TableCell className="text-sm">
                     {request.fechaFin ? 
-                      `${request.fechaSolicitada} - ${request.fechaFin}` : 
-                      request.fechaSolicitada
+                      `${formatDate(request.fechaSolicitada)} - ${formatDate(request.fechaFin)}` : 
+                      formatDate(request.fechaSolicitada)
                     }
                   </TableCell>
                   <TableCell className="text-sm">{request.tipo}</TableCell>
@@ -184,24 +174,14 @@ export function RequestTable({ requests, isLoading, onViewDetails, onDownload, t
                     {formatDate(request.fechaCreacion)}
                   </TableCell>
                   <TableCell className="text-center">
-                    <div className="flex justify-center space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => onViewDetails(request)}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => onDownload(request.id)}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onViewDetails(request)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -218,8 +198,8 @@ export function RequestTable({ requests, isLoading, onViewDetails, onDownload, t
                   <h4 className="font-medium text-gray-900">{request.tipo}</h4>
                   <p className="text-sm text-gray-500">
                     {request.fechaFin ? 
-                      `${request.fechaSolicitada} - ${request.fechaFin}` : 
-                      request.fechaSolicitada
+                      `${formatDate(request.fechaSolicitada)} - ${formatDate(request.fechaFin)}` : 
+                      formatDate(request.fechaSolicitada)
                     }
                   </p>
                 </div>
@@ -244,15 +224,6 @@ export function RequestTable({ requests, isLoading, onViewDetails, onDownload, t
                 >
                   <Eye className="w-4 h-4 mr-1" />
                   Ver detalles
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onDownload(request.id)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <Download className="w-4 h-4 mr-1" />
-                  Descargar
                 </Button>
               </div>
             </div>

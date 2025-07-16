@@ -1,0 +1,37 @@
+/* Tooltip */
+/* Contenedor del Tooltip */
+.tooltip-container {
+    position: relative;
+    padding-left: 4px;
+    display: flex;
+    align-items: center;
+}
+
+    .tooltip-container .icon {
+        display: block;
+        width: 20px;
+        height: 20px;
+        background-size: 20px;
+        background-repeat: no-repeat;
+    }
+
+    /* Mostrando los tooltips*/
+    .tooltip-container:hover .tooltip-report {
+        display: block;
+        z-index: 1050;
+    }
+
+    .tooltip-container .tooltip-report {
+        background-color: var(--gv-gray9);
+        border: 1px solid var(--gv-lightblue1);
+        border-radius: 6px;
+        color: var(--gv-gray1);
+        display: none;
+        font-weight: 600;
+        padding: 8px;
+        position: absolute;
+        right: 20px;
+        text-align: left;
+        top: -38px;
+        min-width: 150px;
+    }

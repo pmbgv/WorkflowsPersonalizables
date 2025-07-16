@@ -1,0 +1,289 @@
+[
+  {
+    "id": "YFwoUq2dEYPyFpEXZKTiLw",
+    "employee_id": "123456789",
+    "name": "Alejandra Guzman",
+    "group_name": "Neltume",
+    "position_name": ""
+  },
+  {
+    "id": "wZZcy3RaGC5cuic61IwTFw",
+    "employee_id": "185649874",
+    "name": "Edgardo Lopez",
+    "group_name": "Neltume",
+    "position_name": ""
+  },
+  {
+    "id": "P0IRR_7I0c1CmoP0YI5YcA",
+    "employee_id": "423883014",
+    "name": "Cotellero Prueba enrrolamiento",
+    "group_name": "Santiago",
+    "position_name": ""
+  },
+  {
+    "id": "CUtFiUC3KsNUUsSE1ZVMEw",
+    "employee_id": "987654321234",
+    "name": "Nueve Ocho",
+    "group_name": "Talca",
+    "position_name": ""
+  },
+  {
+    "id": "Ohe4O91rFL2jLYvLO-nqlA",
+    "employee_id": "2874982347",
+    "name": "Pedro Perez",
+    "group_name": "Talca",
+    "position_name": ""
+  },
+  {
+    "id": "HzbPzPcb1thJmFS6ntkQYw",
+    "employee_id": "1234321442",
+    "name": "Nueve Ocho",
+    "group_name": "Talca",
+    "position_name": ""
+  },
+  {
+    "id": "o3ZsCoyAOSTGr4visLI62A",
+    "employee_id": "189320302",
+    "name": "Melanie Mendoza Arias",
+    "group_name": "Alexandria",
+    "position_name": "prueba 3"
+  },
+  {
+    "id": "9rjPDycFfAdSZ_vM1NSAUg",
+    "employee_id": "159340058",
+    "name": "Rubi Murillo Susaeta",
+    "group_name": "string",
+    "position_name": "Prueba 1"
+  },
+  {
+    "id": "77HL2yZucnVvvusKFDbA0Q",
+    "employee_id": "198823831",
+    "name": "Amelia  Lopez Arriagada",
+    "group_name": "Talca",
+    "position_name": ""
+  },
+  {
+    "id": "fxakljtVL7yg4V7oIq7z7A",
+    "employee_id": "197782544",
+    "name": "Antonia Mendoza",
+    "group_name": "Santiago",
+    "position_name": ""
+  },
+  {
+    "id": "ITYsGVQySlnGXD71-g2DrA",
+    "employee_id": "192721911",
+    "name": "Claudio  Acuña",
+    "group_name": "Concepción",
+    "position_name": "Prueba 1"
+  },
+  {
+    "id": "o2sNONAddsH3Z-9MoPo-Aw",
+    "employee_id": "183954540",
+    "name": "Usuario Admin Test",
+    "group_name": "",
+    "position_name": ""
+  },
+  {
+    "id": "qKZx35_M0HnydqgWmQ7iug",
+    "employee_id": "183954560",
+    "name": "Usuario  Test",
+    "group_name": "Talca",
+    "position_name": ""
+  },
+  {
+    "id": "jbxArx5Y8QqTVKw2xJrNGg",
+    "employee_id": "183954580",
+    "name": "Usuario Colaborador Test",
+    "group_name": "Peñalolén",
+    "position_name": ""
+  },
+  {
+    "id": "OZBVKtv7GTxDHd5khi9_Vw",
+    "employee_id": "183955671",
+    "name": "Fabian Test  Jefe Grupo",
+    "group_name": "Concón",
+    "position_name": "Prueba 1"
+  },
+  {
+    "id": "caEhwGGcbn2iuHKRSj9xVw",
+    "employee_id": "183956781",
+    "name": "Francisco Test Colaborador",
+    "group_name": "Santiago",
+    "position_name": ""
+  },
+  {
+    "id": "IS9QmoItrNfKXbXUXcNthw",
+    "employee_id": "195264569",
+    "name": "Ángela Muñoz",
+    "group_name": "Santiago",
+    "position_name": "Prueba 2"
+  },
+  {
+    "id": "75NVwmi6r6azlwpPJWpnKg",
+    "employee_id": "197568452",
+    "name": "Matías Idioma",
+    "group_name": "Peñalolén",
+    "position_name": ""
+  },
+  {
+    "id": "hmGa9uagKmwcpAqoFRbvHg",
+    "employee_id": "192908906",
+    "name": "Javiera Copia",
+    "group_name": "Santiago",
+    "position_name": ""
+  },
+  {
+    "id": "pBgM6lWjLowQIukjbntpgw",
+    "employee_id": "184101955",
+    "name": "Catalina Copia",
+    "group_name": "Concepción",
+    "position_name": ""
+  },
+  {
+    "id": "jUvzPbc_aJhCqDmcPwgMpA",
+    "employee_id": "169926662",
+    "name": "Leonardo Copia",
+    "group_name": "Concepción",
+    "position_name": "Prueba 1"
+  },
+  {
+    "id": "2U--oYkw19Zl4pt9gjFSGw",
+    "employee_id": "262698211",
+    "name": "Marilia Copia",
+    "group_name": "Concón",
+    "position_name": "Prueba 2"
+  },
+  {
+    "id": "rvA4AzDFEt3jNI1DoXq6bg",
+    "employee_id": "12562907",
+    "name": "William Garcia",
+    "group_name": "Santiago",
+    "position_name": ""
+  },
+  {
+    "id": "K22xo7UmF1ce7YYr4FORGg",
+    "employee_id": "20836784",
+    "name": "Prueba GC",
+    "group_name": "Concón",
+    "position_name": ""
+  },
+  {
+    "id": "R-qk3zYIHa--9ecfiqjMLg",
+    "employee_id": "",
+    "name": "Prueba GC 2",
+    "group_name": "Neltume",
+    "position_name": ""
+  },
+  {
+    "id": "FnLxoFksFC8KVxMZYRNfkg",
+    "employee_id": "186686691",
+    "name": "Macarena Copia",
+    "group_name": "Peñalolén",
+    "position_name": ""
+  },
+  {
+    "id": "TRpGCv7oNhmPo9ipBRvj-w",
+    "employee_id": "156235687",
+    "name": "Pruebas App",
+    "group_name": "Santiago",
+    "position_name": "Prueba 1"
+  },
+  {
+    "id": "y2YUdiKb9ZRYQAP74AMfbw",
+    "employee_id": "1264579458",
+    "name": "Melissa Copia",
+    "group_name": "Alexandria",
+    "position_name": "cargo critico"
+  },
+  {
+    "id": "WOlg4PwZcGB13jvap-027w",
+    "employee_id": "123456",
+    "name": "Pepita mendieta",
+    "group_name": "Concón",
+    "position_name": "Prueba 1"
+  },
+  {
+    "id": "VIhWCc853IxZ5SB9W2piRQ",
+    "employee_id": "",
+    "name": "Gabriel Fuentes",
+    "group_name": "Concón",
+    "position_name": "Prueba 1"
+  },
+  {
+    "id": "FD4N1WiLvBhhT-R4koG1sg",
+    "employee_id": "15745811",
+    "name": "Daniel Lagos",
+    "group_name": "Talca",
+    "position_name": ""
+  },
+  {
+    "id": "8ooiYT33jaHH0r5xIJ_KUw",
+    "employee_id": "125698742",
+    "name": "Daniela Cifuentes",
+    "group_name": "Concón",
+    "position_name": "cargo critico"
+  },
+  {
+    "id": "hM15zzxsMZeNhv4-0EdiqQ",
+    "employee_id": "256987412",
+    "name": "Gabriel Gonzalez",
+    "group_name": "Neltume",
+    "position_name": ""
+  },
+  {
+    "id": "LP5WhQHREYwf63l3E1hXoQ",
+    "employee_id": "888888",
+    "name": "Prueba funesta funesta funesta",
+    "group_name": "Concón",
+    "position_name": ""
+  },
+  {
+    "id": "u8J5ENP8Jv_6NiaOY54X7g",
+    "employee_id": "1233456789",
+    "name": "Harry James Potter",
+    "group_name": "Santiago",
+    "position_name": "Prueba 1"
+  },
+  {
+    "id": "GvAV3c5MwASKVnMewntouQ",
+    "employee_id": "123456767890",
+    "name": "Sirius Black",
+    "group_name": "string",
+    "position_name": "Prueba 1"
+  },
+  {
+    "id": "SWvZJWC5qBfiDw89lZvcuw",
+    "employee_id": "987654",
+    "name": "Ron Weasley",
+    "group_name": "Talca",
+    "position_name": "Prueba 1"
+  },
+  {
+    "id": "zG8TSsHNM4yDEO9JdC1J5A",
+    "employee_id": "98765432123",
+    "name": "Nueve Ocho",
+    "group_name": "Talca",
+    "position_name": ""
+  },
+  {
+    "id": "0a_u5w2lyCz0rTPUVK3wvQ",
+    "employee_id": "241243214",
+    "name": "jorgesssss stringsss",
+    "group_name": "",
+    "position_name": ""
+  },
+  {
+    "id": "39qFD70cpmr7PLP3BzE0FA",
+    "employee_id": "",
+    "name": "Renato Rivera",
+    "group_name": "Santiago",
+    "position_name": "Prueba 1"
+  },
+  {
+    "id": "n5j6N29DBwDxdHoy_O8s8A",
+    "employee_id": "164640310",
+    "name": "tito rivera",
+    "group_name": "Santiago",
+    "position_name": "Prueba 1"
+  }
+]

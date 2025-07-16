@@ -1,23 +1,31 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronRight, Globe } from "lucide-react";
+import { ChevronRight, Globe, User, Star, FileText, Users, Calendar, Settings } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RequestTable } from "@/components/request-table";
+import { PendingRequestsTable } from "@/components/pending-requests-table";
 import { CreateRequestModal } from "@/components/create-request-modal";
 import { RequestDetailsModal } from "@/components/request-details-modal";
 import { FiltersSection } from "@/components/filters-section";
 import { ApprovalSchemas } from "@/components/approval-schemas";
+import { GroupsModal } from "@/components/groups-modal";
+import { UserSelector } from "@/components/user-selector";
 import { useToast } from "@/hooks/use-toast";
 import type { Request } from "@shared/schema";
 
 export default function Dashboard() {
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [groupsModalOpen, setGroupsModalOpen] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState<string>("");
+  const [selectedGroupUsers, setSelectedGroupUsers] = useState<any[]>([]);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
   const [activeTab, setActiveTab] = useState("lista");
   const [filters, setFilters] = useState({
     fechaInicio: "",
     fechaFin: "",
+    tipoFecha: "fechaCreacion",
     estado: "",
     tipo: "",
     busqueda: "",
@@ -27,17 +35,55 @@ export default function Dashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Obtener información de la empresa
+  const { data: companyData } = useQuery<{ name: string }>({
+    queryKey: ["/api/company"],
+  });
+
   // Mutation for updating request status
   const updateStatusMutation = useMutation({
     mutationFn: async ({ requestId, newStatus }: { requestId: number; newStatus: string }) => {
       const response = await apiRequest("PATCH", `/api/requests/${requestId}/status`, { estado: newStatus });
-      return response.json();
+      const updatedRequest = await response.json();
+      
+      // Si el estado cambió a "Aprobado", sincronizar con GeoVictoria
+      if (newStatus === "Aprobado" && updatedRequest.tipo === "Permiso") {
+        try {
+          const syncResponse = await apiRequest("POST", "/api/sync-to-geovictoria", {
+            userIdentifier: updatedRequest.identificador,
+            motivo: updatedRequest.motivo,
+            startDate: updatedRequest.fechaSolicitada,
+            endDate: updatedRequest.fechaFin || updatedRequest.fechaSolicitada
+          });
+          
+          if (syncResponse.ok) {
+            const syncResult = await syncResponse.json();
+            console.log("Successfully synced to GeoVictoria:", syncResult);
+          } else {
+            console.error("Failed to sync to GeoVictoria:", await syncResponse.text());
+          }
+        } catch (syncError) {
+          console.error("Error syncing to GeoVictoria:", syncError);
+          // No failing the main operation if sync fails
+        }
+      }
+      
+      return updatedRequest;
     },
-    onSuccess: () => {
+    onSuccess: (updatedRequest, { newStatus }) => {
+      // Invalidate all user-centric queries
       queryClient.invalidateQueries({ queryKey: ["/api/requests"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/requests/my-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/requests/pending-approval"] });
+      
+      let description = "El estado de la solicitud ha sido actualizado exitosamente.";
+      if (newStatus === "Aprobado" && updatedRequest.tipo === "Permiso") {
+        description += " La solicitud ha sido sincronizada con GeoVictoria.";
+      }
+      
       toast({
         title: "Estado actualizado",
-        description: "El estado de la solicitud ha sido actualizado exitosamente.",
+        description,
       });
     },
     onError: () => {
@@ -54,51 +100,185 @@ export default function Dashboard() {
     Object.entries(appliedFilters).filter(([_, value]) => value !== "" && value !== "all")
   ).toString();
 
-  // Query for filtered requests (Lista de Solicitudes)
+  // Query for user's own requests (Mis solicitudes)
   const { 
     data: requests = [], 
     isLoading, 
     error,
     refetch 
   } = useQuery<Request[]>({
-    queryKey: ["/api/requests", queryString],
+    queryKey: ["/api/requests/my-requests", selectedUser?.Identifier || selectedUser?.Id, queryString],
     queryFn: async () => {
-      const url = queryString ? `/api/requests?${queryString}` : "/api/requests";
+      const userId = selectedUser?.Identifier || selectedUser?.Id;
+      if (!userId) return [];
+      const url = queryString ? 
+        `/api/requests/my-requests/${userId}?${queryString}` : 
+        `/api/requests/my-requests/${userId}`;
       const response = await fetch(url, { credentials: "include" });
       if (!response.ok) {
-        throw new Error("Failed to fetch requests");
+        throw new Error("Failed to fetch user requests");
       }
       return response.json();
     },
+    enabled: !!(selectedUser?.Identifier || selectedUser?.Id),
   });
 
-  // Query for all requests with filters applied (Todas las Solicitudes)
+  // Query to check if user can approve requests
+  const { data: canApproveData } = useQuery<{ canApprove: boolean }>({
+    queryKey: ["/api/users", selectedUser?.UserProfile, "can-approve"],
+    queryFn: async () => {
+      if (!selectedUser?.UserProfile) {
+        return { canApprove: false };
+      }
+      
+      const response = await fetch(`/api/users/${encodeURIComponent(selectedUser.UserProfile)}/can-approve`);
+      if (!response.ok) {
+        return { canApprove: false };
+      }
+      return response.json();
+    },
+    enabled: !!selectedUser?.UserProfile,
+  });
+
+  // Query to check if user can view all requests
+  const { data: canViewAllRequestsData } = useQuery<{ canViewAllRequests: boolean }>({
+    queryKey: ["/api/users", selectedUser?.UserProfile, "can-view-all-requests"],
+    queryFn: async () => {
+      if (!selectedUser?.UserProfile) {
+        return { canViewAllRequests: false };
+      }
+      
+      const response = await fetch(`/api/users/${encodeURIComponent(selectedUser.UserProfile)}/can-view-all-requests`);
+      if (!response.ok) {
+        return { canViewAllRequests: false };
+      }
+      return response.json();
+    },
+    enabled: !!selectedUser?.UserProfile,
+  });
+
+  // Query for pending approval requests (Solicitudes pendientes)
+  const { 
+    data: pendingRequests = [], 
+    isLoading: isLoadingPending,
+    error: errorPending,
+    refetch: refetchPending
+  } = useQuery<Request[]>({
+    queryKey: ["/api/requests/pending-approval", selectedUser?.Identifier, selectedUser?.UserProfile, selectedUser?.GroupDescription, queryString],
+    queryFn: async () => {
+      if (!selectedUser?.Identifier || !selectedUser?.UserProfile) return [];
+      
+      // Build query parameters including userProfile and group information
+      const params = new URLSearchParams();
+      if (queryString) {
+        const existingParams = new URLSearchParams(queryString);
+        existingParams.forEach((value, key) => params.append(key, value));
+      }
+      params.append('userProfile', selectedUser.UserProfile);
+      if (selectedUser.GroupDescription) {
+        params.append('userGroupDescription', selectedUser.GroupDescription);
+      }
+      
+      const url = `/api/requests/pending-approval/${selectedUser.Identifier}?${params.toString()}`;
+      const response = await fetch(url, { credentials: "include" });
+      if (!response.ok) {
+        throw new Error("Failed to fetch pending requests");
+      }
+      return response.json();
+    },
+    enabled: !!selectedUser?.Identifier && !!selectedUser?.UserProfile && (canApproveData?.canApprove || (selectedUser?.UserProfile && ["#JefeGrupo#", "#adminCuenta#", "#supervisor#"].includes(selectedUser.UserProfile))),
+  });
+
+
+
+  // Query for all requests visible to user profile (Todas las Solicitudes)
   const { 
     data: allRequests = [], 
     isLoading: isLoadingAll, 
     error: errorAll,
     refetch: refetchAll 
   } = useQuery<Request[]>({
-    queryKey: ["/api/requests", "all", queryString],
+    queryKey: ["/api/requests", "all-requests", selectedUser?.UserProfile, queryString, activeTab],
     queryFn: async () => {
-      const url = queryString ? `/api/requests?${queryString}` : "/api/requests";
-      const response = await fetch(url, { credentials: "include" });
-      if (!response.ok) {
-        throw new Error("Failed to fetch all requests");
+      if (!selectedUser?.UserProfile) {
+        console.log("No user profile for all-requests");
+        return [];
       }
-      return response.json();
+      
+      // Only fetch when we're actually on the all-requests tab or approval schemas tab
+      if (activeTab !== "todas" && activeTab !== "esquemas") {
+        console.log("Not on todas or esquemas tab, skipping fetch");
+        return [];
+      }
+      
+      const params = new URLSearchParams();
+      if (queryString) {
+        const existingParams = new URLSearchParams(queryString);
+        existingParams.forEach((value, key) => params.append(key, value));
+      }
+      
+      const url = `/api/requests/all-requests/${encodeURIComponent(selectedUser.UserProfile)}?${params.toString()}`;
+      console.log("Fetching all requests from:", url);
+      
+      const response = await fetch(url, { 
+        credentials: "include",
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      // Handle both error responses and empty responses gracefully
+      if (!response.ok) {
+        console.error("All requests fetch failed:", response.status, response.statusText);
+        const errorText = await response.text();
+        console.error("Error response body:", errorText);
+        return []; // Return empty array instead of throwing
+      }
+      
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        console.error("Response is not JSON, content-type:", contentType);
+        const textResponse = await response.text();
+        console.error("Non-JSON response:", textResponse.substring(0, 200));
+        return [];
+      }
+      
+      const data = await response.json();
+      console.log("All requests data received:", data?.length || 0, "items");
+      return Array.isArray(data) ? data : [];
     },
+    enabled: selectedUser?.UserProfile && canViewAllRequestsData?.canViewAllRequests && (activeTab === "todas" || activeTab === "esquemas"),
+    retry: 1, // Reduce retries to prevent multiple error toasts
+    retryDelay: 1000,
   });
 
+  // Error handling with debouncing to prevent multiple toasts
   useEffect(() => {
-    if (error || errorAll) {
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar las solicitudes.",
-        variant: "destructive",
-      });
+    const errors = [
+      { error, name: "requests" },
+      { error: errorAll, name: "all-requests" },
+      { error: errorPending, name: "pending-requests" }
+    ].filter(({ error }) => error);
+
+    if (errors.length > 0) {
+      // Only show one toast for all errors to prevent spam
+      const errorMessages = errors.map(({ name }) => name).join(", ");
+      console.error("Request loading errors:", errors);
+      
+      // Debounce toasts to prevent multiple modals
+      const toastTimeout = setTimeout(() => {
+        toast({
+          title: "Error de carga",
+          description: `Error al cargar: ${errorMessages}`,
+          variant: "destructive",
+          duration: 5000,
+        });
+      }, 100);
+
+      return () => clearTimeout(toastTimeout);
     }
-  }, [error, errorAll, toast]);
+  }, [error, errorAll, errorPending, toast]);
 
   const handleViewDetails = (request: Request) => {
     setSelectedRequest(request);
@@ -108,6 +288,83 @@ export default function Dashboard() {
   const handleStatusChange = (requestId: number, newStatus: string) => {
     updateStatusMutation.mutate({ requestId, newStatus });
   };
+
+  // Bulk approval handler using proper workflow endpoints
+  const handleBulkApprovalAction = async (requestIds: number[], action: "Aprobado" | "Rechazado") => {
+    const userProfile = selectedUser?.UserProfile;
+    if (!userProfile) {
+      toast({
+        title: "Error",
+        description: "No se pudo identificar el perfil de usuario",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const requestId of requestIds) {
+      try {
+        // Get approval steps for this request
+        const stepsResponse = await fetch(`/api/requests/${requestId}/approval-steps`);
+        if (!stepsResponse.ok) {
+          errorCount++;
+          continue;
+        }
+        
+        const steps = await stepsResponse.json();
+        const currentStep = steps.find((stepData: any) => 
+          stepData.approvalStep.perfil === userProfile && 
+          stepData.requestApprovalStep.estado === 'Pendiente'
+        );
+
+        if (!currentStep) {
+          errorCount++;
+          continue;
+        }
+
+        // Process the approval step using the workflow endpoint
+        const approvalResponse = await fetch(`/api/requests/${requestId}/approval-steps/${currentStep.requestApprovalStep.id}/process`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action,
+            userProfile,
+            comentario: `Aprobación masiva: ${action}`
+          })
+        });
+
+        if (approvalResponse.ok) {
+          successCount++;
+        } else {
+          errorCount++;
+        }
+      } catch (error) {
+        errorCount++;
+      }
+    }
+
+    // Show result toast
+    if (successCount > 0) {
+      toast({
+        title: "Operación completada",
+        description: `${successCount} solicitud${successCount !== 1 ? 'es' : ''} ${action.toLowerCase()}${successCount !== 1 ? 's' : ''}${errorCount > 0 ? `, ${errorCount} con errores` : ''}`,
+      });
+      
+      // Refresh the data
+      queryClient.invalidateQueries({ queryKey: ['/api/requests/pending-approval'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/requests'] });
+    } else {
+      toast({
+        title: "Error en operación masiva",
+        description: "No se pudieron procesar las solicitudes seleccionadas",
+        variant: "destructive",
+      });
+    }
+  };
+
+
 
   const handleDownload = (requestId: number) => {
     toast({
@@ -121,31 +378,87 @@ export default function Dashboard() {
   };
 
   const handleRequestCreated = () => {
+    // Invalidate all request-related queries to ensure fresh data
+    queryClient.invalidateQueries({ queryKey: ["/api/requests"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/requests/my-requests"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/requests/pending-approval"] });
+    
+    // Also call refetch for immediate update
     refetch();
+    refetchPending();
     refetchAll();
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4">
-        <nav className="flex items-center space-x-2 text-sm text-gray-600">
-          <span>Solicitudes</span>
-          <ChevronRight className="h-4 w-4" />
-          <span className="text-gray-900 font-medium">Solicitudes</span>
-          <Globe className="h-4 w-4 text-blue-500 ml-2" />
-        </nav>
-      </header>
+  const handleGroupSelect = (groupName: string, users: any[]) => {
+    setSelectedGroup(groupName);
+    setSelectedGroupUsers(users);
+  };
 
-      <div className="container mx-auto px-6 py-8 max-w-7xl">
-        {/* Page Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Solicitudes</h1>
-            <p className="text-gray-600 mt-1">Gestiona y supervisa todas las solicitudes de flujo de trabajo</p>
-          </div>
-          <CreateRequestModal onRequestCreated={handleRequestCreated} />
+  const handleUserSelect = (user: any) => {
+    console.log("Usuario seleccionado:", user);
+    setSelectedUser(user);
+    
+    // Always switch to "lista" (Mis Solicitudes) when selecting a new user
+    setActiveTab("lista");
+  };
+
+  return (
+    <>
+      {/* Portal Header */}
+      <div className="portal-header">
+        <div className="header-content">
+          <img 
+            src="https://www.geovictoria.com/hubfs/social-suggested-images/info.geovictoria.comhubfscropped-Logo-WEB-5-1.png" 
+            width="112" 
+            alt="Logo"
+          />
+          <div className="divider"></div>
+          <div className="color-lightblue2">Control de Solicitudes</div>
+          <div className="divider"></div>
+          <input 
+            className="gv-input" 
+            type="text" 
+            placeholder="Buscar..."
+          />
         </div>
+        
+        <div className="header-content flex items-center gap-4">
+          <div className="info-buttons cursor-pointer" onClick={() => setGroupsModalOpen(true)}>
+            <Globe className="h-5 w-5 color-lightblue2" />
+          </div>
+          
+          <div className="info-buttons company min-w-0 flex-shrink-0">
+            <div className="text-sm font-medium truncate">{companyData?.name || "Empresa"}</div>
+          </div>
+
+          <div className="flex-1 min-w-0">
+            <UserSelector
+              users={selectedGroupUsers}
+              selectedGroup={selectedGroup}
+              onUserSelect={handleUserSelect}
+            />
+          </div>
+        </div>
+      </div>
+      
+      <div className="portal-body">
+        <div className="side-menu">
+          <Star className="h-5 w-5" />
+          <FileText className="h-5 w-5" />
+          <User className="h-5 w-5" />
+          <Users className="h-5 w-5" />
+          <Calendar className="h-5 w-5" />
+          <Settings className="h-5 w-5" />
+        </div>
+        
+        <div className="container-fluid">
+          {/* Breadcrumb Navigation */}
+          <div className="breadcrumb">
+            <span className="breadcrumb-item">Planificación</span>
+            <ChevronRight className="h-4 w-4" />
+            <span className="breadcrumb-item current">Solicitudes</span>
+          </div>
+
 
         {/* Filters - Only show for request tabs */}
         {activeTab !== "esquemas" && (
@@ -158,10 +471,24 @@ export default function Dashboard() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3 mb-6">
-            <TabsTrigger value="lista">Lista de Solicitudes</TabsTrigger>
-            <TabsTrigger value="todas">Todas las Solicitudes</TabsTrigger>
-            <TabsTrigger value="esquemas">Configuración Esquemas</TabsTrigger>
+          <TabsList className={`grid w-full mb-6 ${
+            // Dynamic grid based on available tabs
+            !canApproveData?.canApprove && !canViewAllRequestsData?.canViewAllRequests && selectedUser?.UserProfile !== "#adminCuenta#" ? "grid-cols-1" :
+            canApproveData?.canApprove && !canViewAllRequestsData?.canViewAllRequests && selectedUser?.UserProfile !== "#adminCuenta#" ? "grid-cols-2" :
+            canViewAllRequestsData?.canViewAllRequests && selectedUser?.UserProfile !== "#adminCuenta#" ? "grid-cols-3" :
+            selectedUser?.UserProfile === "#adminCuenta#" ? "grid-cols-4" :
+            "grid-cols-1"
+          }`}>
+            <TabsTrigger value="lista">Mis Solicitudes</TabsTrigger>
+            {(canApproveData?.canApprove || (selectedUser?.UserProfile && ["#JefeGrupo#", "#adminCuenta#", "#supervisor#"].includes(selectedUser.UserProfile))) && (
+              <TabsTrigger value="pendientes">Solicitudes pendientes</TabsTrigger>
+            )}
+            {canViewAllRequestsData?.canViewAllRequests && (
+              <TabsTrigger value="todas">Todas las Solicitudes</TabsTrigger>
+            )}
+            {selectedUser?.UserProfile === "#adminCuenta#" && (
+              <TabsTrigger value="esquemas">Configuración Esquemas</TabsTrigger>
+            )}
           </TabsList>
           
           <TabsContent value="lista" className="space-y-6">
@@ -171,38 +498,72 @@ export default function Dashboard() {
               isLoading={isLoading}
               onViewDetails={handleViewDetails}
               onDownload={handleDownload}
-              title="Lista de Solicitudes"
+              title="Mis Solicitudes"
+              showCreateButton={true}
+              onRequestCreated={handleRequestCreated}
+              selectedGroupUsers={selectedGroupUsers}
+              selectedUser={selectedUser}
             />
           </TabsContent>
+
+          {(canApproveData?.canApprove || (selectedUser?.UserProfile && ["#JefeGrupo#", "#adminCuenta#", "#supervisor#"].includes(selectedUser.UserProfile))) && (
+            <TabsContent value="pendientes" className="space-y-6">
+              {/* Pending Requests Table with Checkboxes */}
+              <PendingRequestsTable
+                requests={pendingRequests}
+                isLoading={isLoadingPending}
+                onViewDetails={handleViewDetails}
+                onDownload={handleDownload}
+                onBulkApprovalAction={handleBulkApprovalAction}
+                selectedGroupUsers={selectedGroupUsers}
+                selectedUser={selectedUser}
+                currentUser={selectedUser}
+                showManagementDropdown={true}
+              />
+            </TabsContent>
+          )}
           
-          <TabsContent value="todas" className="space-y-6">
-            {/* All Requests Table */}
-            <RequestTable
-              requests={allRequests}
-              isLoading={isLoadingAll}
-              onViewDetails={handleViewDetails}
-              onDownload={handleDownload}
-              title="Todas las Solicitudes"
-              allowStatusChange={true}
-              onStatusChange={handleStatusChange}
-            />
-          </TabsContent>
+          {canViewAllRequestsData?.canViewAllRequests && (
+            <TabsContent value="todas" className="space-y-6">
+              {/* All Requests Table - View only, no management */}
+              <RequestTable
+                requests={allRequests}
+                isLoading={isLoadingAll}
+                onViewDetails={handleViewDetails}
+                onDownload={handleDownload}
+                title="Todas las Solicitudes"
+                showCreateButton={false}
+                allowStatusChange={false}
+              />
+            </TabsContent>
+          )}
           
-          <TabsContent value="esquemas" className="space-y-6">
-            {/* Approval Schemas Configuration */}
-            <ApprovalSchemas />
-          </TabsContent>
+          {selectedUser?.UserProfile === "#adminCuenta#" && (
+            <TabsContent value="esquemas" className="space-y-6">
+              {/* Approval Schemas Configuration */}
+              <ApprovalSchemas selectedUser={selectedUser} />
+            </TabsContent>
+          )}
         </Tabs>
 
-        {/* Request Details Modal */}
-        <RequestDetailsModal
-          request={selectedRequest}
-          open={detailsModalOpen}
-          onOpenChange={setDetailsModalOpen}
-          onDownload={handleDownload}
-          onStatusChange={handleStatusChange}
-        />
+          {/* Request Details Modal */}
+          <RequestDetailsModal
+            request={selectedRequest}
+            open={detailsModalOpen}
+            onOpenChange={setDetailsModalOpen}
+            onDownload={handleDownload}
+            isAllRequestsTab={activeTab === "todas"}
+            currentUser={selectedUser}
+          />
+
+          {/* Groups Modal */}
+          <GroupsModal
+            open={groupsModalOpen}
+            onOpenChange={setGroupsModalOpen}
+            onGroupSelect={handleGroupSelect}
+          />
+        </div>
       </div>
-    </div>
+    </>
   );
 }

@@ -1,35 +1,321 @@
-import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Upload } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Plus, Upload, Calendar as CalendarIcon, X, Info, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import type { InsertRequest } from "@shared/schema";
+
+import { format, differenceInDays, isWeekend, eachDayOfInterval } from "date-fns";
+import { es } from "date-fns/locale";
+import type { InsertRequest, Request, UserVacationBalance, ApprovalSchema } from "@shared/schema";
+import type { DateRange } from "react-day-picker";
 
 interface CreateRequestModalProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   onRequestCreated?: () => void;
+  selectedGroupUsers?: any[];
+  selectedUser?: any;
 }
 
-export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps) {
-  const [open, setOpen] = useState(false);
+export function CreateRequestModal({ open: externalOpen, onOpenChange, onRequestCreated, selectedGroupUsers = [], selectedUser }: CreateRequestModalProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = externalOpen !== undefined ? externalOpen : internalOpen;
+  const setOpen = onOpenChange || setInternalOpen;
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [showDateConflictAlert, setShowDateConflictAlert] = useState(false);
+  const [showMinimumDaysAlert, setShowMinimumDaysAlert] = useState(false);
+  const [minimumDaysError, setMinimumDaysError] = useState({ requested: 0, minimum: 0 });
+  const [showMaximumDaysAlert, setShowMaximumDaysAlert] = useState(false);
+  const [maximumDaysError, setMaximumDaysError] = useState({ requested: 0, maximum: 0 });
+  const [showMultipleDaysAlert, setShowMultipleDaysAlert] = useState(false);
+  const [multipleDaysError, setMultipleDaysError] = useState({ requested: 0, multiple: 0 });
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [vacationCalculation, setVacationCalculation] = useState({
+    diasDisponibles: 0,
+    diasSolicitados: 0,
+    diasEfectivos: 0,
+    diasRestantes: 0
+  });
   const [formData, setFormData] = useState<Partial<InsertRequest>>({
     tipo: "",
     fechaSolicitada: "",
     fechaFin: "",
     asunto: "",
     descripcion: "",
-    solicitadoPor: "Andrés Acevedo", // Default user
-    prioridad: "normal",
+    solicitadoPor: selectedUser ? `${selectedUser.Name} ${selectedUser.LastName}` : "", // Group/user selection sets requester
+    identificador: selectedUser ? selectedUser.Identifier : "", // Requester ID
+    usuarioSolicitado: "", // User the request is for (to be selected in form)
+    identificadorUsuario: "", // ID of user the request is for
+    motivo: "",
     archivosAdjuntos: [],
   });
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Obtener usuarios reales de la API
+  const { data: allUsers = [] } = useQuery({
+    queryKey: ["/api/users"],
+    queryFn: async () => {
+      const response = await fetch("/api/users");
+      if (!response.ok) throw new Error("Failed to fetch users");
+      return response.json();
+    },
+  });
+
+  // Usar usuarios del grupo seleccionado si están disponibles, sino todos los usuarios
+  const allAvailableUsers = selectedGroupUsers.length > 0 ? selectedGroupUsers.map((user: any) => ({
+    id: user.Id,
+    employee_id: user.Identifier,
+    name: `${user.Name} ${user.LastName}`.trim(),
+    group_name: user.GroupDescription,
+    position_name: user.PositionDescription,
+    userProfile: user.UserProfile
+  })) : allUsers.map((user: any) => ({
+    ...user,
+    userProfile: user.userProfile || "#usuario#" // Default profile if not specified
+  }));
+
+  // Obtener motivos desde GeoVictoria API
+  const { data: timeoffTypes } = useQuery({
+    queryKey: ["/api/timeoff-types"],
+    queryFn: async () => {
+      const response = await fetch("/api/timeoff-types");
+      if (!response.ok) throw new Error("Failed to fetch timeoff types");
+      return response.json();
+    },
+  });
+
+  // Obtener motivos disponibles basados en el perfil del usuario
+  const { data: availableMotivos } = useQuery({
+    queryKey: ["/api/available-motivos", selectedUser?.UserProfile],
+    queryFn: async () => {
+      if (!selectedUser?.UserProfile) return { motivos: [], visibleSchemas: [] };
+      const response = await fetch(`/api/available-motivos/${encodeURIComponent(selectedUser.UserProfile)}`);
+      if (!response.ok) throw new Error("Failed to fetch available motivos");
+      return response.json();
+    },
+    enabled: !!selectedUser?.UserProfile,
+  });
+
+  // Filtrar motivos según permisos de visibilidad por esquema específico
+  const getVisibleMotivos = () => {
+    if (!selectedUser?.UserProfile || !timeoffTypes) return [];
+    
+    // Combinar todos los motivos disponibles
+    const allMotivos = [...(timeoffTypes.permisosCompletos || []), ...(timeoffTypes.permisosParciales || [])];
+    
+    // Filtrar motivos según visibilidad por esquema
+    const visibleMotivos = allMotivos.filter(motivo => {
+      // Buscar el esquema que contiene este motivo específico
+      const motivoSchema = approvalSchemas.find(schema => 
+        schema.tipoSolicitud === "Permiso" && 
+        (schema as any).motivos && 
+        (schema as any).motivos.includes(motivo)
+      );
+      
+      if (!motivoSchema) {
+        // Si no hay esquema configurado para este motivo, ocultarlo por seguridad
+        return false;
+      }
+      
+      // Verificar permisos de visibilidad del esquema específico
+      if (!motivoSchema.visibilityPermissions || motivoSchema.visibilityPermissions.length === 0) {
+        // Si no hay permisos configurados, permitir a todos (comportamiento por defecto)
+        return true;
+      }
+      
+      // Verificar si el perfil del usuario está en los permisos de visibilidad
+      return motivoSchema.visibilityPermissions.includes(selectedUser.UserProfile);
+    });
+    
+    return visibleMotivos;
+  };
+
+  // Obtener esquemas de aprobación para aplicar configuración
+  const { data: approvalSchemas = [] } = useQuery<ApprovalSchema[]>({
+    queryKey: ["/api/approval-schemas"],
+    queryFn: async () => {
+      const response = await fetch("/api/approval-schemas");
+      if (!response.ok) throw new Error("Failed to fetch approval schemas");
+      return response.json();
+    },
+  });
+
+  // Verificar si el usuario actual es admin o jefe de grupo
+  const isAdminOrManager = selectedUser && ["#JefeGrupo#", "#adminCuenta#"].includes(selectedUser.UserProfile);
+
+  // Obtener el esquema activo para el tipo de solicitud y motivo seleccionados
+  const activeSchema = approvalSchemas.find(schema => {
+    if (formData.tipo === "Vacaciones") {
+      return schema.tipoSolicitud === "Vacaciones";
+    } else if (formData.tipo === "Permiso") {
+      return schema.tipoSolicitud === "Permiso" && 
+             (schema as any).motivos && 
+             (schema as any).motivos.includes(formData.motivo);
+    }
+    return false;
+  });
+
+  // Verificar si el usuario actual puede hacer solicitudes para terceros
+  const canRequestForOthers = () => {
+    // Si el tipo no está seleccionado, no se puede determinar
+    if (!formData.tipo) {
+      return false;
+    }
+
+    // Para Vacaciones, verificar el esquema de vacaciones
+    if (formData.tipo === "Vacaciones") {
+      const vacationSchema = approvalSchemas.find(schema => schema.tipoSolicitud === "Vacaciones");
+      if (!vacationSchema) return false;
+      
+      // Si permitir solicitud a terceros está desactivado
+      if (vacationSchema.permitirSolicitudTerceros === "false" || !vacationSchema.permitirSolicitudTerceros) {
+        return false;
+      }
+      
+      // Si está activado, verificar permisos según jerarquía
+      if (vacationSchema.permitirSolicitudTerceros === "true") {
+        return selectedUser?.UserProfile === "#adminCuenta#" || selectedUser?.UserProfile === "#JefeGrupo#";
+      }
+    }
+
+    // Para Permisos, verificar el esquema específico del motivo seleccionado
+    if (formData.tipo === "Permiso") {
+      // Si no hay motivo seleccionado, no se puede determinar
+      if (!formData.motivo) {
+        return false;
+      }
+      
+      const motivoSchema = approvalSchemas.find(schema => 
+        schema.tipoSolicitud === "Permiso" && 
+        (schema as any).motivos && 
+        (schema as any).motivos.includes(formData.motivo)
+      );
+      
+      if (!motivoSchema) return false;
+      
+      // Si permitir solicitud a terceros está desactivado para este motivo específico
+      if (motivoSchema.permitirSolicitudTerceros === "false" || !motivoSchema.permitirSolicitudTerceros) {
+        return false;
+      }
+      
+      // Si está activado, verificar permisos según jerarquía
+      if (motivoSchema.permitirSolicitudTerceros === "true") {
+        return selectedUser?.UserProfile === "#adminCuenta#" || selectedUser?.UserProfile === "#JefeGrupo#";
+      }
+    }
+    
+    return false;
+  };
+
+  // Filtrar usuarios disponibles para solicitudes según permisos y jerarquía
+  const getFilteredUsers = () => {
+    if (!canRequestForOthers()) {
+      // Si no puede solicitar para terceros, solo puede seleccionarse a sí mismo
+      return allAvailableUsers.filter((user: any) => user.employee_id === selectedUser?.Identifier);
+    }
+
+    // Si puede solicitar para terceros, filtrar según jerarquía
+    if (selectedUser?.UserProfile === "#adminCuenta#") {
+      // Admin puede solicitar para jefe de grupo y empleados
+      return allAvailableUsers.filter((user: any) => 
+        user.userProfile === "#JefeGrupo#" || 
+        user.userProfile === "#usuario#" || 
+        user.userProfile === "#empleado#" ||
+        user.employee_id === selectedUser?.Identifier
+      );
+    } else if (selectedUser?.UserProfile === "#JefeGrupo#") {
+      // Jefe de grupo puede solicitar para empleados
+      return allAvailableUsers.filter((user: any) => 
+        user.userProfile === "#usuario#" || 
+        user.userProfile === "#empleado#" ||
+        user.employee_id === selectedUser?.Identifier
+      );
+    }
+
+    return allAvailableUsers;
+  };
+
+  const users = getFilteredUsers();
+
+  // Update form data when selected user changes
+  useEffect(() => {
+    if (selectedUser) {
+      const userIdToUse = selectedUser.Identifier || selectedUser.Id || "";
+      setFormData(prev => ({
+        ...prev,
+        solicitadoPor: `${selectedUser.Name} ${selectedUser.LastName}`,
+        identificador: userIdToUse,
+      }));
+    }
+  }, [selectedUser]);
+
+  // Reset user selection when tipo/motivo changes and third-party requests become unavailable
+  useEffect(() => {
+    if (selectedUser && !canRequestForOthers()) {
+      const userIdToUse = selectedUser.Identifier || selectedUser.Id || "";
+      setFormData(prev => ({
+        ...prev,
+        usuarioSolicitado: `${selectedUser.Name} ${selectedUser.LastName}`,
+        identificadorUsuario: userIdToUse
+      }));
+    }
+  }, [formData.tipo, formData.motivo, selectedUser]);
+
+  // Obtener todas las solicitudes existentes para verificar conflictos de fechas
+  const { data: existingRequests = [] } = useQuery<Request[]>({
+    queryKey: ["/api/requests"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/requests");
+      return response.json();
+    },
+  });
+
+  // Obtener saldo de vacaciones del usuario
+  const { data: userVacationBalance } = useQuery({
+    queryKey: ['vacation-balance', formData.identificador],
+    queryFn: async () => {
+      const response = await fetch(`/api/vacation-balance/${formData.identificador}`);
+      return response.json();
+    },
+    enabled: Boolean(open && formData.identificador && formData.tipo === "Vacaciones"),
+  });
+
+  // Función para calcular días laborables (excluyendo fines de semana)
+  const calculateWorkingDays = (startDate: Date, endDate: Date): number => {
+    if (!startDate || !endDate) return 0;
+    
+    const days = eachDayOfInterval({ start: startDate, end: endDate });
+    return days.filter(day => !isWeekend(day)).length;
+  };
+
+  // Efecto para calcular días de vacaciones cuando cambian las fechas
+  useEffect(() => {
+    if (formData.tipo === "Vacaciones" && dateRange?.from && dateRange?.to && userVacationBalance) {
+      const diasSolicitados = differenceInDays(dateRange.to, dateRange.from) + 1;
+      const diasEfectivos = calculateWorkingDays(dateRange.from, dateRange.to);
+      const diasRestantes = userVacationBalance.diasDisponibles - diasEfectivos;
+
+      setVacationCalculation({
+        diasDisponibles: userVacationBalance.diasDisponibles || 0,
+        diasSolicitados,
+        diasEfectivos,
+        diasRestantes
+      });
+    }
+  }, [dateRange, formData.tipo, userVacationBalance]);
 
   const createRequestMutation = useMutation({
     mutationFn: async (data: InsertRequest) => {
@@ -63,27 +349,365 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
       asunto: "",
       descripcion: "",
       solicitadoPor: "Andrés Acevedo",
-      prioridad: "normal",
+      identificador: "16345990-8",
+      motivo: "",
       archivosAdjuntos: [],
     });
+    setDateRange(undefined);
+  };
+
+  // Función para verificar conflictos de fechas
+  const checkDateConflicts = (startDate: string, endDate?: string): boolean => {
+    console.log("🔍 Iniciando verificación de conflictos de fechas");
+    console.log("📅 Fechas a verificar:", { startDate, endDate });
+    
+    if (!startDate) {
+      console.log("❌ No hay fecha de inicio, no hay conflictos");
+      return false;
+    }
+
+    const requestStart = new Date(startDate);
+    const requestEnd = endDate ? new Date(endDate) : requestStart;
+    
+    console.log("📅 Fechas parseadas:", { 
+      requestStart: requestStart.toISOString(), 
+      requestEnd: requestEnd.toISOString() 
+    });
+    console.log("📋 Solicitudes existentes a verificar:", existingRequests.length);
+
+    const conflicts = existingRequests.filter(request => {
+      console.log("🔎 Verificando solicitud:", {
+        id: request.id,
+        solicitadoPor: request.solicitadoPor,
+        estado: request.estado,
+        fechaSolicitada: request.fechaSolicitada,
+        fechaFin: request.fechaFin
+      });
+      
+      // Solo verificar solicitudes del mismo usuario
+      if (request.solicitadoPor !== formData.solicitadoPor) {
+        console.log("⏭️ Saltando - diferente usuario");
+        return false;
+      }
+      
+      // Solo verificar solicitudes que no estén rechazadas o canceladas
+      if (request.estado === "Rechazada" || request.estado === "Cancelada") {
+        console.log("⏭️ Saltando - estado rechazada/cancelada");
+        return false;
+      }
+      
+      // Verificar que las fechas de la solicitud existente sean válidas
+      if (!request.fechaSolicitada || request.fechaSolicitada === "") {
+        console.log("⏭️ Saltando - sin fecha solicitada");
+        return false;
+      }
+      
+      const existingStart = new Date(request.fechaSolicitada);
+      const existingEnd = request.fechaFin && request.fechaFin !== "" ? new Date(request.fechaFin) : existingStart;
+
+      console.log("📅 Fechas existentes parseadas:", {
+        existingStart: existingStart.toISOString(),
+        existingEnd: existingEnd.toISOString()
+      });
+
+      // Verificar que las fechas sean válidas
+      if (isNaN(existingStart.getTime()) || isNaN(existingEnd.getTime())) {
+        console.log("⏭️ Saltando - fechas existentes inválidas");
+        return false;
+      }
+      if (isNaN(requestStart.getTime()) || isNaN(requestEnd.getTime())) {
+        console.log("⏭️ Saltando - fechas solicitadas inválidas");
+        return false;
+      }
+
+      // Verificar si hay solapamiento
+      const hasOverlap = (requestStart <= existingEnd) && (requestEnd >= existingStart);
+      
+      console.log("🔄 Verificación de solapamiento:", {
+        condicion1: `${requestStart.toISOString()} <= ${existingEnd.toISOString()}`,
+        resultado1: requestStart <= existingEnd,
+        condicion2: `${requestEnd.toISOString()} >= ${existingStart.toISOString()}`,
+        resultado2: requestEnd >= existingStart,
+        hasOverlap
+      });
+      
+      if (hasOverlap) {
+        console.log("⚠️ CONFLICTO DETECTADO:", {
+          solicitudExistente: request,
+          fechasSolicitadas: { inicio: startDate, fin: endDate },
+          solapamiento: hasOverlap
+        });
+      }
+      
+      return hasOverlap;
+    });
+
+    console.log("📊 Resultado final de validación:", {
+      fechaSolicitada: startDate,
+      fechaFin: endDate,
+      solicitudesExistentes: existingRequests.length,
+      conflictosEncontrados: conflicts.length,
+      hayConflictos: conflicts.length > 0
+    });
+
+    return conflicts.length > 0;
+  };
+
+  // Función para convertir fecha a string local sin problemas de zona horaria
+  const formatDateToLocal = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // Función robusta para extraer fecha sin problemas de zona horaria
+  const extractLocalDate = (date: Date): string => {
+    // Obtener componentes de fecha directamente sin conversión de zona horaria
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1; // getMonth() returns 0-11
+    const day = date.getDate();
+    
+    // Formatear con padding
+    const formattedMonth = String(month).padStart(2, '0');
+    const formattedDay = String(day).padStart(2, '0');
+    
+    return `${year}-${formattedMonth}-${formattedDay}`;
+  };
+
+  // Función para manejar el cambio de rango de fechas
+  const handleDateRangeChange = (range: DateRange | undefined) => {
+    console.log("🗓️ Calendar selection:", range);
+    setDateRange(range);
+    if (range?.from) {
+      const formattedFrom = extractLocalDate(range.from);
+      console.log("📅 From date - Original:", range.from.toISOString());
+      console.log("📅 From date - Year:", range.from.getFullYear());
+      console.log("📅 From date - Month:", range.from.getMonth() + 1);
+      console.log("📅 From date - Day:", range.from.getDate());
+      console.log("📅 From date - Final format:", formattedFrom);
+      handleInputChange('fechaSolicitada', formattedFrom);
+    }
+    if (range?.to) {
+      const formattedTo = extractLocalDate(range.to);
+      console.log("📅 To date - Original:", range.to.toISOString());
+      console.log("📅 To date - Year:", range.to.getFullYear());
+      console.log("📅 To date - Month:", range.to.getMonth() + 1);
+      console.log("📅 To date - Day:", range.to.getDate());
+      console.log("📅 To date - Final format:", formattedTo);
+      handleInputChange('fechaFin', formattedTo);
+    } else {
+      handleInputChange('fechaFin', "");
+    }
+  };
+
+  // Define motivos based on tipo selection
+  const getMotivosForTipo = (tipo: string) => {
+    switch (tipo) {
+      case "Permiso":
+        // Usar la nueva lógica de visibilidad por esquema específico
+        return getVisibleMotivos();
+      case "Vacaciones":
+        return ["Vacaciones"];
+      default:
+        return [];
+    }
+  };
+
+  const handleTipoChange = (value: string) => {
+    handleInputChange('tipo', value);
+    // Set appropriate motivo based on tipo
+    if (value === "Vacaciones") {
+      handleInputChange('motivo', "Vacaciones");
+    } else {
+      handleInputChange('motivo', "");
+    }
+  };
+
+  // Handle file upload
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+    try {
+      const newFiles = Array.from(files);
+      setUploadedFiles(prev => [...prev, ...newFiles]);
+      
+      // Generate file URLs for display/storage
+      const fileUrls = newFiles.map(file => {
+        return URL.createObjectURL(file);
+      });
+      
+      // Update form data with file names/links
+      const currentFiles = formData.archivosAdjuntos || [];
+      const newFileNames = newFiles.map(file => file.name);
+      setFormData(prev => ({
+        ...prev,
+        archivosAdjuntos: [...currentFiles, ...newFileNames]
+      }));
+      
+      toast({
+        title: "Archivos subidos",
+        description: `Se han subido ${newFiles.length} archivo(s) exitosamente.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Ocurrió un error al subir los archivos.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // Remove uploaded file
+  const removeFile = (index: number) => {
+    const newFiles = uploadedFiles.filter((_, i) => i !== index);
+    setUploadedFiles(newFiles);
+    
+    const currentFiles = formData.archivosAdjuntos || [];
+    const newFileNames = currentFiles.filter((_, i) => i !== index);
+    setFormData(prev => ({
+      ...prev,
+      archivosAdjuntos: newFileNames
+    }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.tipo || !formData.fechaSolicitada || !formData.asunto || !formData.solicitadoPor) {
+    if (!formData.tipo || !formData.solicitadoPor) {
       toast({
         title: "Campos requeridos",
-        description: "Por favor completa todos los campos requeridos.",
+        description: "Por favor selecciona un tipo de solicitud.",
         variant: "destructive",
       });
       return;
     }
 
-    createRequestMutation.mutate(formData as InsertRequest);
+    // Validar campos obligatorios según configuración del esquema
+    if (activeSchema) {
+      // Validar comentario obligatorio
+      if ((activeSchema as any).comentarioRequerido === "true" && 
+          (activeSchema as any).comentarioObligatorio === "true" && 
+          (!formData.descripcion || formData.descripcion.trim() === "")) {
+        toast({
+          title: "Campo obligatorio",
+          description: "El comentario es obligatorio para este tipo de solicitud.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validar adjuntar documentos obligatorio
+      if ((activeSchema as any).adjuntarDocumentos === "true" && 
+          (activeSchema as any).adjuntarDocumentosObligatorio === "true" && 
+          (!formData.archivosAdjuntos || formData.archivosAdjuntos.length === 0)) {
+        toast({
+          title: "Campo obligatorio",
+          description: "Es obligatorio adjuntar documentos para este tipo de solicitud.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    // Verificar conflictos de fechas si hay fechas seleccionadas
+    console.log("🚀 SUBMIT: Verificando conflictos antes de envío");
+    console.log("📅 formData.fechaSolicitada:", formData.fechaSolicitada);
+    console.log("📅 formData.fechaFin:", formData.fechaFin);
+    
+    if (formData.fechaSolicitada && checkDateConflicts(formData.fechaSolicitada, formData.fechaFin ?? undefined)) {
+      console.log("❌ SUBMIT: Conflicto detectado, mostrando alerta");
+      setShowDateConflictAlert(true);
+      return;
+    } else {
+      console.log("✅ SUBMIT: No hay conflictos, continuando con envío");
+    }
+
+    // Preparar datos según el tipo de solicitud
+    let requestData;
+    
+    if (formData.tipo === "Vacaciones") {
+      const requestedDays = vacationCalculation.diasEfectivos || vacationCalculation.diasSolicitados;
+      
+      // Validar días mínimos para vacaciones
+      if (activeSchema && activeSchema.diasMinimo && activeSchema.diasMinimo > 0) {
+        const minimumDays = activeSchema.diasMinimo;
+        
+        if (requestedDays < minimumDays) {
+          setMinimumDaysError({ requested: requestedDays, minimum: minimumDays });
+          setShowMinimumDaysAlert(true);
+          return;
+        }
+      }
+      
+      // Validar días máximos para vacaciones
+      if (activeSchema && activeSchema.diasMaximo && activeSchema.diasMaximo > 0) {
+        const maximumDays = activeSchema.diasMaximo;
+        
+        if (requestedDays > maximumDays) {
+          setMaximumDaysError({ requested: requestedDays, maximum: maximumDays });
+          setShowMaximumDaysAlert(true);
+          return;
+        }
+      }
+      
+      // Validar múltiplo de días para vacaciones
+      if (activeSchema && activeSchema.diasMultiplo && activeSchema.diasMultiplo > 0) {
+        const multipleDays = activeSchema.diasMultiplo;
+        
+        if (requestedDays % multipleDays !== 0) {
+          setMultipleDaysError({ requested: requestedDays, multiple: multipleDays });
+          setShowMultipleDaysAlert(true);
+          return;
+        }
+      }
+      
+      requestData = {
+        ...formData,
+        asunto: formData.asunto || "Solicitud de Vacaciones",
+        motivo: "Vacaciones",
+        diasSolicitados: vacationCalculation.diasSolicitados,
+        diasEfectivos: vacationCalculation.diasEfectivos,
+      };
+    } else {
+      requestData = {
+        ...formData,
+        asunto: formData.asunto || "Solicitud de Permiso",
+      };
+    }
+
+    // Asegurar que identificador e identificadorUsuario estén configurados
+    // Usar Identifier si existe, sino usar Id como fallback
+    const userIdToUse = selectedUser?.Identifier || selectedUser?.Id || "";
+    
+    // Para solicitudes propias (cuando no se puede solicitar para terceros)
+    if (!canRequestForOthers()) {
+      requestData.identificador = userIdToUse;
+      requestData.identificadorUsuario = userIdToUse;
+      requestData.usuarioSolicitado = `${selectedUser?.Name} ${selectedUser?.LastName}`;
+    } else {
+      // Para solicitudes a terceros, asegurar que el solicitante está identificado
+      if (!requestData.identificador && userIdToUse) {
+        requestData.identificador = userIdToUse;
+      }
+      
+      // Si no se especificó usuario destinatario, usar el solicitante
+      if (!requestData.identificadorUsuario && userIdToUse) {
+        requestData.identificadorUsuario = userIdToUse;
+        requestData.usuarioSolicitado = `${selectedUser?.Name} ${selectedUser?.LastName}`;
+      }
+    }
+
+    console.log("📋 Final request data:", JSON.stringify(requestData, null, 2));
+    console.log("📅 Final dates - fechaSolicitada:", requestData.fechaSolicitada, "fechaFin:", requestData.fechaFin);
+    createRequestMutation.mutate(requestData as InsertRequest);
   };
 
-  const handleInputChange = (field: keyof InsertRequest, value: string) => {
+  const handleInputChange = (field: keyof InsertRequest, value: string | string[]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -97,133 +721,558 @@ export function CreateRequestModal({ onRequestCreated }: CreateRequestModalProps
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Plus className="w-5 h-5" />
-            Nueva Solicitud
+          <DialogTitle className="text-lg font-medium text-gray-900">
+            Crear solicitud
           </DialogTitle>
+          <DialogDescription>
+            Complete los campos para crear una nueva solicitud
+          </DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Campos básicos iniciales */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="tipo">Tipo de solicitud *</Label>
-              <Select 
-                value={formData.tipo} 
-                onValueChange={(value) => handleInputChange('tipo', value)}
-                required
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Permiso">Permiso</SelectItem>
-                  <SelectItem value="Vacaciones">Vacaciones</SelectItem>
-                  <SelectItem value="Marca">Marca</SelectItem>
-                  <SelectItem value="Licencia">Licencia Médica</SelectItem>
-                  <SelectItem value="Capacitacion">Capacitación</SelectItem>
-                  <SelectItem value="Trabajo remoto">Trabajo remoto</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="prioridad">Prioridad</Label>
-              <Select 
-                value={formData.prioridad} 
-                onValueChange={(value) => handleInputChange('prioridad', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="normal">Normal</SelectItem>
-                  <SelectItem value="alta">Alta</SelectItem>
-                  <SelectItem value="urgente">Urgente</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="fechaSolicitada">Fecha solicitada *</Label>
+              <Label htmlFor="solicitante" className="text-gray-700">Solicitante</Label>
               <Input
-                id="fechaSolicitada"
-                type="date"
-                value={formData.fechaSolicitada}
-                onChange={(e) => handleInputChange('fechaSolicitada', e.target.value)}
-                required
+                value={selectedUser ? `${selectedUser.Name} ${selectedUser.LastName} - ${selectedUser.Identifier}` : ""}
+                disabled
+                className="bg-gray-100 text-gray-600 cursor-not-allowed"
               />
+              <p className="text-xs text-gray-500">Persona que está creando la solicitud</p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="fechaFin">Fecha de fin</Label>
-              <Input
-                id="fechaFin"
-                type="date"
-                value={formData.fechaFin}
-                onChange={(e) => handleInputChange('fechaFin', e.target.value)}
-              />
+              <Label htmlFor="usuarioSolicitado" className="text-gray-700">Usuario (para quien es la solicitud)</Label>
+              {!canRequestForOthers() ? (
+                <div className="space-y-2">
+                  <Input
+                    value={selectedUser ? `${selectedUser.Name} ${selectedUser.LastName} - ${selectedUser.Identifier}` : ""}
+                    disabled
+                    className="bg-gray-100 text-gray-600 cursor-not-allowed"
+                  />
+                  <div className="flex items-center gap-2 text-amber-600 text-sm">
+                    <Info className="h-4 w-4" />
+                    <span>
+                      {formData.tipo === "Permiso" && formData.motivo 
+                        ? `Las solicitudes a terceros están desactivadas para "${formData.motivo}"`
+                        : formData.tipo === "Vacaciones"
+                        ? "Las solicitudes a terceros están desactivadas para Vacaciones"
+                        : "Selecciona un tipo de solicitud y motivo para verificar permisos"}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <Select
+                  value={formData.identificadorUsuario || ""}
+                  onValueChange={(value) => {
+                    const targetUser = getFilteredUsers().find((user: any) => user.employee_id === value);
+                    if (targetUser) {
+                      handleInputChange('usuarioSolicitado', targetUser.name);
+                      handleInputChange('identificadorUsuario', targetUser.employee_id);
+                    }
+                  }}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar usuario" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {getFilteredUsers()
+                      .filter((user: any) => user.employee_id && user.employee_id.trim() !== "")
+                      .map((user: any) => (
+                        <SelectItem key={user.id} value={user.employee_id}>
+                          {user.name} - {user.employee_id}
+                          {user.group_name && <span className="text-gray-500 text-xs block">{user.group_name}</span>}
+                        </SelectItem>
+                      ))
+                    }
+                  </SelectContent>
+                </Select>
+              )}
+              <p className="text-xs text-gray-500">Usuario a quien le aplica la solicitud (puede ser diferente al solicitante)</p>
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="asunto">Asunto *</Label>
-            <Input
-              id="asunto"
-              placeholder="Ingresa el asunto de la solicitud"
-              value={formData.asunto}
-              onChange={(e) => handleInputChange('asunto', e.target.value)}
+            <Label htmlFor="tipo" className="text-gray-700">Tipo de solicitud</Label>
+            <Select 
+              value={formData.tipo} 
+              onValueChange={handleTipoChange}
               required
-            />
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Seleccionar" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Permiso">Permiso</SelectItem>
+                <SelectItem value="Vacaciones">Vacaciones</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="descripcion">Descripción</Label>
-            <Textarea
-              id="descripcion"
-              placeholder="Describe los detalles de tu solicitud..."
-              rows={4}
-              value={formData.descripcion}
-              onChange={(e) => handleInputChange('descripcion', e.target.value)}
-            />
-          </div>
+          {/* Campos adicionales que aparecen cuando se selecciona Permiso */}
+          {formData.tipo === "Permiso" && (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label className="text-gray-700">Fecha</Label>
+                  <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start text-left font-normal"
+                        onClick={() => setCalendarOpen(true)}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {dateRange?.from ? (
+                          dateRange.to ? (
+                            `${formatDateToLocal(dateRange.from).split('-').reverse().join('/')} - ${formatDateToLocal(dateRange.to).split('-').reverse().join('/')}`
+                          ) : (
+                            formatDateToLocal(dateRange.from).split('-').reverse().join('/')
+                          )
+                        ) : (
+                          "Seleccionar"
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        initialFocus
+                        mode="range"
+                        defaultMonth={dateRange?.from}
+                        selected={dateRange}
+                        onSelect={handleDateRangeChange}
+                        numberOfMonths={2}
+                        locale={es}
+                      />
+                      <div className="flex justify-end space-x-2 p-3 border-t">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setDateRange(undefined);
+                            handleInputChange('fechaSolicitada', "");
+                            handleInputChange('fechaFin', "");
+                            setCalendarOpen(false);
+                          }}
+                        >
+                          Cancelar
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            setCalendarOpen(false);
+                          }}
+                        >
+                          Aplicar
+                        </Button>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
 
-          <div className="space-y-2">
-            <Label>Documentos adjuntos</Label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
-              <Upload className="mx-auto h-8 w-8 text-gray-400" />
-              <p className="mt-2 text-sm text-gray-600">
-                Arrastra archivos aquí o <span className="text-blue-600 cursor-pointer">selecciona archivos</span>
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                PDF, DOC, DOCX, JPG, PNG (máx. 10MB)
-              </p>
-              <input
-                type="file"
-                multiple
-                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                className="hidden"
-              />
-            </div>
-          </div>
+                <div className="space-y-2">
+                  <Label htmlFor="motivo" className="text-gray-700">Motivo</Label>
+                  <Select 
+                    value={formData.motivo ?? ""} 
+                    onValueChange={(value) => handleInputChange('motivo', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {getMotivosForTipo(formData.tipo).map((motivo: string) => (
+                        <SelectItem key={motivo} value={motivo}>
+                          {motivo}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Adjuntar archivos - Condicional según configuración del esquema */}
+              {activeSchema && (activeSchema as any).adjuntarDocumentos === "true" && (
+                <div className="space-y-2">
+                  <Label className="text-gray-700">
+                    Adjuntar archivos
+                    {(activeSchema as any).adjuntarDocumentosObligatorio === "true" && (
+                      <span className="text-red-500 ml-1">*</span>
+                    )}
+                  </Label>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+                    <div className="space-y-4">
+                      <div>
+                        <p className="text-gray-600 mb-3">
+                          Arrastra tus archivos aquí o haz clic para seleccionar
+                        </p>
+                        <Button 
+                          type="button"
+                          onClick={() => document.getElementById('file-upload')?.click()}
+                          disabled={isUploading}
+                          className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded"
+                        >
+                          {isUploading ? "Subiendo..." : "Seleccionar archivos"}
+                        </Button>
+                        <input
+                          id="file-upload"
+                          type="file"
+                          multiple
+                          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                          onChange={handleFileUpload}
+                          className="hidden"
+                        />
+                      </div>
+                      
+                      {/* Lista de archivos subidos */}
+                      {uploadedFiles.length > 0 && (
+                        <div className="mt-4 space-y-2">
+                          <p className="text-sm font-medium text-gray-700">Archivos seleccionados:</p>
+                          {uploadedFiles.map((file, index) => (
+                            <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded border">
+                              <div className="flex items-center space-x-2">
+                                <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
+                                  <span className="text-blue-600 text-xs font-medium">
+                                    {file.name.split('.').pop()?.toUpperCase()}
+                                  </span>
+                                </div>
+                                <div>
+                                  <p className="text-sm font-medium text-gray-900">{file.name}</p>
+                                  <p className="text-xs text-gray-500">{(file.size / 1024).toFixed(1)} KB</p>
+                                </div>
+                              </div>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeFile(index)}
+                                className="text-red-500 hover:text-red-700"
+                              >
+                                ×
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      
+                      <p className="text-xs text-gray-500">
+                        Formatos soportados: PDF, DOC, DOCX, JPG, JPEG, PNG (Máx. 10MB por archivo)
+                      </p>
+                    </div>
+                    {(activeSchema as any).adjuntarDocumentosObligatorio === "true" && uploadedFiles.length === 0 && (
+                      <p className="text-red-500 text-sm mt-2">
+                        * Este campo es obligatorio
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="comentario" className="text-gray-700">Comentario</Label>
+                <Textarea
+                  id="comentario"
+                  placeholder=""
+                  rows={4}
+                  value={formData.descripcion ?? ""}
+                  onChange={(e) => handleInputChange('descripcion', e.target.value)}
+                  className="min-h-[100px]"
+                />
+              </div>
+            </>
+          )}
+
+          {/* Campos específicos para Vacaciones */}
+          {formData.tipo === "Vacaciones" && (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label className="text-gray-700">Días disponibles</Label>
+                  <Input
+                    value={vacationCalculation.diasDisponibles.toString()}
+                    readOnly
+                    className="bg-gray-100"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-gray-700">Identificador</Label>
+                  <Input
+                    value={formData.identificador || ""}
+                    readOnly
+                    className="bg-gray-100"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-gray-700">Fecha</Label>
+                <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal"
+                      onClick={() => setCalendarOpen(true)}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dateRange?.from ? (
+                        dateRange.to ? (
+                          `${formatDateToLocal(dateRange.from).split('-').reverse().join('/')} - ${formatDateToLocal(dateRange.to).split('-').reverse().join('/')}`
+                        ) : (
+                          formatDateToLocal(dateRange.from).split('-').reverse().join('/')
+                        )
+                      ) : (
+                        "Seleccionar"
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      initialFocus
+                      mode="range"
+                      defaultMonth={dateRange?.from}
+                      selected={dateRange}
+                      onSelect={handleDateRangeChange}
+                      numberOfMonths={2}
+                      locale={es}
+                    />
+                    <div className="flex justify-end space-x-2 p-3 border-t">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setDateRange(undefined);
+                          handleInputChange('fechaSolicitada', "");
+                          handleInputChange('fechaFin', "");
+                          setCalendarOpen(false);
+                        }}
+                      >
+                        Limpiar
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => setCalendarOpen(false)}
+                      >
+                        Confirmar
+                      </Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-gray-700">Días solicitados</Label>
+                  <Input
+                    value={vacationCalculation.diasSolicitados.toString()}
+                    readOnly
+                    className="bg-gray-100"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-gray-700">Días efectivos</Label>
+                  <Input
+                    value={vacationCalculation.diasEfectivos.toString()}
+                    readOnly
+                    className="bg-gray-100"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-gray-700">Días restantes</Label>
+                  <Input
+                    value={vacationCalculation.diasRestantes.toString()}
+                    readOnly
+                    className={`${vacationCalculation.diasRestantes < 0 ? 'bg-red-100 text-red-600' : 'bg-gray-100'}`}
+                  />
+                </div>
+              </div>
+
+              {/* Información sobre fines de semana */}
+              {dateRange?.from && dateRange?.to && (
+                <div className="flex items-start space-x-2 p-3 bg-blue-50 rounded-lg">
+                  <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-blue-800">
+                    <p className="font-medium">1 día no se tomó en cuenta por los siguientes motivos:</p>
+                    <ul className="mt-1 space-y-1">
+                      <li>[ Fecha: {format(dateRange.from, "dd/MM/yyyy", { locale: es })} Razón: Domingo ]</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
+
+              {/* Validación de días insuficientes */}
+              {vacationCalculation.diasRestantes < 0 && (
+                <div className="flex items-start space-x-2 p-3 bg-red-50 rounded-lg border border-red-200">
+                  <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-red-800">
+                    <p className="font-medium">No tienes suficientes días de vacaciones disponibles.</p>
+                    <p>Necesitas {Math.abs(vacationCalculation.diasRestantes)} días adicionales.</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="comentario" className="text-gray-700">Comentario</Label>
+                <Textarea
+                  id="comentario"
+                  placeholder=""
+                  rows={4}
+                  value={formData.descripcion ?? ""}
+                  onChange={(e) => handleInputChange('descripcion', e.target.value)}
+                  className="min-h-[100px]"
+                />
+              </div>
+            </>
+          )}
 
           <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
             <Button 
               type="button" 
               variant="outline"
               onClick={() => setOpen(false)}
+              className="px-6 py-2 border border-blue-500 text-blue-500 hover:bg-blue-50 rounded"
             >
               Cancelar
             </Button>
             <Button 
               type="submit"
-              disabled={createRequestMutation.isPending}
-              className="bg-blue-600 hover:bg-blue-700"
+              disabled={createRequestMutation.isPending || !formData.tipo || (formData.tipo === "Vacaciones" && vacationCalculation.diasRestantes < 0)}
+              className="px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
             >
-              {createRequestMutation.isPending ? "Creando..." : "Crear Solicitud"}
+              {createRequestMutation.isPending ? "Creando..." : "Solicitar"}
             </Button>
           </div>
         </form>
       </DialogContent>
+
+      {/* Modal de alerta para conflicto de fechas */}
+      <AlertDialog open={showDateConflictAlert} onOpenChange={setShowDateConflictAlert}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader className="text-center">
+            <div className="flex justify-end">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowDateConflictAlert(false)}
+                className="h-6 w-6 p-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <AlertDialogTitle className="text-lg font-medium text-gray-900">
+              Ya tienes una solicitud en las fechas seleccionadas.
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm text-gray-600 mt-2">
+              No puedes enviar esta nueva solicitud porque ya existe otra que coincide con las fechas seleccionadas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex justify-center">
+            <Button
+              onClick={() => setShowDateConflictAlert(false)}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-2 rounded"
+            >
+              Cerrar
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Modal de alerta para días mínimos */}
+      <AlertDialog open={showMinimumDaysAlert} onOpenChange={setShowMinimumDaysAlert}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader className="text-center">
+            <div className="flex justify-end">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowMinimumDaysAlert(false)}
+                className="h-6 w-6 p-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <AlertDialogTitle className="text-lg font-medium text-gray-900">
+              La cantidad de días es menor al mínimo configurado
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm text-gray-600 mt-2">
+              Has solicitado {minimumDaysError.requested} días, pero el mínimo configurado en el esquema es de {minimumDaysError.minimum} días.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex justify-center">
+            <Button
+              onClick={() => setShowMinimumDaysAlert(false)}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-2 rounded"
+            >
+              Cerrar
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Modal de alerta para días máximos */}
+      <AlertDialog open={showMaximumDaysAlert} onOpenChange={setShowMaximumDaysAlert}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader className="text-center">
+            <div className="flex justify-end">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowMaximumDaysAlert(false)}
+                className="h-6 w-6 p-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <AlertDialogTitle className="text-lg font-medium text-gray-900">
+              La cantidad de días excede el máximo configurado
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm text-gray-600 mt-2">
+              Has solicitado {maximumDaysError.requested} días, pero el máximo configurado en el esquema es de {maximumDaysError.maximum} días.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex justify-center">
+            <Button
+              onClick={() => setShowMaximumDaysAlert(false)}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-2 rounded"
+            >
+              Cerrar
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Modal de alerta para múltiplo de días */}
+      <AlertDialog open={showMultipleDaysAlert} onOpenChange={setShowMultipleDaysAlert}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader className="text-center">
+            <div className="flex justify-end">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowMultipleDaysAlert(false)}
+                className="h-6 w-6 p-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <AlertDialogTitle className="text-lg font-medium text-gray-900">
+              La cantidad de días no cumple con el múltiplo configurado
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm text-gray-600 mt-2">
+              Has solicitado {multipleDaysError.requested} días, pero debes solicitar en múltiplos de {multipleDaysError.multiple}. 
+              Puedes solicitar: {multipleDaysError.multiple}, {multipleDaysError.multiple * 2}, {multipleDaysError.multiple * 3}, etc.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex justify-center">
+            <Button
+              onClick={() => setShowMultipleDaysAlert(false)}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-2 rounded"
+            >
+              Cerrar
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }

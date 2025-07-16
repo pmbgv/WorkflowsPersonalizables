@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shift Calendar</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/normalize.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='lib/fontawesome/css/fontawesome.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='lib/fontawesome/css/light.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='lib/fontawesome/css/solid.min.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@200;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="portal-header">
+        <div class="header-content">
+            <img src="https://www.geovictoria.com/hubfs/social-suggested-images/info.geovictoria.comhubfscropped-Logo-WEB-5-1.png" width="112px"/>
+            <div class="divider"></div>
+            <div class="color-lightblue2">Control de Asistencia</div>
+            <div class="divider"></div>
+            <input class="gv-input" type="text" placeholder="Buscar..."/>
+        </div>
+        
+        <div class="header-content">
+            <div class="info-buttons">
+                <i class="fa-light fa-grid-round color-lightblue2"></i>
+            </div>
+            
+            <div class="info-buttons company">
+                <div>
+                    Empresa
+                </div>
+                <img src="https://cdn.countryflags.com/thumbs/chile/flag-round-250.png" height="24px"/>
+            </div>
+
+            <div class="info-buttons user">
+                <i class="fa-solid fa-circle-user color-lightblue2"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="portal-body">
+        <div class="side-menu">
+            <i class="fa-light fa-star"></i>
+            <i class="fa-light fa-file-lines"></i>
+            <i class="fa-light fa-user"></i>
+            <i class="fa-light fa-users"></i>
+            <i class="fa-light fa-calendar-lines-pen"></i>
+            <i class="fa-light fa-gear-complex"></i>
+        </div>
+        
+        <div class="container-fluid">
+            <!-- Breadcrumb Navigation -->
+            <div class="breadcrumb">
+                <span class="breadcrumb-item">Planificación</span>
+                <i class="fa-light fa-chevron-right"></i>
+                <span class="breadcrumb-item current">Calendario de turnos</span>
+            </div>
+            
+            <div class="header-row">
+                
+                <!-- Top Control Bar -->
+                <div class="top-row">
+                    <div class="dropdown group-selector">
+                        <button type="button" class="btn-dropdown" data-bs-toggle="dropdown" id="group-dropdown-btn">
+                            <span id="current-group">Grupo</span>
+                        </button>
+                        <ul class="dropdown-menu" id="group-dropdown">
+                            <li><a class="dropdown-item active" data-value="2">Grupo 2</a></li>
+                            <li><a class="dropdown-item" data-value="1">Grupo 1</a></li>
+                            <li><a class="dropdown-item" data-value="3">Grupo 3</a></li>
+                        </ul>
+                    </div>
+                    
+                    <div class="divider"></div>
+                    
+                    <div class="dropdown view-selector">
+                        <button type="button" class="btn-dropdown" data-bs-toggle="dropdown" id="view-dropdown-btn">
+                            <span id="current-view">Semanal</span>
+                        </button>
+                        <ul class="dropdown-menu" id="view-dropdown">
+                            <li><a class="dropdown-item active" data-value="weekly">Semanal</a></li>
+                            <li><a class="dropdown-item" data-value="monthly">Mensual</a></li>
+                        </ul>
+                    </div>
+                    
+                    <div class="divider"></div>
+                    
+                    <div class="date-navigator">
+                        <button class="table-menu-button" id="prev-date">
+                            <i class="fa-light fa-chevron-left"></i>
+                        </button>
+                        <span id="current-date-range">30/12/2024 - 05/01/2025</span>
+                        <button class="table-menu-button" id="next-date">
+                            <i class="fa-light fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="divider"></div>
+                    
+                    <div class="download-button">
+                        <button class="table-menu-button">
+                            <i class="fa-light fa-arrow-down-to-bracket button-icon icon-left"></i>
+                            <span>Descargar</span>
+                        </button>
+                    </div>          
+                    
+                    <div class="table-simbology align-right">
+                        <i class="fa-light fa-circle-info button-icon icon-left"></i>
+                        <span>Simbología</span>
+                        <div class="table-simbology-container">
+                            <div class="column">
+                                <div class="table-simbology-title">Turnos</div>
+                                <div class="table-simbology-items-container">
+                                    <div class="table-simbology-item">
+                                        <div class="simbology-icon shift-fixed"></div>
+                                        <p>Turno Fijo</p>
+                                    </div>
+                                    <div class="table-simbology-item">
+                                        <div class="simbology-icon shift-time-band"></div>
+                                        <p>Banda Horaria</p>
+                                    </div>
+                                    <div class="table-simbology-item">
+                                        <div class="simbology-icon shift-fixed-hours"></div>
+                                        <p>Fijo por Horas</p>
+                                    </div>
+                                    <div class="table-simbology-item">
+                                        <div class="simbology-icon shift-holiday"></div>
+                                        <p>Día Feriado</p>
+                                    </div>
+                                    <div class="table-simbology-item">
+                                        <div class="simbology-icon night-shift"></div>
+                                        <p>Turno Nocturno</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="column">
+                                <div class="table-simbology-title">Alertas</div>
+                                <div class="table-simbology-items-container">
+                                    <div class="table-simbology-item">
+                                        <i class="simbology-icon fa-solid fa-triangle-exclamation color-yellow1"></i>
+                                        <p>Inconsistencia</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="divider"></div>
+                    
+                    <div class="paginator-container">
+                        <div class="paginator-icon" id="prev-page">
+                            <i class="fa-light fa-chevron-left"></i>
+                        </div>
+                        <p class="paginator-item active">1</p>
+                        <p class="paginator-item">2</p>
+                        <p class="paginator-item">3</p>
+                        <p class="paginator-item">4</p>
+                        <p class="paginator-item">5</p>
+                        <p class="paginator-item paginator-elipsis">...</p>
+                        <p class="paginator-item">8</p>
+                        <div class="paginator-icon" id="next-page">
+                            <i class="fa-light fa-chevron-right"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Bottom Control Bar -->
+                <div class="bottom-row">
+                    <div class="search-container rounded-1 d-grid bg-color-white">
+                        <input class="gv-input input-with-left-icon" type="text" id="employee-search" placeholder="Buscar colaborador...">
+                        <i class="input-icon input-left-icon fa-light fa-magnifying-glass"></i>
+                    </div>
+                    
+                    <div class="divider"></div>
+    
+                    <div class="dropdown info-selector">
+                        <button type="button" class="btn-dropdown" data-bs-toggle="dropdown" id="view-dropdown-btn">
+                            <span id="current-info">Identificador</span>
+                        </button>
+                        <ul class="dropdown-menu" id="info-dropdown">
+                            <li><a class="dropdown-item active" data-value="identifier">Identificador</a></li>
+                            <li><a class="dropdown-item" data-value="position">Cargo</a></li>
+                        </ul>
+                    </div>
+                    
+                    <div class="max-hours">
+                        <span>Máx. cantidad de horas: 44</span>
+                    </div>
+                
+                </div>
+            </div>
+            
+            <!-- Calendar Grid Container -->
+        <div class="calendar-wrapper">
+            <div class="calendar-container">
+                <!-- Calendar will be dynamically generated here -->
+                <div id="calendar-grid" class="calendar-grid">
+                    <!-- Loading state -->
+                    <div class="loading-container">
+                        <div class="loading-spinner"></div>
+                        <p>Cargando calendario...</p>
+                    </div>
+                </div>
+            </div>
+    
+        </div>
+    </div>
+    
+    <!-- Templates for different calendar views -->
+    <template id="monthly-header-template">
+        <table class="calendar-table gv-table">
+            <thead>
+                <!-- Only one row in the header, day headers will be added dynamically -->
+            </thead>
+            <tbody id="monthly-table-body">
+                <!-- Employee rows will be added here -->
+            </tbody>
+        </table>
+    </template>
+    
+    <template id="weekly-header-template">
+        <table class="calendar-table gv-table">
+            <thead>
+                <!-- Only one row in the header, day headers will be added dynamically -->
+            </thead>
+            <tbody id="weekly-table-body">
+                <!-- Employee rows will be added here -->
+            </tbody>
+        </table>
+    </template>
+    
+    <template id="employee-row-template">
+        <tr class="employee-row">
+            <td class="employee-info">
+                <div class="employee-name"></div>
+                <div class="employee-id"></div>
+            </td>
+            <!-- Shift cells will be added dynamically -->
+            <td class="employee-total"></td>
+        </tr>
+    </template>
+    
+    <template id="day-header-template">
+        <th class="day-header">
+            <div class="day-name" style="margin-left: 2px;"></div>
+            <div class="day-number"></div>
+        </th>
+    </template>
+    
+    <template id="shift-cell-template">
+        <td class="shift-cell">
+            <!-- Shift content will be added here -->
+        </td>
+    </template>
+    
+    <!-- JavaScript Files -->
+    <!-- Popper JS (for popover functionality only) -->
+    <script src="https://unpkg.com/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    
+    <script src="{{ url_for('static', filename='js/utils.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/data.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/calendar.js') }}"></script>
+    
+    <!-- Custom popovers -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize popovers when view changes
+            document.addEventListener('employeesLoaded', initPopovers);
+            document.addEventListener('shiftsLoaded', initPopovers);
+            
+            // Function to initialize popovers
+            function initPopovers() {
+                setTimeout(function() {
+                    const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]');
+                    if (popoverTriggerList.length > 0) {
+                        popoverTriggerList.forEach(function(el) {
+                            // Use popper.js directly without Bootstrap
+                            const content = el.getAttribute('data-bs-content');
+                            const title = el.getAttribute('data-bs-title') || el.getAttribute('title');
+                            
+                            // Create popover elements
+                            const popoverEl = document.createElement('div');
+                            popoverEl.className = 'popover';
+                            popoverEl.style.display = 'none';
+                            popoverEl.innerHTML = `
+                                <div class="popover-header">${title || ''}</div>
+                                <div class="popover-body">${content}</div>
+                            `;
+                            document.body.appendChild(popoverEl);
+                            
+                            // Show popover on hover
+                            el.addEventListener('mouseenter', function() {
+                                popoverEl.style.display = 'block';
+                                Popper.createPopper(el, popoverEl, {
+                                    placement: 'top',
+                                    modifiers: [
+                                        {
+                                            name: 'offset',
+                                            options: {
+                                                offset: [0, 8],
+                                            },
+                                        },
+                                    ],
+                                });
+                            });
+                            
+                            // Hide popover when mouse leaves
+                            el.addEventListener('mouseleave', function() {
+                                popoverEl.style.display = 'none';
+                            });
+                        });
+
+                    }
+                }, 200); // Small delay to ensure DOM is fully updated
+            }
+            
+            // Fix for group dropdown to close immediately when selecting a group
+            const groupDropdownItems = document.querySelectorAll('.dropdown-item');
+            groupDropdownItems.forEach(function(item) {
+                item.addEventListener('click', function() {
+                    // Force dropdown to close immediately
+                    setTimeout(function() {
+                        document.querySelectorAll('.dropdown-menu').classList.remove('show');
+                    }, 300);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
