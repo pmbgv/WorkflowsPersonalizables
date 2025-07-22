@@ -274,6 +274,18 @@ export function CreateRequestModal({ open: externalOpen, onOpenChange, onRequest
     }
   }, [formData.tipo, formData.motivo, selectedUser]);
 
+  // Reset vacation calculation when identificadorUsuario changes
+  useEffect(() => {
+    if (formData.tipo === "Vacaciones") {
+      setVacationCalculation({
+        diasDisponibles: 0,
+        diasSolicitados: 0,
+        diasEfectivos: 0,
+        diasRestantes: 0
+      });
+    }
+  }, [formData.identificadorUsuario, formData.tipo]);
+
   // Obtener todas las solicitudes existentes para verificar conflictos de fechas
   const { data: existingRequests = [] } = useQuery<Request[]>({
     queryKey: ["/api/requests"],
@@ -283,14 +295,15 @@ export function CreateRequestModal({ open: externalOpen, onOpenChange, onRequest
     },
   });
 
-  // Obtener saldo de vacaciones del usuario
+  // Obtener saldo de vacaciones del usuario para quien se solicita la vacación
   const { data: userVacationBalance } = useQuery({
-    queryKey: ['vacation-balance', formData.identificador],
+    queryKey: ['vacation-balance', formData.identificadorUsuario || formData.identificador],
     queryFn: async () => {
-      const response = await fetch(`/api/vacation-balance/${formData.identificador}`);
+      const targetUserId = formData.identificadorUsuario || formData.identificador;
+      const response = await fetch(`/api/vacation-balance/${targetUserId}`);
       return response.json();
     },
-    enabled: Boolean(open && formData.identificador && formData.tipo === "Vacaciones"),
+    enabled: Boolean(open && (formData.identificadorUsuario || formData.identificador) && formData.tipo === "Vacaciones"),
   });
 
   // Función para calcular días laborables (excluyendo fines de semana)
@@ -996,9 +1009,9 @@ export function CreateRequestModal({ open: externalOpen, onOpenChange, onRequest
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-gray-700">Identificador</Label>
+                  <Label className="text-gray-700">Identificador (usuario para vacación)</Label>
                   <Input
-                    value={formData.identificador || ""}
+                    value={formData.identificadorUsuario || formData.identificador || ""}
                     readOnly
                     className="bg-gray-100"
                   />
