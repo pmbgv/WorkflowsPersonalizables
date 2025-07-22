@@ -274,17 +274,17 @@ export function CreateRequestModal({ open: externalOpen, onOpenChange, onRequest
     }
   }, [formData.tipo, formData.motivo, selectedUser]);
 
-  // Reset vacation calculation when identificadorUsuario changes
+  // Invalidate vacation balance cache when user changes
   useEffect(() => {
-    if (formData.tipo === "Vacaciones") {
-      setVacationCalculation({
-        diasDisponibles: 0,
-        diasSolicitados: 0,
-        diasEfectivos: 0,
-        diasRestantes: 0
+    if (formData.tipo === "Vacaciones" && formData.identificadorUsuario) {
+      console.log(`🔄 User changed for vacation request: ${formData.identificadorUsuario}`);
+      
+      // Invalidate and refetch vacation balance when user changes
+      queryClient.invalidateQueries({ 
+        queryKey: ['vacation-balance', formData.identificadorUsuario] 
       });
     }
-  }, [formData.identificadorUsuario, formData.tipo]);
+  }, [formData.identificadorUsuario, formData.tipo, queryClient]);
 
   // Obtener todas las solicitudes existentes para verificar conflictos de fechas
   const { data: existingRequests = [] } = useQuery<Request[]>({
@@ -296,14 +296,22 @@ export function CreateRequestModal({ open: externalOpen, onOpenChange, onRequest
   });
 
   // Obtener saldo de vacaciones del usuario para quien se solicita la vacación
-  const { data: userVacationBalance } = useQuery({
+  const { data: userVacationBalance, refetch: refetchVacationBalance } = useQuery({
     queryKey: ['vacation-balance', formData.identificadorUsuario || formData.identificador],
     queryFn: async () => {
       const targetUserId = formData.identificadorUsuario || formData.identificador;
+      console.log(`🏖️ Fetching vacation balance for user: ${targetUserId}`);
       const response = await fetch(`/api/vacation-balance/${targetUserId}`);
-      return response.json();
+      if (!response.ok) {
+        console.log(`❌ Error fetching vacation balance: ${response.status}`);
+        throw new Error('Failed to fetch vacation balance');
+      }
+      const balance = await response.json();
+      console.log(`💰 Vacation balance received:`, balance);
+      return balance;
     },
     enabled: Boolean(open && (formData.identificadorUsuario || formData.identificador) && formData.tipo === "Vacaciones"),
+    staleTime: 0, // Always refetch when query key changes
   });
 
   // Función para calcular días laborables (excluyendo fines de semana)
@@ -314,19 +322,31 @@ export function CreateRequestModal({ open: externalOpen, onOpenChange, onRequest
     return days.filter(day => !isWeekend(day)).length;
   };
 
-  // Efecto para calcular días de vacaciones cuando cambian las fechas
+  // Efecto para calcular días de vacaciones cuando cambian las fechas O cuando se obtiene el balance
   useEffect(() => {
-    if (formData.tipo === "Vacaciones" && dateRange?.from && dateRange?.to && userVacationBalance) {
-      const diasSolicitados = differenceInDays(dateRange.to, dateRange.from) + 1;
-      const diasEfectivos = calculateWorkingDays(dateRange.from, dateRange.to);
-      const diasRestantes = userVacationBalance.diasDisponibles - diasEfectivos;
+    if (formData.tipo === "Vacaciones" && userVacationBalance) {
+      console.log(`💰 Updating vacation balance display: ${userVacationBalance.diasDisponibles} días`);
+      
+      if (dateRange?.from && dateRange?.to) {
+        const diasSolicitados = differenceInDays(dateRange.to, dateRange.from) + 1;
+        const diasEfectivos = calculateWorkingDays(dateRange.from, dateRange.to);
+        const diasRestantes = userVacationBalance.diasDisponibles - diasEfectivos;
 
-      setVacationCalculation({
-        diasDisponibles: userVacationBalance.diasDisponibles || 0,
-        diasSolicitados,
-        diasEfectivos,
-        diasRestantes
-      });
+        setVacationCalculation({
+          diasDisponibles: userVacationBalance.diasDisponibles || 0,
+          diasSolicitados,
+          diasEfectivos,
+          diasRestantes
+        });
+      } else {
+        // No dates selected yet, just show the available balance
+        setVacationCalculation({
+          diasDisponibles: userVacationBalance.diasDisponibles || 0,
+          diasSolicitados: 0,
+          diasEfectivos: 0,
+          diasRestantes: userVacationBalance.diasDisponibles || 0
+        });
+      }
     }
   }, [dateRange, formData.tipo, userVacationBalance]);
 
@@ -779,10 +799,17 @@ export function CreateRequestModal({ open: externalOpen, onOpenChange, onRequest
                 <Select
                   value={formData.identificadorUsuario || ""}
                   onValueChange={(value) => {
+                    console.log(`👤 User selection changed to: ${value}`);
                     const targetUser = getFilteredUsers().find((user: any) => user.employee_id === value);
                     if (targetUser) {
+                      console.log(`✅ Found target user:`, targetUser);
                       handleInputChange('usuarioSolicitado', targetUser.name);
                       handleInputChange('identificadorUsuario', targetUser.employee_id);
+                      
+                      // Clear date selection when changing user
+                      setDateRange(undefined);
+                      handleInputChange('fechaSolicitada', "");
+                      handleInputChange('fechaFin', "");
                     }
                   }}
                   required
