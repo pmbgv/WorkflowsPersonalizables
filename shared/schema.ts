@@ -26,7 +26,7 @@ export const requests = pgTable("requests", {
 // Tabla para manejar saldos de vacaciones de usuarios
 export const userVacationBalance = pgTable("user_vacation_balance", {
   id: serial("id").primaryKey(),
-  identificador: varchar("identificador", { length: 20 }).notNull().unique(),
+  identificador: varchar("identificador", { length: 50 }).notNull().unique(), // Increased to accommodate GeoVictoria API IDs
   nombreUsuario: varchar("nombre_usuario", { length: 100 }).notNull(),
   diasDisponibles: integer("dias_disponibles").notNull().default(15),
   fechaActualizacion: timestamp("fecha_actualizacion").defaultNow().notNull(),
