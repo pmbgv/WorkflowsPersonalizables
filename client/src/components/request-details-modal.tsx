@@ -96,7 +96,7 @@ export function RequestDetailsModal({ request, open, onOpenChange, onDownload, o
   });
 
   // Check if current user can approve this request
-  const currentStep = approvalSteps.find(step => 
+  const currentStep = approvalSteps.find((step: any) => 
     step.requestApprovalStep?.estado === "Pendiente" && 
     step.approvalStep?.perfil === currentUser?.UserProfile
   );
@@ -176,7 +176,7 @@ export function RequestDetailsModal({ request, open, onOpenChange, onDownload, o
               
               <div>
                 <label className="block text-sm font-medium text-gray-600">Grupo</label>
-                <div className="mt-1 p-2 bg-gray-100 rounded text-gray-900">Santiago Admin.</div>
+                <div className="mt-1 p-2 bg-gray-100 rounded text-gray-900">{request.grupo || "No especificado"}</div>
               </div>
               
               <div>
@@ -294,7 +294,7 @@ export function RequestDetailsModal({ request, open, onOpenChange, onDownload, o
               )}
               <div>
                 <label className="block text-sm font-medium text-gray-600">Identificador</label>
-                <div className="mt-1 p-2 bg-gray-100 rounded text-gray-900">{request.identificador || "16345990-8"}</div>
+                <div className="mt-1 p-2 bg-gray-100 rounded text-gray-900">{request.identificador || "No especificado"}</div>
               </div>
               
               <div>
@@ -309,7 +309,7 @@ export function RequestDetailsModal({ request, open, onOpenChange, onDownload, o
               
               <div>
                 <label className="block text-sm font-medium text-gray-600">Motivo</label>
-                <div className="mt-1 p-2 bg-gray-100 rounded text-gray-900">{request.motivo || "Permiso parcial MHR"}</div>
+                <div className="mt-1 p-2 bg-gray-100 rounded text-gray-900">{request.motivo || "No especificado"}</div>
               </div>
             </div>
           </div>
@@ -326,48 +326,40 @@ export function RequestDetailsModal({ request, open, onOpenChange, onDownload, o
           <div>
             <label className="block text-sm font-medium text-gray-600">Solicitado por</label>
             <div className="mt-1 p-2 bg-gray-100 rounded text-gray-900">
-              Pedro Ramirez Gonzalez - 22.456.789-2
+              {request.solicitadoPor} - {request.identificador}
             </div>
           </div>
 
-          {/* Tabla de aprobadores */}
-          <div>
-            <div className="grid grid-cols-4 gap-4 mb-2">
-              <div className="text-sm font-medium text-gray-600">Perfil aprobador</div>
-              <div className="text-sm font-medium text-gray-600">Fecha de aprobación</div>
-              <div className="text-sm font-medium text-gray-600">Aprobado por</div>
-              <div className="text-sm font-medium text-gray-600">Comentario</div>
-            </div>
-            
-            <div className="grid grid-cols-4 gap-4 py-2 border-b">
-              <div className="p-2 bg-gray-100 rounded text-sm">Jefes de grupo</div>
-              <div className="p-2 bg-gray-100 rounded text-sm">08/04/2025</div>
-              <div className="p-2 bg-gray-100 rounded text-sm">Juan Pérez</div>
-              <div className="p-2 bg-gray-100 rounded text-sm flex justify-center">
-                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-blue-600">
-                  💬
-                </Button>
+          {/* Historial de aprobaciones */}
+          {approvalSteps.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-3">Historial de aprobaciones</label>
+              <div className="grid grid-cols-4 gap-4 mb-2">
+                <div className="text-sm font-medium text-gray-600">Perfil aprobador</div>
+                <div className="text-sm font-medium text-gray-600">Fecha de aprobación</div>
+                <div className="text-sm font-medium text-gray-600">Estado</div>
+                <div className="text-sm font-medium text-gray-600">Comentario</div>
               </div>
+              
+              {approvalSteps.map((step: any, index: number) => (
+                <div key={step.requestApprovalStep?.id || index} className="grid grid-cols-4 gap-4 py-2 border-b">
+                  <div className="p-2 bg-gray-100 rounded text-sm">{step.approvalStep?.perfil || "No especificado"}</div>
+                  <div className="p-2 bg-gray-100 rounded text-sm">
+                    {step.requestApprovalStep?.fechaAprobacion ? 
+                      format(new Date(step.requestApprovalStep.fechaAprobacion), "dd/MM/yyyy", { locale: es }) :
+                      "Pendiente"
+                    }
+                  </div>
+                  <div className="p-2 bg-gray-100 rounded text-sm">
+                    {step.requestApprovalStep?.estado || "Pendiente"}
+                  </div>
+                  <div className="p-2 bg-gray-100 rounded text-sm">
+                    {step.requestApprovalStep?.comentario || "Sin comentario"}
+                  </div>
+                </div>
+              ))}
             </div>
-            
-            <div className="grid grid-cols-4 gap-4 py-2 border-b">
-              <div className="p-2 bg-gray-100 rounded text-sm">Jefes de grupo</div>
-              <div className="p-2 bg-gray-100 rounded text-sm">08/04/2025</div>
-              <div className="p-2 bg-gray-100 rounded text-sm">Juan Pérez</div>
-              <div className="p-2 bg-gray-100 rounded text-sm flex justify-center">
-                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-blue-600">
-                  💬
-                </Button>
-              </div>
-            </div>
-            
-            <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-600">Justificación</label>
-              <div className="mt-1 p-2 bg-gray-100 rounded text-gray-900 min-h-[40px]">
-                Datos
-              </div>
-            </div>
-          </div>
+          )}
 
           {/* Historial de estados */}
           <div>
