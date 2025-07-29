@@ -322,6 +322,19 @@ export function CreateRequestModal({ open: externalOpen, onOpenChange, onRequest
     return days.filter(day => !isWeekend(day)).length;
   };
 
+  // Función para obtener los días excluidos (fines de semana) con detalles
+  const getExcludedDays = (startDate: Date, endDate: Date) => {
+    if (!startDate || !endDate) return [];
+    
+    const days = eachDayOfInterval({ start: startDate, end: endDate });
+    const excludedDays = days.filter(day => isWeekend(day));
+    
+    return excludedDays.map(day => ({
+      date: day,
+      reason: day.getDay() === 0 ? 'Domingo' : 'Sábado'
+    }));
+  };
+
   // Efecto para calcular días de vacaciones cuando cambian las fechas O cuando se obtiene el balance
   useEffect(() => {
     if (formData.tipo === "Vacaciones" && userVacationBalance) {
@@ -1127,18 +1140,43 @@ export function CreateRequestModal({ open: externalOpen, onOpenChange, onRequest
                 </div>
               </div>
 
-              {/* Información sobre fines de semana */}
-              {dateRange?.from && dateRange?.to && (
-                <div className="flex items-start space-x-2 p-3 bg-blue-50 rounded-lg">
-                  <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                  <div className="text-sm text-blue-800">
-                    <p className="font-medium">1 día no se tomó en cuenta por los siguientes motivos:</p>
-                    <ul className="mt-1 space-y-1">
-                      <li>[ Fecha: {format(dateRange.from, "dd/MM/yyyy", { locale: es })} Razón: Domingo ]</li>
-                    </ul>
+              {/* Información sobre días excluidos */}
+              {dateRange?.from && dateRange?.to && (() => {
+                const excludedDays = getExcludedDays(dateRange.from, dateRange.to);
+                const totalDaysRequested = vacationCalculation.diasSolicitados;
+                const effectiveDays = vacationCalculation.diasEfectivos;
+                
+                return excludedDays.length > 0 ? (
+                  <div className="flex items-start space-x-2 p-3 bg-blue-50 rounded-lg">
+                    <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <div className="text-sm text-blue-800">
+                      <p className="font-medium">
+                        {excludedDays.length} {excludedDays.length === 1 ? 'día no se tomó' : 'días no se tomaron'} en cuenta por los siguientes motivos:
+                      </p>
+                      <ul className="mt-1 space-y-1">
+                        {excludedDays.map((day, index) => (
+                          <li key={index}>
+                            [ Fecha: {format(day.date, "dd/MM/yyyy", { locale: es })} Razón: {day.reason} ]
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="mt-2 font-medium">
+                        Total de días solicitados: {totalDaysRequested} | Días efectivos a descontar: {effectiveDays}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              )}
+                ) : (
+                  <div className="flex items-start space-x-2 p-3 bg-green-50 rounded-lg">
+                    <Info className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    <div className="text-sm text-green-800">
+                      <p className="font-medium">
+                        Total de días solicitados: {totalDaysRequested} | Días efectivos a descontar: {effectiveDays}
+                      </p>
+                      <p>Todos los días seleccionados son días laborables.</p>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Validación de días insuficientes */}
               {vacationCalculation.diasRestantes < 0 && (
