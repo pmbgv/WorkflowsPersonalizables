@@ -12,7 +12,7 @@ import { formatDate, getStatusColor } from "@/lib/utils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import type { Request, RequestHistory } from "@shared/schema";
+import type { Request } from "@shared/schema";
 
 interface RequestDetailsModalProps {
   request: Request | null;
@@ -128,12 +128,7 @@ export function RequestDetailsModal({ request, open, onOpenChange, onDownload, o
     return isOwnRequest ? "Cancelar" : "Anular";
   };
 
-  // Get request history
-  const { data: history = [], isLoading: isLoadingHistory } = useQuery<RequestHistory[]>({
-    queryKey: ['requests', request.id, 'history'],
-    queryFn: () => fetch(`/api/requests/${request.id}/history`).then(res => res.json()),
-    enabled: open && !!request.id,
-  });
+
 
   const getStatusBadge = (status: string) => {
     return (
@@ -205,7 +200,7 @@ export function RequestDetailsModal({ request, open, onOpenChange, onDownload, o
                     {isLoadingSteps ? (
                       <p className="text-sm text-muted-foreground">Cargando pasos de aprobación...</p>
                     ) : (
-                      approvalSteps.map((step, index) => (
+                      approvalSteps.map((step: any, index: number) => (
                         <div key={step.requestApprovalStep?.id || index} className="flex items-center gap-3 p-3 border rounded-lg">
                           <div className="flex-shrink-0">
                             {step.requestApprovalStep?.estado === "Aprobado" ? (
@@ -361,37 +356,7 @@ export function RequestDetailsModal({ request, open, onOpenChange, onDownload, o
             </div>
           )}
 
-          {/* Historial de estados */}
-          <div>
-            <label className="block text-sm font-medium text-gray-600 mb-3">Historial de estados</label>
-            <div className="space-y-2">
-              {/* Solicitud creada */}
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded border">
-                <div className="flex items-center gap-4">
-                  <span className="text-sm text-gray-600">{formatDate(request.fechaCreacion)}</span>
-                  <span className="text-sm font-medium">Estado: Pendiente</span>
-                  <span className="text-sm text-gray-600">Por: {request.solicitadoPor}</span>
-                </div>
-                <span className="text-xs text-gray-500">Solicitud creada</span>
-              </div>
-              
-              {/* Historial de cambios de estado */}
-              {history.map((entry, index) => (
-                <div key={entry.id} className="flex items-center justify-between p-3 bg-gray-50 rounded border">
-                  <div className="flex items-center gap-4">
-                    <span className="text-sm text-gray-600">{formatDate(entry.fechaCreacion)}</span>
-                    <span className="text-sm font-medium">
-                      Estado: {entry.previousState} → {entry.newState}
-                    </span>
-                    <span className="text-sm text-gray-600">Por: {entry.changedBy}</span>
-                  </div>
-                  <span className="text-xs text-gray-500">
-                    {entry.changeReason || "Cambio de estado"}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
+
 
           {/* Acciones de aprobación - solo visible en pestaña "Todas las solicitudes" */}
           {isAllRequestsTab && onStatusChange && request.estado === "Pendiente" && (

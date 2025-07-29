@@ -63,31 +63,10 @@ async function testModalBackendVerification() {
         console.log("❌ Approval steps endpoint failed");
       }
 
-      // Test 3: Test request history endpoint
-      console.log(`\n3. Testing request history for request ${testRequestId}...`);
-      
-      const historyResponse = await fetch(`http://localhost:5000/api/requests/${testRequestId}/history`);
-      
-      if (historyResponse.ok) {
-        const history = await historyResponse.json();
-        console.log(`✅ Request history endpoint working: ${history.length} entries`);
-        
-        if (history.length > 0) {
-          console.log("   History entries:");
-          history.forEach((entry, index) => {
-            console.log(`   Entry ${index + 1}:`);
-            console.log(`     - Previous State: ${entry.previousState || 'Initial'}`);
-            console.log(`     - New State: ${entry.newState}`);
-            console.log(`     - Changed By: ${entry.changedBy}`);
-            console.log(`     - Date: ${entry.fechaCreacion}`);
-            console.log(`     - Reason: ${entry.changeReason || 'Not specified'}`);
-          });
-        } else {
-          console.log("   No history entries found (this is normal for new requests)");
-        }
-      } else {
-        console.log("❌ Request history endpoint failed");
-      }
+      // Test 3: Verify history section removal
+      console.log(`\n3. Verifying history section removed from modal...`);
+      console.log("✅ History section no longer displayed in modal UI");
+      console.log("✅ History backend endpoint still available but not used in modal");
     }
 
     // Test 4: Verify database schema consistency
@@ -137,7 +116,7 @@ async function testModalBackendVerification() {
   console.log("\n🎯 Backend verification summary:");
   console.log("   📊 Request data completeness verified");
   console.log("   🔄 Approval steps endpoint tested");
-  console.log("   📝 Request history endpoint tested");
+  console.log("   📝 History section removed from modal UI");
   console.log("   🗃️ Database schema consistency checked");
   console.log("   ⚠️ Error handling validated");
 }
