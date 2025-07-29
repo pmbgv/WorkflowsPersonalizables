@@ -314,7 +314,32 @@ export function CreateRequestModal({ open: externalOpen, onOpenChange, onRequest
     staleTime: 0, // Always refetch when query key changes
   });
 
-  // Función para calcular días laborables (excluyendo fines de semana)
+  // Función para calcular días efectivos basado en la configuración del esquema
+  const calculateEffectiveDays = (startDate: Date, endDate: Date): number => {
+    if (!startDate || !endDate) return 0;
+    
+    const totalDays = differenceInDays(endDate, startDate) + 1;
+    
+    // Check if vacation schema has days kind configuration
+    const vacationSchema = activeSchema;
+    const daysKind = vacationSchema?.tipoDias || "laborales"; // Default to work days
+    
+    console.log(`📊 Days calculation mode: ${daysKind}`);
+    
+    if (daysKind === "calendario") {
+      // Calendar days: include all days (weekends and holidays)
+      console.log(`📅 Using calendar days: ${totalDays} total days (including weekends)`);
+      return totalDays;
+    } else {
+      // Work days: exclude weekends
+      const days = eachDayOfInterval({ start: startDate, end: endDate });
+      const workDays = days.filter(day => !isWeekend(day)).length;
+      console.log(`💼 Using work days: ${workDays} work days (excluding weekends)`);
+      return workDays;
+    }
+  };
+
+  // Función para calcular días laborables (excluyendo fines de semana) - mantener para compatibilidad
   const calculateWorkingDays = (startDate: Date, endDate: Date): number => {
     if (!startDate || !endDate) return 0;
     
@@ -322,17 +347,31 @@ export function CreateRequestModal({ open: externalOpen, onOpenChange, onRequest
     return days.filter(day => !isWeekend(day)).length;
   };
 
-  // Función para obtener los días excluidos (fines de semana) con detalles
+  // Función para obtener los días excluidos basado en la configuración del esquema
   const getExcludedDays = (startDate: Date, endDate: Date) => {
     if (!startDate || !endDate) return [];
     
-    const days = eachDayOfInterval({ start: startDate, end: endDate });
-    const excludedDays = days.filter(day => isWeekend(day));
+    // Check if vacation schema has days kind configuration
+    const vacationSchema = activeSchema;
+    const daysKind = vacationSchema?.tipoDias || "laborales"; // Default to work days
     
-    return excludedDays.map(day => ({
-      date: day,
-      reason: day.getDay() === 0 ? 'Domingo' : 'Sábado'
-    }));
+    if (daysKind === "calendario") {
+      // Calendar days: no days are excluded
+      console.log(`📅 Calendar days mode: no excluded days`);
+      return [];
+    } else {
+      // Work days: exclude weekends
+      const days = eachDayOfInterval({ start: startDate, end: endDate });
+      const excludedDays = days.filter(day => isWeekend(day));
+      
+      const excludedDetails = excludedDays.map(day => ({
+        date: day,
+        reason: day.getDay() === 0 ? 'Domingo' : 'Sábado'
+      }));
+      
+      console.log(`💼 Work days mode: ${excludedDetails.length} excluded days (weekends)`);
+      return excludedDetails;
+    }
   };
 
   // Efecto para calcular días de vacaciones cuando cambian las fechas O cuando se obtiene el balance
@@ -342,7 +381,7 @@ export function CreateRequestModal({ open: externalOpen, onOpenChange, onRequest
       
       if (dateRange?.from && dateRange?.to) {
         const diasSolicitados = differenceInDays(dateRange.to, dateRange.from) + 1;
-        const diasEfectivos = calculateWorkingDays(dateRange.from, dateRange.to);
+        const diasEfectivos = calculateEffectiveDays(dateRange.from, dateRange.to);
         const diasRestantes = userVacationBalance.diasDisponibles - diasEfectivos;
 
         setVacationCalculation({
@@ -361,7 +400,7 @@ export function CreateRequestModal({ open: externalOpen, onOpenChange, onRequest
         });
       }
     }
-  }, [dateRange, formData.tipo, userVacationBalance]);
+  }, [dateRange, formData.tipo, userVacationBalance, activeSchema]);
 
   const createRequestMutation = useMutation({
     mutationFn: async (data: InsertRequest) => {
@@ -1172,7 +1211,7 @@ export function CreateRequestModal({ open: externalOpen, onOpenChange, onRequest
                       <p className="font-medium">
                         Total de días solicitados: {totalDaysRequested} | Días efectivos a descontar: {effectiveDays}
                       </p>
-                      <p>Todos los días seleccionados son días laborables.</p>
+                      <p>{activeSchema?.tipoDias === "calendario" ? "Todos los días seleccionados serán descontados (incluye fines de semana)." : "Todos los días seleccionados son días laborables."}</p>
                     </div>
                   </div>
                 );
