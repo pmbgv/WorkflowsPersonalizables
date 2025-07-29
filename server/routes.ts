@@ -452,18 +452,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get user vacation balance
+  // Get user vacation balance with pending requests subtracted
   app.get("/api/vacation-balance/:identificador", async (req, res) => {
     try {
       const identificador = req.params.identificador;
-      const balance = await storage.getUserVacationBalance(identificador);
+      const balanceWithPending = await storage.getUserVacationBalanceWithPending(identificador);
       
-      if (!balance) {
+      if (!balanceWithPending) {
         return res.status(404).json({ error: "User vacation balance not found" });
       }
       
-      res.json(balance);
+      // Return balance with real available days (subtracting pending requests)
+      const response = {
+        id: balanceWithPending.id,
+        identificador: balanceWithPending.identificador,
+        nombreUsuario: balanceWithPending.nombreUsuario,
+        diasDisponibles: balanceWithPending.diasDisponiblesReales, // Real available days after subtracting pending
+        diasPendientes: balanceWithPending.diasPendientes, // Days in pending requests
+        diasTotales: balanceWithPending.diasDisponibles, // Original balance before subtracting
+        fechaActualizacion: balanceWithPending.fechaActualizacion
+      };
+      
+      res.json(response);
     } catch (error) {
+      console.error("Error fetching vacation balance with pending:", error);
       res.status(500).json({ error: "Failed to fetch vacation balance" });
     }
   });

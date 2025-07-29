@@ -64,6 +64,8 @@ export interface IStorage {
   
   // User Vacation Balance
   getUserVacationBalance(identificador: string): Promise<UserVacationBalance | undefined>;
+  getUserVacationBalanceWithPending(identificador: string): Promise<UserVacationBalance & { diasPendientes: number; diasDisponiblesReales: number } | undefined>;
+  getPendingVacationDays(identificador: string): Promise<number>;
   createUserVacationBalance(balance: InsertUserVacationBalance): Promise<UserVacationBalance>;
   updateUserVacationBalance(identificador: string, diasDisponibles: number): Promise<UserVacationBalance | undefined>;
   
@@ -969,6 +971,63 @@ export class DatabaseStorage implements IStorage {
       return balance;
     } catch (error) {
       console.error("Error fetching user vacation balance:", error);
+      return undefined;
+    }
+  }
+
+  async getPendingVacationDays(identificador: string): Promise<number> {
+    try {
+      console.log(`🔍 Calculating pending vacation days for user: ${identificador}`);
+      
+      const pendingRequests = await db
+        .select({
+          diasEfectivos: requests.diasEfectivos
+        })
+        .from(requests)
+        .where(
+          and(
+            eq(requests.identificadorUsuario, identificador),
+            eq(requests.tipo, "Vacaciones"),
+            eq(requests.estado, "Pendiente")
+          )
+        );
+
+      const totalPendingDays = pendingRequests.reduce((total, request) => {
+        const days = request.diasEfectivos || 0;
+        console.log(`📋 Found pending vacation request: ${days} effective days`);
+        return total + days;
+      }, 0);
+
+      console.log(`📊 Total pending vacation days for ${identificador}: ${totalPendingDays}`);
+      return totalPendingDays;
+    } catch (error) {
+      console.error("Error calculating pending vacation days:", error);
+      return 0;
+    }
+  }
+
+  async getUserVacationBalanceWithPending(identificador: string): Promise<UserVacationBalance & { diasPendientes: number; diasDisponiblesReales: number } | undefined> {
+    try {
+      const balance = await this.getUserVacationBalance(identificador);
+      if (!balance) {
+        return undefined;
+      }
+
+      const pendingDays = await this.getPendingVacationDays(identificador);
+      const realAvailableDays = balance.diasDisponibles - pendingDays;
+
+      console.log(`💰 Vacation balance calculation for ${identificador}:`);
+      console.log(`   - Original balance: ${balance.diasDisponibles} days`);
+      console.log(`   - Pending days: ${pendingDays} days`);
+      console.log(`   - Real available days: ${realAvailableDays} days`);
+
+      return {
+        ...balance,
+        diasPendientes: pendingDays,
+        diasDisponiblesReales: realAvailableDays
+      };
+    } catch (error) {
+      console.error("Error fetching vacation balance with pending:", error);
       return undefined;
     }
   }
